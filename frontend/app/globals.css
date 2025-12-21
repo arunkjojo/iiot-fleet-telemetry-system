@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+:root{
+  --bg-dark: #0a0a0a;
+  --primary: #f9f506;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,body,#root{
+  height:100%;
+}
+
+body{
+  @apply bg-[var(--bg-dark)] text-white font-display;
+}
+
+.glow-text{ text-shadow:0 0 10px rgba(19,200,236,0.45); }
+.glow-box{ box-shadow:0 0 15px rgba(19,200,236,0.08); }
+
+/* Hide native scrollbars while preserving scroll behavior (virtualized list will drive content) */
+.hide-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
+/* Small highlight style for matched text in search results */
+.match { background: rgba(249,245,6,0.12); padding: 0 0.12rem; border-radius: 2px; transition: background-color 160ms ease; }
+
+/* Subtle fade-in for virtualized rows when they appear */
+@keyframes vt-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.vt-enter { animation: vt-fade-in 220ms cubic-bezier(.2,.9,.2,1); }

@@ -1,0 +1,67 @@
+[
+  {
+    "id": "FT-0001",
+    "model": "Model X",
+    "driver": "Alice Johnson",
+    "status": "active",
+    "fuel": 84,
+    "temp": 42,
+    "speedKph": 62,
+    "cargoLoad": 450,
+    "engineHealth": 92,
+    "lat": 37.7749,
+    "lng": -122.4194
+  },
+  {
+    "id": "FT-0002",
+    "model": "Transit 200",
+    "driver": "Bob Smith",
+    "status": "warning",
+    "fuel": 24,
+    "temp": 58,
+    "speedKph": 48,
+    "cargoLoad": 1200,
+    "engineHealth": 68,
+    "lat": 37.7890,
+    "lng": -122.4010
+  },
+  {
+    "id": "FT-0003",
+    "model": "Hauler Pro",
+    "driver": "Carlos Reyes",
+    "status": "danger",
+    "fuel": 8,
+    "temp": 75,
+    "speedKph": 0,
+    "cargoLoad": 1800,
+    "engineHealth": 32,
+    "lat": 37.7600,
+    "lng": -122.4350
+  },
+  {
+    "id": "FT-0004",
+    "model": "CityRunner",
+    "driver": "Dana Lee",
+    "status": "offline",
+    "fuel": 0,
+    "temp": 0,
+    "speedKph": 0,
+    "cargoLoad": 0,
+    "engineHealth": 0,
+    "lat": 37.7700,
+    "lng": -122.4050
+  },
+  {
+    "id": "FT-0005",
+    "model": "Model X",
+    "driver": "Ethan Cho",
+    "status": "active",
+    "fuel": 55,
+    "temp": 40,
+    "speedKph": 88,
+    "cargoLoad": 600,
+    "engineHealth": 87,
+    "lat": 37.7950,
+    "lng": -122.4020
+  }
+]
