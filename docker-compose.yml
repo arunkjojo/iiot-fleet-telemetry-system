@@ -9,6 +9,13 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - FRONTEND_ORIGIN=http://frontend:3000
       - ADDITIONAL_FRONTEND_ORIGINS=http://localhost:3000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   frontend:
     build: ./frontend
@@ -18,3 +25,14 @@ services:
       - NEXT_PUBLIC_API_URL=http://backend:8080
     depends_on:
       - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  default:
+    name: iiot-fleet-net
