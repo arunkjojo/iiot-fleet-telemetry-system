@@ -27,12 +27,15 @@ services:
       - FRONTEND_ORIGIN=http://frontend:3000
       - ADDITIONAL_FRONTEND_ORIGINS=http://localhost:3000
       - ConnectionStrings__Fleet=Host=db;Port=5432;Database=fleet_telemetry;Username=postgres;Password=Admin123.
+      - USE_LIVE_TELEMETRY=true
     depends_on:
       db:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/ || exit 1"]
+      # mcr.microsoft.com/dotnet/aspnet:8.0 has neither curl nor wget; use bash's
+      # built-in /dev/tcp to confirm Kestrel is accepting connections on 8080.
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/localhost/8080'"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -48,11 +51,24 @@ services:
       - backend
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
+      # node:18-alpine (busybox) has wget but no curl.
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000/ || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 10s
+
+  iiot-emitter:
+    build: ./iiot-emitter
+    environment:
+      - BACKEND_URL=http://backend:8080
+      - VEHICLE_COUNT=10000
+      - TICK_INTERVAL_SECONDS=3
+      - MAX_CONCURRENCY=300
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   postgres_data:

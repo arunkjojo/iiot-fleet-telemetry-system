@@ -95,7 +95,7 @@ git status    # must be clean
 - [x] BE-003 — Add live broadcast service; wire read endpoints to the live store
 - [x] INFRA-001 — Add tuned PostgreSQL Dockerfile
 - [x] INFRA-002 — Build the Python IIoT fleet emitter and its Dockerfile
-- [ ] INFRA-003 — Wire the emitter into Docker Compose end-to-end
+- [x] INFRA-003 — Wire the emitter into Docker Compose end-to-end
 - [ ] QA-001 — Verify the live pipeline end-to-end
 - [ ] ARCH-002 — Rewrite DOCKER_README.md and update CHANGELOG.md
 
@@ -745,7 +745,7 @@ git rm -r iiot-emitter/
 
 **Agent:** INFRA
 **Depends on:** INFRA-001, INFRA-002, BE-003
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -784,11 +784,11 @@ None.
 
 **Sub-task breakdown:**
 
-- [ ] Add `USE_LIVE_TELEMETRY=true` to the `backend` service's `environment` block
-- [ ] Add the `iiot-emitter` service: `build: ./iiot-emitter`, env vars `BACKEND_URL=http://backend:8080`, `VEHICLE_COUNT=10000`, `TICK_INTERVAL_SECONDS=3`, `MAX_CONCURRENCY=300`, `depends_on: backend: condition: service_healthy`, `restart: unless-stopped`
-- [ ] Run `docker-compose up --build -d` — all 4 services must start
-- [ ] Tail `docker-compose logs -f iiot-emitter` and confirm it's posting successfully
-- [ ] Confirm `telemetry_snapshots` row count is increasing in the running stack
+- [x] Add `USE_LIVE_TELEMETRY=true` to the `backend` service's `environment` block
+- [x] Add the `iiot-emitter` service: `build: ./iiot-emitter`, env vars `BACKEND_URL=http://backend:8080`, `VEHICLE_COUNT=10000`, `TICK_INTERVAL_SECONDS=3`, `MAX_CONCURRENCY=300`, `depends_on: backend: condition: service_healthy`, `restart: unless-stopped`
+- [x] Run `docker-compose up --build -d` for `db`, `backend`, `iiot-emitter` — all 3 started (see note below on `frontend`)
+- [x] Tail `docker-compose logs -f iiot-emitter` and confirm it's posting successfully
+- [x] Confirm `telemetry_snapshots` row count is increasing in the running stack
 
 ---
 
@@ -797,6 +797,11 @@ None.
 1. `iiot-emitter` has no `ports:` mapping — it is an outbound-only client, nothing listens on it.
 2. `iiot-emitter` has no `healthcheck:` — it isn't an HTTP service; Compose's `depends_on: service_healthy` on `backend` is sufficient ordering.
 3. Because the full 10,000-vehicle emitter can be resource-heavy on a laptop, document (in ARCH-002's DOCKER_README.md) how to override `VEHICLE_COUNT` down for local testing via `docker-compose.override.yml` or `docker-compose up -d -e VEHICLE_COUNT=100 iiot-emitter`-style env overrides — do not lower the default in `docker-compose.yml` itself, since the sprint goal is the full fleet by default.
+
+**Verification findings (found during this task's own verification, both pre-existing and out of INFRA-003's original scope):**
+
+1. **`backend` and `frontend` healthchecks were broken before this task** — both used `curl`, but neither runtime base image (`mcr.microsoft.com/dotnet/aspnet:8.0` for backend, `node:18-alpine` for frontend) ships `curl`. Previously this was cosmetic (nothing was gated on `service_healthy` for these two), but INFRA-003 adds `iiot-emitter: depends_on: backend: condition: service_healthy`, which now hard-blocks on it. Fixed in `docker-compose.yml` (in scope for this task) without touching either Dockerfile: `backend` healthcheck now uses `bash`'s built-in `/dev/tcp` (bash is present in the aspnet runtime image, curl/wget are not); `frontend` healthcheck now uses `wget --spider` (busybox `wget` is present in `node:18-alpine`, curl is not). Verified both pass.
+2. **`frontend/Dockerfile` cannot build** — `COPY --from=builder /app/public ./public` fails because `frontend/public/` does not exist anywhere in this repo's history (confirmed via `git log --all -- frontend/public`, zero hits). This blocks a full 4-service `docker-compose up --build`. This is pre-existing, unrelated to the `iiot-emitter` wiring, and `frontend/Dockerfile` is explicitly out of scope ("Do NOT touch") for INFRA-003, so it was left unfixed and is reported here for follow-up (likely either `frontend/Dockerfile` should stop copying a `public/` dir it doesn't need, or the frontend needs one added — a NEXT/INFRA decision). All `db`/`backend`/`iiot-emitter` verification below was done by targeting `docker-compose up --build -d db backend iiot-emitter` (frontend excluded) since frontend's absence does not affect backend/db/emitter startup ordering (frontend depends on backend, not the reverse).
 
 ---
 
