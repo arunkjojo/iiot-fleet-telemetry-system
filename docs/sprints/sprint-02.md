@@ -90,7 +90,7 @@ git status    # must be clean
 ## Task Index
 
 - [x] ARCH-001 — Register live-ingestion architecture in AGENTS.md and REQUIREMENTS.md
-- [ ] BE-001 — Add shared status evaluator, live telemetry store, and `USE_LIVE_TELEMETRY` toggle
+- [x] BE-001 — Add shared status evaluator, live telemetry store, and `USE_LIVE_TELEMETRY` toggle
 - [ ] BE-002 — Add telemetry ingestion endpoint and buffered PostgreSQL persistence
 - [ ] BE-003 — Add live broadcast service; wire read endpoints to the live store
 - [ ] INFRA-001 — Add tuned PostgreSQL Dockerfile
@@ -216,7 +216,7 @@ git checkout -- AGENTS.md docs/requirements/REQUIREMENTS.md
 
 **Agent:** ASP.NET
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -261,13 +261,13 @@ The backend has no shared, reusable place to (a) compute vehicle status from raw
 
 **Sub-task breakdown:**
 
-- [ ] Create `VehicleStatusEvaluator.cs` implementing the 4 status tiers from REQUIREMENTS.md 4.1
-- [ ] Create `LiveTelemetryStore.cs` with `ILiveTelemetryStore` interface and thread-safe implementation
-- [ ] Register `ILiveTelemetryStore` → `LiveTelemetryStore` as a singleton in `Program.cs`
-- [ ] Read `USE_LIVE_TELEMETRY` via `builder.Configuration.GetValue<bool>("USE_LIVE_TELEMETRY", false)`
-- [ ] Wrap the existing `builder.Services.AddHostedService<TelemetrySimulationService>()` line in an `if (!useLiveTelemetry)` branch
-- [ ] Add `"USE_LIVE_TELEMETRY": false` to `appsettings.json`
-- [ ] Run `dotnet build` — zero errors
+- [x] Create `VehicleStatusEvaluator.cs` implementing the 4 status tiers from REQUIREMENTS.md 4.1
+- [x] Create `LiveTelemetryStore.cs` with `ILiveTelemetryStore` interface and thread-safe implementation
+- [x] Register `ILiveTelemetryStore` → `LiveTelemetryStore` as a singleton in `Program.cs`
+- [x] Read `USE_LIVE_TELEMETRY` via `builder.Configuration.GetValue<bool>("USE_LIVE_TELEMETRY", false)`
+- [x] Wrap the existing `builder.Services.AddHostedService<TelemetrySimulationService>()` line in an `if (!useLiveTelemetry)` branch
+- [x] Add `"USE_LIVE_TELEMETRY": false` to `appsettings.json`
+- [x] Run `dotnet build` — zero errors
 
 ---
 
