@@ -94,7 +94,7 @@ git status    # must be clean
 - [x] BE-002 — Add telemetry ingestion endpoint and buffered PostgreSQL persistence
 - [x] BE-003 — Add live broadcast service; wire read endpoints to the live store
 - [x] INFRA-001 — Add tuned PostgreSQL Dockerfile
-- [ ] INFRA-002 — Build the Python IIoT fleet emitter and its Dockerfile
+- [x] INFRA-002 — Build the Python IIoT fleet emitter and its Dockerfile
 - [ ] INFRA-003 — Wire the emitter into Docker Compose end-to-end
 - [ ] QA-001 — Verify the live pipeline end-to-end
 - [ ] ARCH-002 — Rewrite DOCKER_README.md and update CHANGELOG.md
@@ -636,7 +636,7 @@ git rm -r db/
 
 **Agent:** INFRA
 **Depends on:** BE-002 (needs the `POST /api/telemetry/ingest` contract to be live for testing)
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -676,14 +676,14 @@ None.
 
 **Sub-task breakdown:**
 
-- [ ] Write `emitter.py`: fetch vehicle roster from `{BACKEND_URL}/api/vehicles/metadata`, slice to first `VEHICLE_COUNT` entries
-- [ ] Implement per-vehicle async loop: random-walk lat/lng within the SF bbox, slow fuel drain, small speed/temp/engineHealth jitter, occasional cargo change
-- [ ] Implement staggered startup (random 0–`TICK_INTERVAL_SECONDS` initial delay per vehicle) so 10,000 tasks don't all POST in the same instant
-- [ ] Wrap each POST in an `asyncio.Semaphore(MAX_CONCURRENCY)` and a try/except that logs and continues on failure
-- [ ] Add graceful shutdown on `SIGINT`/`SIGTERM`
-- [ ] Add a periodic summary log line (ticks sent, errors, every ~10s)
-- [ ] Write `requirements.txt` and `Dockerfile`
-- [ ] Test locally: `pip install -r requirements.txt && BACKEND_URL=http://localhost:8080 VEHICLE_COUNT=20 python emitter.py` against a running backend with `USE_LIVE_TELEMETRY=true`
+- [x] Write `emitter.py`: fetch vehicle roster from `{BACKEND_URL}/api/vehicles/metadata`, slice to first `VEHICLE_COUNT` entries
+- [x] Implement per-vehicle async loop: random-walk lat/lng within the SF bbox, slow fuel drain, small speed/temp/engineHealth jitter, occasional cargo change
+- [x] Implement staggered startup (random 0–`TICK_INTERVAL_SECONDS` initial delay per vehicle) so 10,000 tasks don't all POST in the same instant
+- [x] Wrap each POST in an `asyncio.Semaphore(MAX_CONCURRENCY)` and a try/except that logs and continues on failure
+- [x] Add graceful shutdown on `SIGINT`/`SIGTERM`
+- [x] Add a periodic summary log line (ticks sent, errors, every ~10s)
+- [x] Write `requirements.txt` and `Dockerfile`
+- [x] Test locally (via Docker, since Python isn't installed on the host): built `iiot-emitter-test` image, ran it in the `iiot-fleet-net` network against a live `USE_LIVE_TELEMETRY=true` backend + seeded `db` container — verified `telemetry_snapshots` growth, error-free ticks, survival of a backend outage, auto-recovery, and clean SIGTERM shutdown
 
 ---
 

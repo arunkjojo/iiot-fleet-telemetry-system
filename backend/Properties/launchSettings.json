@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "http": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:8080",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "FRONTEND_ORIGIN": "http://localhost:3000",
+        "ConnectionStrings__Fleet": "Host=localhost;Port=5432;Database=fleet_telemetry;Username=postgres;Password=Admin123."
+      }
+    }
+  }
+}
