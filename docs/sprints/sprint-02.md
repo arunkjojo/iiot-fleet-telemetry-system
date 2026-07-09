@@ -97,7 +97,7 @@ git status    # must be clean
 - [x] INFRA-002 — Build the Python IIoT fleet emitter and its Dockerfile
 - [x] INFRA-003 — Wire the emitter into Docker Compose end-to-end
 - [ ] QA-001 — Verify the live pipeline end-to-end
-- [ ] ARCH-002 — Rewrite DOCKER_README.md and update CHANGELOG.md
+- [x] ARCH-002 — Rewrite DOCKER_README.md and update CHANGELOG.md
 
 ---
 
@@ -947,7 +947,15 @@ Not applicable — verification-only task, no files modified.
 
 **Agent:** ARCH
 **Depends on:** QA-001
-**Status:** [ ]
+**Status:** [x]
+
+**Note (execution-order deviation):** Completed ahead of strict dependency order at the
+operator's explicit direction. QA-001 is not yet marked complete as of this task — it found one
+real bug (SignalR `/fleethub` disconnects under sustained live-ingestion load), which is being
+fixed separately (commit prefix `IIOT-S02-BE-004`, in flight). This task documents the system
+as designed/intended per the operator's instruction and does not block on QA-001's formal
+sign-off; the SignalR fix is reflected in this changelog entry's `### Fix` section on the
+assumption it lands as described.
 
 ---
 
@@ -990,9 +998,9 @@ None.
 
 **Sub-task breakdown:**
 
-- [ ] Rewrite `DOCKER_README.md`: quick start (`docker-compose up --build`), architecture diagram in text (db → backend → frontend, iiot-emitter → backend), full env var table for all 4 services, how to scale down `VEHICLE_COUNT` for local testing, how to switch back to dummy mode (`USE_LIVE_TELEMETRY=false`), troubleshooting section
-- [ ] Bump `frontend/package.json` version (minor bump — this sprint adds a feature, not just a fix)
-- [ ] Add `## v{NEW_VERSION} — 2026-07-16` entry to `CHANGELOG.md` with `### Add` (live ingestion endpoint, Python emitter, live/sim toggle, tuned Postgres image) sections
+- [x] Rewrite `DOCKER_README.md`: quick start (`docker-compose up --build`), architecture diagram in text (db → backend → frontend, iiot-emitter → backend), full env var table for all 4 services, how to scale down `VEHICLE_COUNT` for local testing, how to switch back to dummy mode (`USE_LIVE_TELEMETRY=false`), troubleshooting section
+- [x] Bump `frontend/package.json` version (minor bump — this sprint adds a feature, not just a fix)
+- [x] Add `## v0.2.0 — 2026-07-09` entry to `CHANGELOG.md` with `### Add` (live ingestion endpoint, Python emitter, live/sim toggle, tuned Postgres image) sections
 
 ---
 
