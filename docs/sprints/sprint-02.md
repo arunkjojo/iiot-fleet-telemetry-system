@@ -93,7 +93,7 @@ git status    # must be clean
 - [x] BE-001 — Add shared status evaluator, live telemetry store, and `USE_LIVE_TELEMETRY` toggle
 - [ ] BE-002 — Add telemetry ingestion endpoint and buffered PostgreSQL persistence
 - [ ] BE-003 — Add live broadcast service; wire read endpoints to the live store
-- [ ] INFRA-001 — Add tuned PostgreSQL Dockerfile
+- [x] INFRA-001 — Add tuned PostgreSQL Dockerfile
 - [ ] INFRA-002 — Build the Python IIoT fleet emitter and its Dockerfile
 - [ ] INFRA-003 — Wire the emitter into Docker Compose end-to-end
 - [ ] QA-001 — Verify the live pipeline end-to-end
@@ -546,7 +546,7 @@ git rm backend/Services/LiveBroadcastService.cs
 
 **Agent:** INFRA
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -585,11 +585,11 @@ git rm backend/Services/LiveBroadcastService.cs
 
 **Sub-task breakdown:**
 
-- [ ] Create `db/postgresql.conf` with tuned values (base it on the default Postgres 16 conf, only override the handful of throughput-relevant settings)
-- [ ] Create `db/Dockerfile`
-- [ ] Change `docker-compose.yml`'s `db` service from `image:` to `build: ./db`
-- [ ] Run `docker-compose build db` — must succeed
-- [ ] Run `docker-compose up -d db` — healthcheck must pass within 30s
+- [x] Create `db/postgresql.conf` with tuned values (base it on the default Postgres 16 conf, only override the handful of throughput-relevant settings)
+- [x] Create `db/Dockerfile`
+- [x] Change `docker-compose.yml`'s `db` service from `image:` to `build: ./db`
+- [x] Run `docker-compose build db` — must succeed
+- [x] Run `docker-compose up -d db` — healthcheck must pass within 30s
 
 ---
 

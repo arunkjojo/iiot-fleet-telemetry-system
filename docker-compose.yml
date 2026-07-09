@@ -1,6 +1,23 @@
 version: '3.8'
 
 services:
+  db:
+    build: ./db
+    environment:
+      - POSTGRES_DB=fleet_telemetry
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Admin123.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build: ./backend
     ports:
@@ -9,6 +26,10 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - FRONTEND_ORIGIN=http://frontend:3000
       - ADDITIONAL_FRONTEND_ORIGINS=http://localhost:3000
+      - ConnectionStrings__Fleet=Host=db;Port=5432;Database=fleet_telemetry;Username=postgres;Password=Admin123.
+    depends_on:
+      db:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/ || exit 1"]
@@ -32,6 +53,9 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+volumes:
+  postgres_data:
 
 networks:
   default:
