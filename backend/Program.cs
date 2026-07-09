@@ -5,6 +5,25 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ── Thread pool tuning (QA-001 fix: /fleethub abnormal disconnects under live-ingestion load) ──
+// Root-cause context: under full-scale live ingestion (VEHICLE_COUNT=10000, MAX_CONCURRENCY=300),
+// the backend fields a sustained burst of concurrent short-lived async requests/continuations
+// (TelemetryIngestController -> channel writes, TelemetryPersistenceService's per-second EF Core
+// flush, LiveBroadcastService's 500ms SignalR relay). No blocking (.Result/.Wait()) calls were
+// found in this hot path, but the CLR thread pool still starts at Environment.ProcessorCount
+// threads and only injects new ones at a throttled rate (~1 every ~500ms-1s) once queued work
+// backs up. SignalR's own keep-alive ping is driven by a System.Threading.Timer callback that
+// is itself scheduled onto the thread pool — if the pool is busy servicing the ingest burst, that
+// callback (and the request-processing work that must run promptly to keep the connection alive)
+// can queue behind everything else long enough to blow through the client's fixed timeout,
+// producing exactly the abnormal WebSocket closure (code 1006) QA observed roughly every 30-70s.
+// Raising the floor removes the injection-throttle delay for this workload's normal burst size.
+ThreadPool.GetMinThreads(out var minWorkerThreads, out var minCompletionPortThreads);
+var targetMinThreads = Math.Max(Environment.ProcessorCount * 16, 200);
+ThreadPool.SetMinThreads(
+    Math.Max(minWorkerThreads, targetMinThreads),
+    Math.Max(minCompletionPortThreads, targetMinThreads));
+
 // ── CORS ─────────────────────────────────────────────────────────────────────
 builder.Services.AddCors(options =>
 {
@@ -36,7 +55,22 @@ builder.Services.AddDbContext<FleetDbContext>(options =>
 
 // ── Controllers + SignalR ─────────────────────────────────────────────────────
 builder.Services.AddControllers();
-builder.Services.AddSignalR().AddMessagePackProtocol();
+
+// QA-001 fix: defaults (KeepAliveInterval=15s server-ping cadence, ClientTimeoutInterval=30s
+// server-side patience for the client) are too tight for this workload. The JS client's own
+// fixed serverTimeoutInMilliseconds (30s, not configurable from here — frontend is out of
+// scope for this fix) trips into an abnormal close (code 1006) if a keep-alive ping is ever
+// delayed past that window, which is plausible under full live-ingestion load even with the
+// thread-pool floor raised above. Widen both server-side knobs generously: keep
+// KeepAliveInterval at the standard 15s cadence (frequent enough that occasional scheduling
+// jitter still lands well inside the client's 30s budget) and raise ClientTimeoutInterval to
+// 60s (SignalR guidance: at least 2-3x the keep-alive interval) so the server tolerates
+// transient delays in receiving client pings under load instead of tearing the connection down.
+builder.Services.AddSignalR(options =>
+{
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
+}).AddMessagePackProtocol();
 
 // ── Live telemetry store (always registered; consumed by live-mode services/controllers) ──
 builder.Services.AddSingleton<ILiveTelemetryStore, LiveTelemetryStore>();
