@@ -92,7 +92,7 @@ git status    # must be clean
 - [x] ARCH-001 — Register live-ingestion architecture in AGENTS.md and REQUIREMENTS.md
 - [x] BE-001 — Add shared status evaluator, live telemetry store, and `USE_LIVE_TELEMETRY` toggle
 - [x] BE-002 — Add telemetry ingestion endpoint and buffered PostgreSQL persistence
-- [ ] BE-003 — Add live broadcast service; wire read endpoints to the live store
+- [x] BE-003 — Add live broadcast service; wire read endpoints to the live store
 - [x] INFRA-001 — Add tuned PostgreSQL Dockerfile
 - [ ] INFRA-002 — Build the Python IIoT fleet emitter and its Dockerfile
 - [ ] INFRA-003 — Wire the emitter into Docker Compose end-to-end
@@ -434,7 +434,7 @@ git rm backend/Models/TelemetryIngestRequest.cs backend/Controllers/TelemetryIng
 
 **Agent:** ASP.NET
 **Depends on:** BE-001, BE-002
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -480,12 +480,12 @@ Two things are still missing for the frontend to see live data with zero fronten
 
 **Sub-task breakdown:**
 
-- [ ] Create `LiveBroadcastService.cs` with a "dirty since last broadcast" tracking mechanism in `ILiveTelemetryStore` (add a `ConcurrentDictionary<string, bool> _dirty` internally, set `true` on `Upsert`, drained/cleared by the broadcaster each tick)
-- [ ] Register `LiveBroadcastService` in `Program.cs`, gated by `USE_LIVE_TELEMETRY`
-- [ ] Modify `VehiclesController.Get(id)` and `.List()` to branch on `USE_LIVE_TELEMETRY`
-- [ ] Modify `LogsController.Get(vehicleId)` to branch on `USE_LIVE_TELEMETRY`
-- [ ] Run `dotnet build` — zero errors
-- [ ] Start backend with `USE_LIVE_TELEMETRY=true`, POST a few `/api/telemetry/ingest` requests, confirm `GET /api/vehicles` reflects them and a SignalR client receives a broadcast
+- [x] Create `LiveBroadcastService.cs` with a "dirty since last broadcast" tracking mechanism in `ILiveTelemetryStore` (add a `ConcurrentDictionary<string, bool> _dirty` internally, set `true` on `Upsert`, drained/cleared by the broadcaster each tick)
+- [x] Register `LiveBroadcastService` in `Program.cs`, gated by `USE_LIVE_TELEMETRY`
+- [x] Modify `VehiclesController.Get(id)` and `.List()` to branch on `USE_LIVE_TELEMETRY`
+- [x] Modify `LogsController.Get(vehicleId)` to branch on `USE_LIVE_TELEMETRY`
+- [x] Run `dotnet build` — zero errors
+- [x] Start backend with `USE_LIVE_TELEMETRY=true`, POST a few `/api/telemetry/ingest` requests, confirm `GET /api/vehicles` reflects them and a SignalR client receives a broadcast
 
 ---
 

@@ -60,6 +60,11 @@ else
     builder.Services.AddSingleton<TelemetryPersistenceService>();
     builder.Services.AddSingleton<ITelemetryIngestQueue>(sp => sp.GetRequiredService<TelemetryPersistenceService>());
     builder.Services.AddHostedService(sp => sp.GetRequiredService<TelemetryPersistenceService>());
+
+    // Relays ILiveTelemetryStore changes to connected SignalR clients every ~500ms (BE-003).
+    // VehiclesController/LogsController read the same store synchronously on request; this
+    // service is what makes the frontend see updates without polling.
+    builder.Services.AddHostedService<LiveBroadcastService>();
 }
 
 var app = builder.Build();

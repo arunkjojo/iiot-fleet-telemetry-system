@@ -9,10 +9,33 @@ namespace FleetTelemetry.Controllers;
 [Route("api/vehicles")]
 public class VehiclesController : ControllerBase
 {
+    private readonly IConfiguration _config;
+    private readonly ILiveTelemetryStore _liveStore;
+
+    public VehiclesController(IConfiguration config, ILiveTelemetryStore liveStore)
+    {
+        _config = config;
+        _liveStore = liveStore;
+    }
+
+    // USE_LIVE_TELEMETRY=true reads from ILiveTelemetryStore (fed by POST /api/telemetry/ingest);
+    // false (default) keeps reading from TelemetrySimulationService.Vehicles, unchanged from Sprint 01.
+    private bool UseLiveTelemetry => _config.GetValue<bool>("USE_LIVE_TELEMETRY", false);
+
     [HttpGet("{id}")]
     public IActionResult Get(string id)
     {
-        if (TelemetrySimulationService.Vehicles.TryGetValue(id, out var v))
+        Vehicle? v = null;
+        if (UseLiveTelemetry)
+        {
+            _liveStore.TryGet(id, out v);
+        }
+        else
+        {
+            TelemetrySimulationService.Vehicles.TryGetValue(id, out v);
+        }
+
+        if (v != null)
         {
             var api = new ApiVehicle
             {
@@ -28,8 +51,8 @@ public class VehiclesController : ControllerBase
                 Lng = v.Longitude
             };
 
-            // return recent generated logs from simulation service
-            var logs = TelemetrySimulationService.GetLogs(id)
+            // return recent logs from the active data source (live store or simulation service)
+            var logs = (UseLiveTelemetry ? _liveStore.GetLogs(id) : TelemetrySimulationService.GetLogs(id))
                 .Select(l => new { ts = l.Ts.ToString("o"), level = l.Level, msg = l.Message })
                 .ToArray();
 
@@ -42,7 +65,8 @@ public class VehiclesController : ControllerBase
     [HttpGet]
     public IActionResult List()
     {
-            var list = TelemetrySimulationService.Vehicles.Values.Select(v => new {
+        var vehicles = UseLiveTelemetry ? _liveStore.GetAll() : (IEnumerable<Vehicle>)TelemetrySimulationService.Vehicles.Values;
+        var list = vehicles.Select(v => new {
             id = v.Id,
             model = string.IsNullOrEmpty(v.Model) ? "NV Cargo" : v.Model,
             driver = v.DriverName,

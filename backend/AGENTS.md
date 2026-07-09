@@ -39,7 +39,8 @@ backend/
 │   ├── TelemetrySimulationService.cs  # BackgroundService — 10k vehicle simulation
 │   ├── VehicleStatusEvaluator.cs      # Static status evaluator (live-mode canonical rules, REQUIREMENTS.md 4.1)
 │   ├── LiveTelemetryStore.cs          # ILiveTelemetryStore — in-memory current-state cache + last-50-logs cache for live mode
-│   └── TelemetryPersistenceService.cs # ITelemetryIngestQueue + BackgroundService — buffered batched writer draining into PostgreSQL (telemetry_snapshots, vehicle_logs), decouples emitter/request count from DB connections (BE-002)
+│   ├── TelemetryPersistenceService.cs # ITelemetryIngestQueue + BackgroundService — buffered batched writer draining into PostgreSQL (telemetry_snapshots, vehicle_logs), decouples emitter/request count from DB connections (BE-002)
+│   └── LiveBroadcastService.cs        # BackgroundService — relays ILiveTelemetryStore.GetAndClearDirty() to SignalR every ~500ms; skips empty ticks (BE-003)
 ├── Data/                           # (Sprint 01) EF Core DbContext + migrations
 │   ├── FleetDbContext.cs
 │   └── Migrations/
@@ -63,6 +64,17 @@ backend/
 | GET | `/api/vehicles/metadata` | `{ id, driver }[]` | Static metadata list for all 10k vehicles |
 | POST | `/api/telemetry/ingest` | `202 { status, vehicleId, computedStatus }` | Live telemetry ingestion (BE-002) — validates payload, computes status via `VehicleStatusEvaluator`, upserts `ILiveTelemetryStore`, enqueues a buffered/batched write via `ITelemetryIngestQueue`. Only registered when `USE_LIVE_TELEMETRY=true`. `400` on missing `vehicleId` or out-of-range numeric fields. |
 | WS | `/fleethub` | SignalR | Hub for `ReceiveFleetUpdate` broadcasts |
+
+---
+
+## Read-Path Data Source Branching (BE-003)
+
+`VehiclesController` (`GET /api/vehicles`, `GET /api/vehicles/{id}`) and `LogsController` (`GET /api/vehicles/{vehicleId}/logs`) both inject `IConfiguration` and `ILiveTelemetryStore` and branch per-request on `IConfiguration.GetValue<bool>("USE_LIVE_TELEMETRY", false)`:
+
+- `false` (default, local `dotnet run`): read from `TelemetrySimulationService.Vehicles` / `.GetLogs(id)` — unchanged from Sprint 01.
+- `true` (Docker Compose): read from `ILiveTelemetryStore.GetAll()` / `.TryGet(id, out v)` / `.GetLogs(id)`, fed by `POST /api/telemetry/ingest` (BE-002).
+
+`ApiVehicle` field mapping (rounding, `driver`/`model` names) is byte-for-byte identical across both branches — the frontend type contract needs no changes. `MetadataController` is source-independent and untouched; it always returns the static `VEH-00000..VEH-09999` roster.
 
 ---
 
