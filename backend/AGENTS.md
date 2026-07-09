@@ -24,7 +24,8 @@ backend/
 ├── Controllers/
 │   ├── VehiclesController.cs       # GET /api/vehicles, GET /api/vehicles/{id}
 │   ├── LogsController.cs           # GET /api/vehicles/{vehicleId}/logs
-│   └── MetadataController.cs       # GET /api/vehicles/metadata
+│   ├── MetadataController.cs       # GET /api/vehicles/metadata
+│   └── TelemetryIngestController.cs # POST /api/telemetry/ingest (live mode ingestion, BE-002)
 ├── Hubs/
 │   ├── FleetHub.cs                 # SignalR hub (intentionally minimal)
 │   └── IFleetClient.cs             # Client interface — ReceiveFleetUpdate()
@@ -32,11 +33,13 @@ backend/
 │   ├── Vehicle.cs                  # Internal state model (MessagePackObject)
 │   ├── VehicleUpdate.cs            # SignalR broadcast payload (MessagePackObject)
 │   ├── ApiVehicle.cs               # REST response DTO (JsonPropertyName)
-│   └── VehicleLog.cs               # Telemetry log entry
+│   ├── VehicleLog.cs               # Telemetry log entry
+│   └── TelemetryIngestRequest.cs   # POST /api/telemetry/ingest request DTO (camelCase JSON binding, BE-002)
 ├── Services/
 │   ├── TelemetrySimulationService.cs  # BackgroundService — 10k vehicle simulation
 │   ├── VehicleStatusEvaluator.cs      # Static status evaluator (live-mode canonical rules, REQUIREMENTS.md 4.1)
-│   └── LiveTelemetryStore.cs          # ILiveTelemetryStore — in-memory current-state cache + last-50-logs cache for live mode
+│   ├── LiveTelemetryStore.cs          # ILiveTelemetryStore — in-memory current-state cache + last-50-logs cache for live mode
+│   └── TelemetryPersistenceService.cs # ITelemetryIngestQueue + BackgroundService — buffered batched writer draining into PostgreSQL (telemetry_snapshots, vehicle_logs), decouples emitter/request count from DB connections (BE-002)
 ├── Data/                           # (Sprint 01) EF Core DbContext + migrations
 │   ├── FleetDbContext.cs
 │   └── Migrations/
@@ -58,6 +61,7 @@ backend/
 | GET | `/api/vehicles/{id}` | `{ vehicle, logs }` | Single vehicle detail + last 50 log entries |
 | GET | `/api/vehicles/{vehicleId}/logs` | `VehicleLog[]` | Last 50 log entries for a vehicle |
 | GET | `/api/vehicles/metadata` | `{ id, driver }[]` | Static metadata list for all 10k vehicles |
+| POST | `/api/telemetry/ingest` | `202 { status, vehicleId, computedStatus }` | Live telemetry ingestion (BE-002) — validates payload, computes status via `VehicleStatusEvaluator`, upserts `ILiveTelemetryStore`, enqueues a buffered/batched write via `ITelemetryIngestQueue`. Only registered when `USE_LIVE_TELEMETRY=true`. `400` on missing `vehicleId` or out-of-range numeric fields. |
 | WS | `/fleethub` | SignalR | Hub for `ReceiveFleetUpdate` broadcasts |
 
 ---

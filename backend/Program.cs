@@ -51,6 +51,16 @@ if (!useLiveTelemetry)
 {
     builder.Services.AddHostedService<TelemetrySimulationService>();
 }
+else
+{
+    // Buffered PostgreSQL writer for POST /api/telemetry/ingest (BE-002). Registered as a
+    // singleton so the same instance backs both the ITelemetryIngestQueue the controller
+    // enqueues into and the IHostedService drain loop that flushes it — the channels must be
+    // shared, not duplicated.
+    builder.Services.AddSingleton<TelemetryPersistenceService>();
+    builder.Services.AddSingleton<ITelemetryIngestQueue>(sp => sp.GetRequiredService<TelemetryPersistenceService>());
+    builder.Services.AddHostedService(sp => sp.GetRequiredService<TelemetryPersistenceService>());
+}
 
 var app = builder.Build();
 

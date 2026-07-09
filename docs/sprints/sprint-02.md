@@ -91,7 +91,7 @@ git status    # must be clean
 
 - [x] ARCH-001 — Register live-ingestion architecture in AGENTS.md and REQUIREMENTS.md
 - [x] BE-001 — Add shared status evaluator, live telemetry store, and `USE_LIVE_TELEMETRY` toggle
-- [ ] BE-002 — Add telemetry ingestion endpoint and buffered PostgreSQL persistence
+- [x] BE-002 — Add telemetry ingestion endpoint and buffered PostgreSQL persistence
 - [ ] BE-003 — Add live broadcast service; wire read endpoints to the live store
 - [x] INFRA-001 — Add tuned PostgreSQL Dockerfile
 - [ ] INFRA-002 — Build the Python IIoT fleet emitter and its Dockerfile
@@ -323,7 +323,7 @@ git rm backend/Services/VehicleStatusEvaluator.cs backend/Services/LiveTelemetry
 
 **Agent:** ASP.NET
 **Depends on:** BE-001
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -370,12 +370,12 @@ The Python emitter (INFRA-002) needs one HTTP endpoint to post a single vehicle'
 
 **Sub-task breakdown:**
 
-- [ ] Create `TelemetryIngestRequest.cs`
-- [ ] Create `TelemetryPersistenceService.cs` with two bounded channels (capacity 50,000 each) and a `Writer`-exposing static/singleton API the controller can enqueue into
-- [ ] Create `TelemetryIngestController.cs`: validate request (400 if `VehicleId` missing/empty or numeric fields out of sane range), compute status via `VehicleStatusEvaluator.Evaluate`, build `Vehicle`, call `ILiveTelemetryStore.Upsert`, enqueue a `TelemetrySnapshotEntity` always, enqueue a `VehicleLogEntity` only if status changed since the previous `ILiveTelemetryStore` value or a threshold was crossed, return `202 Accepted`
-- [ ] Register `TelemetryPersistenceService` as hosted service in `Program.cs`, gated by `USE_LIVE_TELEMETRY`
-- [ ] Run `dotnet build` — zero errors
-- [ ] Manually POST a sample payload with `curl` and confirm a row appears in `telemetry_snapshots`
+- [x] Create `TelemetryIngestRequest.cs`
+- [x] Create `TelemetryPersistenceService.cs` with two bounded channels (capacity 50,000 each) and a `Writer`-exposing static/singleton API the controller can enqueue into
+- [x] Create `TelemetryIngestController.cs`: validate request (400 if `VehicleId` missing/empty or numeric fields out of sane range), compute status via `VehicleStatusEvaluator.Evaluate`, build `Vehicle`, call `ILiveTelemetryStore.Upsert`, enqueue a `TelemetrySnapshotEntity` always, enqueue a `VehicleLogEntity` only if status changed since the previous `ILiveTelemetryStore` value or a threshold was crossed, return `202 Accepted`
+- [x] Register `TelemetryPersistenceService` as hosted service in `Program.cs`, gated by `USE_LIVE_TELEMETRY`
+- [x] Run `dotnet build` — zero errors
+- [x] Manually POST a sample payload with `curl` and confirm a row appears in `telemetry_snapshots`
 
 ---
 
