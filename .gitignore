@@ -21,3 +21,6 @@ Thumbs.db
 # Environment variables
 .env
 .env.*
+
+# Runtime dead-letter output (TelemetryPersistenceService, ADR-001 follow-up)
+backend/deadletter/

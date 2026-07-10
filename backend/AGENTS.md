@@ -39,7 +39,7 @@ backend/
 │   ├── TelemetrySimulationService.cs  # BackgroundService — 10k vehicle simulation
 │   ├── VehicleStatusEvaluator.cs      # Static status evaluator (live-mode canonical rules, REQUIREMENTS.md 4.1)
 │   ├── LiveTelemetryStore.cs          # ILiveTelemetryStore — in-memory current-state cache + last-50-logs cache for live mode
-│   ├── TelemetryPersistenceService.cs # ITelemetryIngestQueue + BackgroundService — buffered batched writer draining into PostgreSQL (telemetry_snapshots, vehicle_logs), decouples emitter/request count from DB connections (BE-002)
+│   ├── TelemetryPersistenceService.cs # ITelemetryIngestQueue + BackgroundService — buffered batched writer draining into PostgreSQL (telemetry_snapshots, vehicle_logs), decouples emitter/request count from DB connections (BE-002). Batch/timing knobs configurable via "TelemetryPersistence" appsettings section; retries failed batches then falls back to a dead-letter JSON file on disk (ADR-001 follow-up)
 │   └── LiveBroadcastService.cs        # BackgroundService — relays ILiveTelemetryStore.GetAndClearDirty() to SignalR every ~500ms; skips empty ticks (BE-003)
 ├── Data/                           # (Sprint 01) EF Core DbContext + migrations
 │   ├── FleetDbContext.cs
@@ -208,6 +208,27 @@ cd backend
 dotnet ef migrations add InitialSchema
 dotnet ef database update
 ```
+
+---
+
+## TelemetryPersistenceService Configuration (ADR-001 follow-up)
+
+Batch/timing/retry knobs for `TelemetryPersistenceService` live under `TelemetryPersistence` in
+`appsettings.json` (env override: `TelemetryPersistence__<Key>`). Defaults match the original
+hard-coded values — none of these have been validated by an actual load test at sustained
+10,000-vehicle throughput; see `docs/decisions/ADR-001-telemetry-ingestion-pipeline.md`.
+
+| Key | Default | Purpose |
+|-----|---------|---------|
+| `ChannelCapacity` | `50000` | Bounded channel size per entity type; `DropOldest` once full |
+| `FlushIntervalMs` | `1000` | Max time between drain/flush cycles |
+| `MaxBatchSize` | `2000` | Max items per `SaveChangesAsync` call |
+| `MaxRetryAttempts` | `2` | Extra attempts after the first failed `SaveChangesAsync`, before dead-lettering |
+| `RetryDelayMs` | `250` | Delay between retry attempts |
+| `DeadLetterDirectory` | `deadletter` | Where batches that fail after all retries are written as JSON, one file per failed flush |
+
+Dead-letter files are inspect/replay-manually only — there is no automatic replay tool or
+retention/cleanup policy yet (ADR-001 action item #5).
 
 ---
 
