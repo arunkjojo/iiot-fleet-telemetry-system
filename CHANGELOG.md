@@ -7,6 +7,47 @@ Version is bumped once per sprint at sprint-end by the ARCH agent.
 
 ---
 
+## v0.3.0 — 2026-07-20
+
+### Add
+
+- **SignalR connection-status indicator** — `frontend/components/ConnectionStatus.tsx` renders a
+  colored dot + label ("Connected"/"Reconnecting"/"Disconnected") in the dashboard header, driven
+  by the existing single `/fleethub` connection's `onreconnecting`/`onreconnected`/`onclose`
+  events in `frontend/app/page.tsx` — no second SignalR connection is created
+- **`GET /api/health/signalr` endpoint** — backed by a new thread-safe `HubConnectionTracker`
+  singleton wired into `FleetHub`'s `OnConnectedAsync`/`OnDisconnectedAsync` lifecycle; returns
+  `{ connectedClients, lastEventAtUtc }` regardless of `USE_LIVE_TELEMETRY` mode
+- **Client-side inactive-vehicle detection + "Hide Inactive" toggle** — the frontend now tracks
+  each vehicle's last-moved timestamp and marks it `inactive: true` after 60+ continuous seconds
+  of `speedKph == 0`, dimming it in the Sidebar/MapView and tagging it in the DetailPanel; an
+  opt-in (default off) "Hide Inactive" toggle in `useFilterStore.ts` filters the sidebar list.
+  **This is a display-only, client-computed concept** — it does NOT change the `status` API field
+  contract (`active`/`warning`/`danger`/`offline`), is never sent to or derived by the backend,
+  and does not alter `VehicleStatusEvaluator.cs`'s status priority order. A vehicle can be
+  simultaneously `status: "active"` and `inactive: true`. See REQUIREMENTS.md F-29/§4.4.
+- **Telemetry retention/cleanup background service** — `backend/Services/TelemetryRetentionService.cs`
+  periodically deletes `telemetry_snapshots`/`vehicle_logs` rows older than a configurable
+  retention window in bounded batches (`TelemetryRetention__RetentionDays`,
+  `TelemetryRetention__SweepIntervalMinutes`, `TelemetryRetention__DeleteBatchSize`), closing
+  ADR-001 action item #5; runs only when `USE_LIVE_TELEMETRY=true`
+
+### Known Issues
+
+- `frontend/package.json` has no `lint`/`type-check` npm scripts and no ESLint config/dependency
+  exists anywhere in `frontend/`, despite `frontend/AGENTS.md` and REQUIREMENTS.md NF-13/NF-14
+  documenting both as required pre-commit gates. Found during this sprint's UI-010/UI-011; type
+  safety was verified via `npx tsc --noEmit` instead. Tracked in `docs/sprints/BACKLOG.md` for a
+  standalone fix.
+- NF-01 (10k-vehicle 60 FPS render) and NF-03 (SignalR ~500ms cadence) were only validated at
+  reduced scale (`VEHICLE_COUNT=300`, not the production default of 10,000) this sprint, per
+  ANALYST-001's findings — sandbox constraints prevented a full-scale run. NF-02 (`GET
+  /api/vehicles` <500ms) passed at reduced scale (p95 ≈ 109ms). A full-scale follow-up load test
+  is recommended before relying on these numbers at 10,000 vehicles; tracked in
+  `docs/sprints/BACKLOG.md`.
+
+---
+
 ## v0.2.0 — 2026-07-09
 
 ### Add

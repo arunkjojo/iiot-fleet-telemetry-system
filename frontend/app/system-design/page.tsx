@@ -1,5 +1,6 @@
 import React from 'react'
 import SignalRPipeline from '../../components/SignalRPipeline'
+import Header from '../../components/Header'
 
 export const metadata = {
   title: 'System Design',
@@ -7,7 +8,9 @@ export const metadata = {
 
 export default function Page() {
   return (
-    <main className="max-w-6xl mx-auto p-8 space-y-12">
+    <>
+      <Header />
+      <main className="max-w-6xl mx-auto p-8 space-y-12">
       <section>
         <h2 className="text-white text-xl font-bold mb-4 border-l-4 border-primary pl-4 uppercase tracking-widest">Architectural Vision</h2>
         <p className="leading-relaxed">
@@ -81,6 +84,7 @@ export default function Page() {
               <span className="text-slate-700 text-xs font-mono">DOTNET_8.0</span>
           </div>
       </footer>
-    </main>
+      </main>
+    </>
   )
 }

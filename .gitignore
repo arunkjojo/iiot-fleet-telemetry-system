@@ -3,6 +3,7 @@ bin
 obj
 node_modules
 .next
+*.tsbuildinfo
 
 # User-specific files
 *.user
@@ -24,3 +25,6 @@ Thumbs.db
 
 # Runtime dead-letter output (TelemetryPersistenceService, ADR-001 follow-up)
 backend/deadletter/
+
+# Local-only Compose overrides (DOCKER_README.md documents this pattern — never committed)
+docker-compose.override.yml

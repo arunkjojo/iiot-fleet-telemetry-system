@@ -6,6 +6,8 @@ type FilterState = {
   selectedStatuses: VehicleStatus[]
   setSelectedStatuses: (s: VehicleStatus[]) => void
   toggleStatus: (s: VehicleStatus) => void
+  hideInactive: boolean
+  toggleHideInactive: () => void
 }
 
 export const useFilterStore = create<FilterState>((set, get) => ({
@@ -24,5 +26,7 @@ export const useFilterStore = create<FilterState>((set, get) => ({
     const arr = Array.from(next) as VehicleStatus[]
     if (arr.length === 0) arr.push('all')
     set({ selectedStatuses: arr })
-  }
+  },
+  hideInactive: false,
+  toggleHideInactive: () => set({ hideInactive: !get().hideInactive })
 }))

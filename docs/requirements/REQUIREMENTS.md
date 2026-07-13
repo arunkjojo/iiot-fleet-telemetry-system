@@ -70,6 +70,9 @@ The IIoT Fleet Telemetry System is a real-time industrial asset monitoring platf
 | F-25 | `POST /api/telemetry/ingest` MUST accept a single vehicle's telemetry reading, compute its status server-side, and return `202 Accepted` |
 | F-26 | The backend MUST support a `USE_LIVE_TELEMETRY` toggle; when `true`, vehicle state MUST be sourced from live ingestion instead of the in-memory dummy simulation; default `false` |
 | F-27 | The Python IIoT emitter MUST only emit telemetry for vehicle IDs that already exist in the `vehicles` table, obtained via `GET /api/vehicles/metadata` |
+| F-28 | `GET /api/health/signalr` MUST return the current `/fleethub` connection tracking state (at minimum: active connection count) as `200 OK` JSON |
+| F-29 | The frontend MAY compute a client-side "inactive vehicle" concept — sustained `speedKph = 0` for 60+ continuous seconds — for display/filtering purposes only; this is NOT a `status` enum value, is NOT computed or persisted server-side, and MUST NOT alter `VehicleStatusEvaluator.cs`'s status priority order (`offline` > `danger` > `warning` > `active`) |
+| F-30 | The backend MUST run a background retention/cleanup policy that deletes `telemetry_snapshots` rows older than a configurable retention window, without introducing new database tables |
 
 ---
 
@@ -147,6 +150,15 @@ Frontend alerts fire independently of server-side status when:
 | Temperature | > 65°C |
 | Speed | > 80 kph |
 | Engine Health | < 15 |
+
+### 4.4 Inactive Vehicle Threshold (Client-Side)
+
+| ID | Requirement |
+|----|-------------|
+| BR-01 | A vehicle is considered "inactive" (client-side display concept only) when its `speedKph` has been sustained at `0` for 60 continuous seconds or more, as observed from the stream of SignalR updates received by the client |
+| BR-02 | "Inactive" is computed and tracked entirely in the frontend; it is never sent to, stored by, or derived by the backend |
+| BR-03 | "Inactive" is independent of and MUST NOT be confused with the `offline` value of the `status` enum (see section 4.1) — a vehicle can be `active`, `warning`, or `danger` and simultaneously "inactive", and vice versa |
+| BR-04 | Introducing or evolving the "inactive" concept MUST NOT modify `VehicleStatusEvaluator.cs`'s status priority order (`offline` > `danger` > `warning` > `active`) |
 
 ---
 
@@ -307,6 +319,9 @@ CREATE INDEX idx_logs_vehicle_time ON vehicle_logs(vehicle_id, logged_at DESC);
 | `VEHICLE_COUNT` | iiot-emitter | Number of vehicles the emitter simulates, sliced from the fetched roster; default `10000` |
 | `TICK_INTERVAL_SECONDS` | iiot-emitter | Seconds between telemetry ticks per simulated vehicle; default `3` |
 | `MAX_CONCURRENCY` | iiot-emitter | Maximum concurrent outbound HTTP POSTs the emitter issues; default `300` |
+| `TelemetryRetention__RetentionDays` | Backend | Number of days of `telemetry_snapshots` history to retain before rows are eligible for deletion; default `30` |
+| `TelemetryRetention__SweepIntervalMinutes` | Backend | Minutes between successive retention sweep runs of `TelemetryRetentionService`; default `60` |
+| `TelemetryRetention__DeleteBatchSize` | Backend | Maximum number of rows deleted per batch during a retention sweep, to bound lock/IO impact; default `5000` |
 
 ---
 

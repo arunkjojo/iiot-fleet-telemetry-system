@@ -38,6 +38,8 @@ function Sidebar({ vehicles, onSelect, selectedId }: Props) {
   // Use the precomputed tokenIndex to perform fast lookups. Avoids filtering the full array on each keystroke.
   const selectedStatuses = useFilterStore((s) => s.selectedStatuses)
   const toggleStatus = useFilterStore((s) => s.toggleStatus)
+  const hideInactive = useFilterStore((s) => s.hideInactive)
+  const toggleHideInactive = useFilterStore((s) => s.toggleHideInactive)
 
   // status priority used across the component (lower = higher priority)
   const STATUS_PRIORITY = ['danger', 'warning', 'offline', 'active'] as const
@@ -127,9 +129,14 @@ function Sidebar({ vehicles, onSelect, selectedId }: Props) {
       }
     }
 
+    // apply "Hide Inactive" filter (client-side display concept, opt-in, default off)
+    if (hideInactive) {
+      out = out.filter((v) => !v.inactive)
+    }
+
     // sort matches by status priority so warnings are shown at top
     return out.sort(compare)
-  }, [query, tokenIndex, idMap, vehicles, JSON.stringify(selectedStatuses)])
+  }, [query, tokenIndex, idMap, vehicles, JSON.stringify(selectedStatuses), hideInactive])
 
 
   // debounce inputValue -> query so heavy lookups don't run on every keystroke
@@ -229,6 +236,15 @@ function Sidebar({ vehicles, onSelect, selectedId }: Props) {
               })
             })()}
           </div>
+          <label className="flex items-center gap-2 text-sm mt-2 px-3 py-1 rounded-md text-slate-300 hover:bg-white/5 w-fit cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={hideInactive}
+              onChange={() => toggleHideInactive()}
+              className="accent-primary"
+            />
+            Hide Inactive
+          </label>
         </div>
       </div>
       <div ref={parentRef} tabIndex={0} onKeyDown={handleKeyDown} className="flex-1 hide-scrollbar" style={{ overflowY: 'auto' }}>
@@ -238,13 +254,18 @@ function Sidebar({ vehicles, onSelect, selectedId }: Props) {
             const isSelected = selectedId === v.id
             const isFocused = focusedIdx === virtualRow.index
             return (
-              <div key={v.id} onClick={() => onSelect(v)} style={{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${virtualRow.start}px)` }} className={`vt-enter group flex items-center justify-between p-3 border-b border-border-dark hover:bg-white/5 cursor-pointer transition-all ${isSelected? 'bg-white/5 border-l-primary border-l-2':'border-l-transparent'} ${isFocused? 'bg-white/3': ''}`}>
+              <div key={v.id} onClick={() => onSelect(v)} style={{ position: 'absolute', top: 0, left: 0, width: '100%', transform: `translateY(${virtualRow.start}px)` }} className={`vt-enter group flex items-center justify-between p-3 border-b border-border-dark hover:bg-white/5 cursor-pointer transition-all ${isSelected? 'bg-white/5 border-l-primary border-l-2':'border-l-transparent'} ${isFocused? 'bg-white/3': ''} ${v.inactive ? 'opacity-50' : ''}`}>
                 <div className="flex items-center gap-3">
                   <div className="relative">
                     <div className={`${statusColor(v.status)} w-2.5 h-2.5 rounded-full`} />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-sm font-bold text-white">{highlight(v.id, query)}</span>
+                    <span className="text-sm font-bold text-white flex items-center gap-2">
+                      {highlight(v.id, query)}
+                      {v.inactive && (
+                        <span className="text-[10px] font-bold tracking-wide text-slate-400 bg-white/10 px-1.5 py-0.5 rounded">INACTIVE</span>
+                      )}
+                    </span>
                     <span className="text-xs text-slate-400">{highlight(`${v.model} • ${v.driver}`, query)}</span>
                   </div>
                 </div>
