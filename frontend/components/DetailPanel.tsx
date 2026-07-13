@@ -58,7 +58,7 @@ function CircularChart({ value, max, color, label, display }: { value: number; m
 function DetailPanel({ vehicle, onClose, onVehicleUpdated }: Props) {
   if (!vehicle) {
     return (
-      <aside className="w-96 flex flex-col border-l border-border-dark bg-surface-dark z-20 shrink-0 p-6">
+      <aside className="fixed inset-0 z-30 w-full md:static md:inset-auto md:z-20 md:w-96 flex flex-col border-l border-border-dark bg-surface-dark shrink-0 p-6">
         <h2 className="text-xl font-bold">Select a vehicle</h2>
         <p className="text-slate-400 mt-2 text-sm">Choose a vehicle from the left list or the map to view telemetry.</p>
       </aside>
@@ -194,7 +194,7 @@ function DetailPanel({ vehicle, onClose, onVehicleUpdated }: Props) {
   }, [vehicle, fuel])
 
   return (
-    <aside className="w-96 flex flex-col border-l border-border-dark bg-surface-dark z-20 shrink-0 overflow-y-auto">
+    <aside className="fixed inset-0 z-30 w-full md:static md:inset-auto md:z-20 md:w-96 flex flex-col border-l border-border-dark bg-surface-dark shrink-0 overflow-y-auto">
       <div className="p-6 border-b border-border-dark">
         <div className="flex justify-between items-start mb-4">
           <div>
@@ -226,7 +226,7 @@ function DetailPanel({ vehicle, onClose, onVehicleUpdated }: Props) {
         </div>
         {isEditing ? (
           <div className="flex flex-col gap-3 mb-2">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <label className="flex flex-col gap-1">
                 <span className="text-slate-500 text-xs uppercase">Driver</span>
                 <input
@@ -267,7 +267,7 @@ function DetailPanel({ vehicle, onClose, onVehicleUpdated }: Props) {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4 mb-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-2">
             <div className="bg-[#1c2527] p-3 rounded border border-border-dark">
               <p className="text-slate-500 text-xs uppercase">Driver</p>
               <p className="text-white font-medium">{vehicle.driver}</p>
@@ -287,7 +287,7 @@ function DetailPanel({ vehicle, onClose, onVehicleUpdated }: Props) {
       </div>
       <div className="p-6 flex flex-col gap-6">
         <h3 className="text-slate-400 text-xs font-bold tracking-widest uppercase">System Health</h3>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {metrics.map((m) => (
             <CircularChart key={m.key} value={m.value} max={m.max} color={chartColorByStatus(vehicle.status)} label={m.label} display={m.display} />
           ))}

@@ -194,7 +194,7 @@ export default function Page() {
       <Header connectionStatus={connectionStatus} />
       <Toast item={toast} onDone={() => setToast(null)} />
 
-      <div className="flex flex-1 overflow-hidden relative">
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden relative">
         <Sidebar vehicles={vehicles} onSelect={handleSelect} selectedId={selected?.id} />
         <MapView vehicles={mapVehicles} onSelect={handleSelect} selectedId={selected?.id} />
         {selected && (

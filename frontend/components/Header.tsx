@@ -17,16 +17,16 @@ export default function Header({ connectionStatus = 'disconnected' }: Props) {
 
   return (
     <>
-      <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-border-dark bg-surface-dark px-6 py-3 shrink-0 z-20">
-        <Link href="/" className="flex items-center gap-4 text-white">
-          <div className="size-8 flex items-center justify-center text-primary">
+      <header className="flex flex-wrap md:flex-nowrap items-center justify-between gap-y-2 md:whitespace-nowrap border-b border-solid border-border-dark bg-surface-dark px-3 sm:px-6 py-3 shrink-0 z-20">
+        <Link href="/" className="flex items-center gap-2 sm:gap-4 text-white min-w-0">
+          <div className="size-8 flex items-center justify-center text-primary shrink-0">
             <Satellite size={28} />
           </div>
-          <h2 className="text-white text-xl font-bold leading-tight tracking-[0.1em] uppercase">IIOT Fleet Telemetry Dashboard</h2>
+          <h2 className="text-white text-base sm:text-xl font-bold leading-tight tracking-[0.03em] sm:tracking-[0.1em] uppercase truncate max-w-[60vw] sm:max-w-none">IIOT Fleet Telemetry Dashboard</h2>
         </Link>
 
-        <div className="flex gap-3 items-center">
-          <Link href="/system-design" className="text-sm text-primary">System Design</Link>
+        <div className="flex gap-2 sm:gap-3 items-center shrink-0">
+          <Link href="/system-design" className="hidden md:inline text-sm text-primary">System Design</Link>
 
           <ConnectionStatus status={connectionStatus} />
 
@@ -39,7 +39,7 @@ export default function Header({ connectionStatus = 'disconnected' }: Props) {
             )}
           </div>
 
-          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-yellow-600 flex items-center justify-center text-black font-bold text-xs">AJ</div>
+          <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-yellow-600 flex items-center justify-center text-black font-bold text-xs shrink-0">AJ</div>
         </div>
       </header>
 

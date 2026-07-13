@@ -233,7 +233,7 @@ function Sidebar({ vehicles, onSelect, selectedId }: Props) {
   }, [visible, focusedIdx, onSelect])
 
   return (
-    <aside className="w-80 flex flex-col border-r border-border-dark bg-surface-dark z-10 shrink-0">
+    <aside className="w-full md:w-80 h-[45vh] md:h-auto flex flex-col border-r border-border-dark bg-surface-dark z-10 shrink-0">
       <div className="p-4 border-b border-border-dark">
         <div className="flex flex-col gap-1 mb-3">
           <h1 className="text-sm font-bold tracking-widest text-primary uppercase">Fleet Inventory</h1>

@@ -97,7 +97,7 @@ git status    # must be clean
 - [x] BE-007 — Expose `lastSeenAtUtc` per vehicle
 - [x] UI-013 — Apply 24h-activity filter to sidebar search
 - [x] UI-014 — Add default-on focused view (max 10 vehicles + "Show all" toggle)
-- [ ] UI-015 — Responsive/overflow audit and fix
+- [x] UI-015 — Responsive/overflow audit and fix
 - [ ] QA-003 — Verify Sprint 04 end-to-end
 - [ ] ARCH-006 — Sprint-end: CHANGELOG, version bump, roadmap pointer update
 
@@ -845,7 +845,17 @@ git checkout -- frontend/store/useFilterStore.ts frontend/components/Sidebar.tsx
 
 **Agent:** NEXT
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
+
+---
+
+**Verification note:** Live-verified via headless Chrome DevTools Protocol with
+`Emulation.setDeviceMetricsOverride` (not just a code audit) — confirmed real horizontal
+overflow at 375px (`docScrollWidth` 775 vs `innerWidth` 375) and 768px (774 vs 768) before the
+fix, and `hasHorizOverflow: false` at 375px/768px/1024px/1280px after. Desktop (1280px)
+screenshot after the fix is visually identical to before. Also found and fixed a second overflow
+inside `DetailPanel` (the `CircularChart`/driver-model grids) not anticipated in the original
+task text.
 
 ---
 
@@ -888,13 +898,13 @@ None.
 
 **Sub-task breakdown:**
 
-- [ ] Use the `chrome` skill/tool (or manual `npm run dev` + browser resize) to identify concrete overflow/clipping issues at 375px and 768px before making changes
-- [ ] Fix `Header.tsx`: responsive flex-wrap or conditional hiding of less-critical elements (e.g. "System Design" link) below `md:`
-- [ ] Fix `Sidebar.tsx`: below `md:`, render as a full-width panel (e.g. `w-full md:w-80`) or an overlay/drawer triggered by a toggle, rather than always-visible fixed-width
-- [ ] Fix `DetailPanel.tsx`: below `md:`, render as a full-width overlay (`w-full md:w-96` or similar) instead of a fixed side panel that pushes/overlaps content
-- [ ] Confirm `MapView.tsx` and the overall `page.tsx` flex container don't force horizontal scroll at either breakpoint
-- [ ] Re-check all 4 components at 375px/768px after fixes — no horizontal scrollbar, no clipped text/buttons
-- [ ] Run `npx tsc --noEmit` — zero errors
+- [x] Use the `chrome` skill/tool (or manual `npm run dev` + browser resize) to identify concrete overflow/clipping issues at 375px and 768px before making changes — done via direct CDP `Emulation.setDeviceMetricsOverride`, not the `chrome` skill's MCP tools (not registered in this environment)
+- [x] Fix `Header.tsx`: `flex-wrap md:flex-nowrap`, truncated/shrinking title, "System Design" link hidden below `md:`
+- [x] Fix `Sidebar.tsx`: `w-80` → `w-full md:w-80`, plus `h-[45vh] md:h-auto` for a bounded height when stacked
+- [x] Fix `DetailPanel.tsx`: fixed full-screen overlay (`fixed inset-0 z-30 w-full`) below `md:`, reverting to the original static `w-96` side panel at `md:`+; also fixed a nested overflow in its internal grids
+- [x] Confirm `MapView.tsx` and the overall `page.tsx` flex container don't force horizontal scroll — `MapView` needed no changes (`flex-1`, no forced min-width); `page.tsx`'s top-level container changed `flex` → `flex flex-col md:flex-row` (necessary, not just a check — a row layout couldn't fit all 3 panels without overflow below `md:`)
+- [x] Re-check all 4 components at 375px/768px after fixes — confirmed `hasHorizOverflow: false` via CDP at both, and at 1024px/1280px (desktop unaffected)
+- [x] Run `npx tsc --noEmit` — zero errors
 
 ---
 
