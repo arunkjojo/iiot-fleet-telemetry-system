@@ -3,6 +3,7 @@ bin
 obj
 node_modules
 .next
+*.tsbuildinfo
 
 # User-specific files
 *.user

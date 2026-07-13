@@ -24,4 +24,8 @@ export type Vehicle = {
   lng: number
 
   // optional diagnostic fields (provided separately via API / SignalR)
+
+  // client-computed only — not sent by the backend. True when speedKph has been
+  // sustained at 0 for 60+ seconds (see frontend/app/page.tsx inactive sweep).
+  inactive?: boolean
 }

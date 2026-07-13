@@ -94,7 +94,7 @@ git status    # must be clean
 - [x] ARCH-003 — Register Sprint 03 architecture decisions in AGENTS.md and REQUIREMENTS.md
 - [x] BE-005 — Add SignalR connection tracking and `/api/health/signalr` endpoint
 - [x] UI-010 — Add SignalR connection-status indicator to the dashboard header
-- [ ] UI-011 — Add client-side inactive-vehicle detection, styling, and filter toggle
+- [x] UI-011 — Add client-side inactive-vehicle detection, styling, and filter toggle
 - [x] DB-004 — Add telemetry retention/cleanup background service
 - [ ] ANALYST-001 — Measure throughput/latency impact of retention sweeps against NF-01/02/03
 - [ ] QA-002 — Verify Sprint 03 end-to-end
@@ -416,7 +416,7 @@ git rm frontend/components/ConnectionStatus.tsx
 
 **Agent:** NEXT
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -463,14 +463,14 @@ None.
 
 **Sub-task breakdown:**
 
-- [ ] Add `inactive?: boolean` to the `Vehicle` type
-- [ ] Add `lastMovedAtMs` tracking in `page.tsx`, updated whenever an incoming SignalR update carries `speedKph > 0`; seed every vehicle's entry with the mount timestamp on initial `GET /api/vehicles` load
-- [ ] Add a 5s `setInterval` sweep in `page.tsx`: for each vehicle, `inactive = (Date.now() - (lastMovedAtMs.current.get(v.id) ?? mountTimeMs)) > INACTIVE_THRESHOLD_MS` (constant `INACTIVE_THRESHOLD_MS = 60_000`), then flush via `setVehicles`
-- [ ] Add `hideInactive`/`toggleHideInactive` to `useFilterStore.ts`
-- [ ] Add "Hide Inactive" toggle UI to `Sidebar.tsx`; filter `filtered` on `hideInactive`; dim + tag inactive rows
-- [ ] Dim inactive markers in `MapView.tsx`
-- [ ] Add "Inactive" badge to `DetailPanel.tsx`
-- [ ] Run `npm run type-check && npm run lint` — zero errors/warnings
+- [x] Add `inactive?: boolean` to the `Vehicle` type
+- [x] Add `lastMovedAtMs` tracking in `page.tsx`, updated whenever an incoming SignalR update carries `speedKph > 0`; seed every vehicle's entry with the mount timestamp on initial `GET /api/vehicles` load
+- [x] Add a 5s `setInterval` sweep in `page.tsx`: for each vehicle, `inactive = (Date.now() - (lastMovedAtMs.current.get(v.id) ?? mountTimeMs)) > INACTIVE_THRESHOLD_MS` (constant `INACTIVE_THRESHOLD_MS = 60_000`), then flush via `setVehicles`
+- [x] Add `hideInactive`/`toggleHideInactive` to `useFilterStore.ts`
+- [x] Add "Hide Inactive" toggle UI to `Sidebar.tsx`; filter `filtered` on `hideInactive`; dim + tag inactive rows
+- [x] Dim inactive markers in `MapView.tsx`
+- [x] Add "Inactive" badge to `DetailPanel.tsx`
+- [x] Run `npx tsc --noEmit` — zero errors (`npm run type-check`/`npm run lint` still don't exist — same pre-existing gap flagged in UI-010)
 
 ---
 
