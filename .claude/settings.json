@@ -1,0 +1,48 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npm test:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(start chrome *)",
+      "Bash(*)",
+      "FileSystem(read:*)",
+      "FileSystem(write:*)",
+      "WebSearch",
+      "WebRequest",
+      "CodeExecution",
+      "ClipboardAccess",
+      "NetworkAccess",
+      "WebFetch",
+      "WebBrowser",
+      "Edit(*)",
+      "Read(*)",
+      "Write(*)",
+      "Execute(*)",
+      "mcp__chrome-devtools__*",
+      "mcp__github__*",
+      "mcp__mcp-registry__search_mcp_registry",
+      "Glob",
+      "Bash(git pull *)",
+      "Bash(git push *)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(del *)",
+      "Bash(rmdir *)",
+      "Bash(git clean *)",
+      "Bash(format C:)",
+      "Bash(format D:)"
+    ],
+    "ask": [
+      "Bash(gh pr *)",
+      "Bash(gh issue:*)"
+    ]
+  },
+  "settings": {
+    "additionalDirectories": [
+      "D:\\project\\iiot-fleet-telemetry-system\\docs\\sprints"
+    ]
+  }
+}
