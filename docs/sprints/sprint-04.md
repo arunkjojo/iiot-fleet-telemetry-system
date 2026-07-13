@@ -93,7 +93,7 @@ git status    # must be clean
 - [x] BE-008 — Fix dummy-mode vehicle ID generation to be meaningful/consistent
 - [x] DB-005 — Add `display_number` column to `vehicles` (migration + entity + seeder)
 - [x] BE-006 — Add `PATCH /api/vehicles/{id}` endpoint (driver name + display number)
-- [ ] UI-012 — Add vehicle edit UI to DetailPanel
+- [x] UI-012 — Add vehicle edit UI to DetailPanel
 - [x] BE-007 — Expose `lastSeenAtUtc` per vehicle
 - [ ] UI-013 — Apply 24h-activity filter to sidebar search
 - [ ] UI-014 — Add default-on focused view (max 10 vehicles + "Show all" toggle)
@@ -489,7 +489,7 @@ git rm backend/Models/PatchVehicleRequest.cs
 
 **Agent:** NEXT
 **Depends on:** BE-006
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -531,12 +531,12 @@ None.
 
 **Sub-task breakdown:**
 
-- [ ] Add `displayNumber?: string` to `Vehicle` type
-- [ ] Add edit UI to `DetailPanel.tsx`: an "Edit" button toggles two inline text inputs (driver name, display number) pre-filled with current values; "Save"/"Cancel" buttons
-- [ ] On "Save": client-side validate both fields non-empty and within length limits (100/30 chars, matching the backend), `PATCH` to `${API_URL}/api/vehicles/${vehicle.id}` with only the changed field(s), show a loading state, show an inline error message on failure (400/404/network), call `onVehicleUpdated(updatedVehicle)` on success
-- [ ] Add `onVehicleUpdated` prop to `DetailPanel`'s `Props` type
-- [ ] Wire `onVehicleUpdated` in `page.tsx`: update `vehiclesMap.current.set(id, {...existing, ...updatedFields})`, flush `setVehicles`, and if the edited vehicle is `selected`, update `selected` too so the panel reflects the save immediately
-- [ ] Run `npx tsc --noEmit` — zero errors
+- [x] Add `displayNumber?: string` to `Vehicle` type
+- [x] Add edit UI to `DetailPanel.tsx`: an "Edit" button toggles two inline text inputs (driver name, display number) pre-filled with current values; "Save"/"Cancel" buttons
+- [x] On "Save": client-side validate both fields non-empty and within length limits (100/30 chars, matching the backend), `PATCH` to `${API_URL}/api/vehicles/${vehicle.id}` with only the changed field(s), show a loading state, show an inline error message on failure (400/404/network), call `onVehicleUpdated(updatedVehicle)` on success
+- [x] Add `onVehicleUpdated` prop to `DetailPanel`'s `Props` type
+- [x] Wire `onVehicleUpdated` in `page.tsx`: update `vehiclesMap.current.set(id, {...existing, ...updatedFields})`, flush `setVehicles`, and if the edited vehicle is `selected`, update `selected` too so the panel reflects the save immediately
+- [x] Run `npx tsc --noEmit` — zero errors
 
 ---
 

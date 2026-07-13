@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import Sidebar from '../components/Sidebar'
 import MapView from '../components/MapView'
-import DetailPanel from '../components/DetailPanel'
+import DetailPanel, { VehiclePatchResult } from '../components/DetailPanel'
 import Header from '../components/Header'
 import type { Vehicle, VehicleStatus } from '../types/vehicle'
 import type { SignalRConnectionStatus } from '../components/ConnectionStatus'
@@ -177,6 +177,17 @@ export default function Page() {
 
   const handleSelect = useCallback((v: Vehicle) => setSelected(v), [])
 
+  // Merges a PATCH /api/vehicles/{id} response (from DetailPanel's edit UI) back
+  // into the live vehicle map/state, and into `selected` if that vehicle is open.
+  const handleVehicleUpdated = useCallback((updatedFields: VehiclePatchResult) => {
+    const existing = vehiclesMap.current.get(updatedFields.id)
+    if (!existing) return
+    const merged: Vehicle = { ...existing, ...updatedFields }
+    vehiclesMap.current.set(updatedFields.id, merged)
+    setVehicles(Array.from(vehiclesMap.current.values()))
+    setSelected((prev) => (prev && prev.id === updatedFields.id ? merged : prev))
+  }, [])
+
   return (
     <div className="h-screen flex flex-col">
       <Header connectionStatus={connectionStatus} />
@@ -185,7 +196,13 @@ export default function Page() {
       <div className="flex flex-1 overflow-hidden relative">
         <Sidebar vehicles={vehicles} onSelect={handleSelect} selectedId={selected?.id} />
         <MapView vehicles={mapVehicles} onSelect={handleSelect} selectedId={selected?.id} />
-        {selected && <DetailPanel vehicle={selected} onClose={() => setSelected(null)} />}
+        {selected && (
+          <DetailPanel
+            vehicle={selected}
+            onClose={() => setSelected(null)}
+            onVehicleUpdated={handleVehicleUpdated}
+          />
+        )}
       </div>
     </div>
   )

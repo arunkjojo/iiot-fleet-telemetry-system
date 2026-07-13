@@ -1,11 +1,19 @@
 "use client"
 import React, { useMemo, useState, useEffect } from 'react'
-import { X } from 'lucide-react'
+import { X, Pencil } from 'lucide-react'
 import { Vehicle } from '../types/vehicle'
+
+// Fields returned by PATCH /api/vehicles/{id}, mapped into the frontend's Vehicle shape.
+// Partial because the endpoint never returns/updates every Vehicle field (e.g. engineHealth).
+export type VehiclePatchResult = Partial<Vehicle> & { id: string }
+
+const DRIVER_NAME_MAX_LENGTH = 100
+const DISPLAY_NUMBER_MAX_LENGTH = 30
 
 type Props = {
   vehicle?: Vehicle | null
   onClose?: () => void
+  onVehicleUpdated?: (updatedVehicle: VehiclePatchResult) => void
 }
 
 const statusColor = (s?: string) => {
@@ -47,7 +55,7 @@ function CircularChart({ value, max, color, label, display }: { value: number; m
   )
 }
 
-function DetailPanel({ vehicle, onClose }: Props) {
+function DetailPanel({ vehicle, onClose, onVehicleUpdated }: Props) {
   if (!vehicle) {
     return (
       <aside className="w-96 flex flex-col border-l border-border-dark bg-surface-dark z-20 shrink-0 p-6">
@@ -74,6 +82,102 @@ function DetailPanel({ vehicle, onClose }: Props) {
     }
     fetchLogs()
   }, [vehicle?.id])
+
+  // Inline edit state for driver name / display number (PATCH /api/vehicles/{id}, Sprint 04 UI-012)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editDriver, setEditDriver] = useState('')
+  const [editDisplayNumber, setEditDisplayNumber] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
+
+  // Reset edit state whenever the selected vehicle changes so a stale in-progress
+  // edit for a previous vehicle never leaks onto the newly-selected one.
+  useEffect(() => {
+    setIsEditing(false)
+    setEditError(null)
+    setSaving(false)
+  }, [vehicle?.id])
+
+  const startEdit = () => {
+    setEditDriver(vehicle.driver ?? '')
+    setEditDisplayNumber(vehicle.displayNumber ?? '')
+    setEditError(null)
+    setIsEditing(true)
+  }
+
+  const cancelEdit = () => {
+    setIsEditing(false)
+    setEditError(null)
+  }
+
+  const handleSave = async () => {
+    setEditError(null)
+    const trimmedDriver = editDriver.trim()
+    const trimmedDisplayNumber = editDisplayNumber.trim()
+
+    if (!trimmedDriver || !trimmedDisplayNumber) {
+      setEditError('Driver name and display number are both required.')
+      return
+    }
+    if (trimmedDriver.length > DRIVER_NAME_MAX_LENGTH) {
+      setEditError(`Driver name must be ${DRIVER_NAME_MAX_LENGTH} characters or fewer.`)
+      return
+    }
+    if (trimmedDisplayNumber.length > DISPLAY_NUMBER_MAX_LENGTH) {
+      setEditError(`Display number must be ${DISPLAY_NUMBER_MAX_LENGTH} characters or fewer.`)
+      return
+    }
+
+    const body: { driverName?: string; displayNumber?: string } = {}
+    if (trimmedDriver !== (vehicle.driver ?? '')) body.driverName = trimmedDriver
+    if (trimmedDisplayNumber !== (vehicle.displayNumber ?? '')) body.displayNumber = trimmedDisplayNumber
+
+    if (Object.keys(body).length === 0) {
+      // nothing actually changed — no need to call the API
+      setIsEditing(false)
+      return
+    }
+
+    setSaving(true)
+    try {
+      const base = process.env.NEXT_PUBLIC_API_URL || ''
+      const res = await fetch(`${base}/api/vehicles/${vehicle.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+
+      if (!res.ok) {
+        if (res.status === 404) setEditError('Vehicle not found.')
+        else if (res.status === 400) setEditError('Invalid input — please check the values and try again.')
+        else setEditError(`Save failed (status ${res.status}).`)
+        return
+      }
+
+      const data = await res.json()
+      // Map the PATCH response back into the frontend's Vehicle shape, the same
+      // way page.tsx's initial load normalizes fields (driver -> driver, etc).
+      const updated: VehiclePatchResult = {
+        id: data.id ?? vehicle.id,
+        model: data.model,
+        driver: data.driver,
+        status: data.status,
+        fuel: data.fuel,
+        temp: data.temp,
+        speedKph: data.speedKph,
+        cargoLoad: data.cargoLoad,
+        lat: data.lat,
+        lng: data.lng,
+        displayNumber: data.displayNumber,
+      }
+      onVehicleUpdated?.(updated)
+      setIsEditing(false)
+    } catch (e) {
+      setEditError('Network error — please try again.')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   // derive UI-friendly values from backend shape
   const fuel = Number(vehicle.fuel ?? 0)
@@ -103,24 +207,83 @@ function DetailPanel({ vehicle, onClose }: Props) {
               )}
             </span>
           </div>
-          {onClose && (
-            <div className="ml-4">
+          <div className="ml-4 flex items-center gap-1">
+            {!isEditing && (
+              <button
+                aria-label="Edit vehicle"
+                onClick={startEdit}
+                className="text-slate-400 hover:text-white p-2 rounded"
+              >
+                <Pencil size={16} />
+              </button>
+            )}
+            {onClose && (
               <button aria-label="Close details" onClick={onClose} className="text-slate-400 hover:text-white p-2 rounded">
                 <X size={18} />
               </button>
+            )}
+          </div>
+        </div>
+        {isEditing ? (
+          <div className="flex flex-col gap-3 mb-2">
+            <div className="grid grid-cols-2 gap-4">
+              <label className="flex flex-col gap-1">
+                <span className="text-slate-500 text-xs uppercase">Driver</span>
+                <input
+                  className="bg-[#1c2527] p-2 rounded border border-border-dark text-white text-sm outline-none focus:border-primary"
+                  value={editDriver}
+                  maxLength={DRIVER_NAME_MAX_LENGTH}
+                  onChange={(e) => setEditDriver(e.target.value)}
+                  disabled={saving}
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-slate-500 text-xs uppercase">Display Number</span>
+                <input
+                  className="bg-[#1c2527] p-2 rounded border border-border-dark text-white text-sm outline-none focus:border-primary"
+                  value={editDisplayNumber}
+                  maxLength={DISPLAY_NUMBER_MAX_LENGTH}
+                  onChange={(e) => setEditDisplayNumber(e.target.value)}
+                  disabled={saving}
+                />
+              </label>
             </div>
-          )}
-        </div>
-        <div className="grid grid-cols-2 gap-4 mb-2">
-          <div className="bg-[#1c2527] p-3 rounded border border-border-dark">
-            <p className="text-slate-500 text-xs uppercase">Driver</p>
-            <p className="text-white font-medium">{vehicle.driver}</p>
+            {editError && <p className="text-red-500 text-xs">{editError}</p>}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="text-xs font-bold uppercase tracking-widest bg-primary text-black px-3 py-1.5 rounded disabled:opacity-50"
+              >
+                {saving ? 'Saving…' : 'Save'}
+              </button>
+              <button
+                onClick={cancelEdit}
+                disabled={saving}
+                className="text-xs font-bold uppercase tracking-widest text-slate-300 hover:text-white px-3 py-1.5 rounded disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
-          <div className="bg-[#1c2527] p-3 rounded border border-border-dark">
-            <p className="text-slate-500 text-xs uppercase">Model</p>
-            <p className="text-white font-medium">{vehicle.model}</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 mb-2">
+            <div className="bg-[#1c2527] p-3 rounded border border-border-dark">
+              <p className="text-slate-500 text-xs uppercase">Driver</p>
+              <p className="text-white font-medium">{vehicle.driver}</p>
+            </div>
+            <div className="bg-[#1c2527] p-3 rounded border border-border-dark">
+              <p className="text-slate-500 text-xs uppercase">Model</p>
+              <p className="text-white font-medium">{vehicle.model}</p>
+            </div>
+            {vehicle.displayNumber && (
+              <div className="bg-[#1c2527] p-3 rounded border border-border-dark col-span-2">
+                <p className="text-slate-500 text-xs uppercase">Display Number</p>
+                <p className="text-white font-medium">{vehicle.displayNumber}</p>
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
       <div className="p-6 flex flex-col gap-6">
         <h3 className="text-slate-400 text-xs font-bold tracking-widest uppercase">System Health</h3>
