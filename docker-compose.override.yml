@@ -1,5 +1,0 @@
-services:
-  iiot-emitter:
-    environment:
-      - VEHICLE_COUNT=300
-      - TICK_INTERVAL_SECONDS=2
