@@ -25,9 +25,10 @@ backend/
 │   ├── VehiclesController.cs       # GET /api/vehicles, GET /api/vehicles/{id}
 │   ├── LogsController.cs           # GET /api/vehicles/{vehicleId}/logs
 │   ├── MetadataController.cs       # GET /api/vehicles/metadata
-│   └── TelemetryIngestController.cs # POST /api/telemetry/ingest (live mode ingestion, BE-002)
+│   ├── TelemetryIngestController.cs # POST /api/telemetry/ingest (live mode ingestion, BE-002)
+│   └── HealthController.cs         # GET /api/health/signalr (BE-005)
 ├── Hubs/
-│   ├── FleetHub.cs                 # SignalR hub (intentionally minimal)
+│   ├── FleetHub.cs                 # SignalR hub (intentionally minimal) — increments/decrements HubConnectionTracker on connect/disconnect (BE-005)
 │   └── IFleetClient.cs             # Client interface — ReceiveFleetUpdate()
 ├── Models/
 │   ├── Vehicle.cs                  # Internal state model (MessagePackObject)
@@ -40,7 +41,8 @@ backend/
 │   ├── VehicleStatusEvaluator.cs      # Static status evaluator (live-mode canonical rules, REQUIREMENTS.md 4.1)
 │   ├── LiveTelemetryStore.cs          # ILiveTelemetryStore — in-memory current-state cache + last-50-logs cache for live mode
 │   ├── TelemetryPersistenceService.cs # ITelemetryIngestQueue + BackgroundService — buffered batched writer draining into PostgreSQL (telemetry_snapshots, vehicle_logs), decouples emitter/request count from DB connections (BE-002). Batch/timing knobs configurable via "TelemetryPersistence" appsettings section; retries failed batches then falls back to a dead-letter JSON file on disk (ADR-001 follow-up)
-│   └── LiveBroadcastService.cs        # BackgroundService — relays ILiveTelemetryStore.GetAndClearDirty() to SignalR every ~500ms; skips empty ticks (BE-003)
+│   ├── LiveBroadcastService.cs        # BackgroundService — relays ILiveTelemetryStore.GetAndClearDirty() to SignalR every ~500ms; skips empty ticks (BE-003)
+│   └── HubConnectionTracker.cs        # Singleton — thread-safe (Interlocked) count of active /fleethub connections + LastEventAtUtc; read by HealthController (BE-005)
 ├── Data/                           # (Sprint 01) EF Core DbContext + migrations
 │   ├── FleetDbContext.cs
 │   └── Migrations/
@@ -63,6 +65,7 @@ backend/
 | GET | `/api/vehicles/{vehicleId}/logs` | `VehicleLog[]` | Last 50 log entries for a vehicle |
 | GET | `/api/vehicles/metadata` | `{ id, driver }[]` | Static metadata list for all 10k vehicles |
 | POST | `/api/telemetry/ingest` | `202 { status, vehicleId, computedStatus }` | Live telemetry ingestion (BE-002) — validates payload, computes status via `VehicleStatusEvaluator`, upserts `ILiveTelemetryStore`, enqueues a buffered/batched write via `ITelemetryIngestQueue`. Only registered when `USE_LIVE_TELEMETRY=true`. `400` on missing `vehicleId` or out-of-range numeric fields. |
+| GET | `/api/health/signalr` | `{ connectedClients, lastEventAtUtc }` | SignalR connection health (BE-005) — reads `HubConnectionTracker`; always registered, works regardless of `USE_LIVE_TELEMETRY`. |
 | WS | `/fleethub` | SignalR | Hub for `ReceiveFleetUpdate` broadcasts |
 
 ---

@@ -75,6 +75,11 @@ builder.Services.AddSignalR(options =>
 // ── Live telemetry store (always registered; consumed by live-mode services/controllers) ──
 builder.Services.AddSingleton<ILiveTelemetryStore, LiveTelemetryStore>();
 
+// ── SignalR connection tracker (BE-005) — always registered; FleetHub increments/decrements
+// it on connect/disconnect, HealthController reads it via GET /api/health/signalr regardless
+// of USE_LIVE_TELEMETRY, since /fleethub is always mapped below. ──
+builder.Services.AddSingleton<HubConnectionTracker>();
+
 // ── Data source toggle: live ingestion pipeline vs. legacy in-memory dummy simulation ──
 // USE_LIVE_TELEMETRY=false (default) keeps local `dotnet run` on the dummy simulation.
 // USE_LIVE_TELEMETRY=true (set by Docker Compose) defers to the live ingestion pipeline

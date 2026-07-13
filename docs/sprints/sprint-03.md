@@ -92,7 +92,7 @@ git status    # must be clean
 ## Task Index
 
 - [x] ARCH-003 — Register Sprint 03 architecture decisions in AGENTS.md and REQUIREMENTS.md
-- [ ] BE-005 — Add SignalR connection tracking and `/api/health/signalr` endpoint
+- [x] BE-005 — Add SignalR connection tracking and `/api/health/signalr` endpoint
 - [ ] UI-010 — Add SignalR connection-status indicator to the dashboard header
 - [ ] UI-011 — Add client-side inactive-vehicle detection, styling, and filter toggle
 - [ ] DB-004 — Add telemetry retention/cleanup background service
@@ -211,7 +211,7 @@ git checkout -- AGENTS.md docs/requirements/REQUIREMENTS.md
 
 **Agent:** ASP.NET
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -254,12 +254,12 @@ git checkout -- AGENTS.md docs/requirements/REQUIREMENTS.md
 
 **Sub-task breakdown:**
 
-- [ ] Create `HubConnectionTracker.cs` (thread-safe via `Interlocked.Increment`/`Decrement`)
-- [ ] Override `OnConnectedAsync`/`OnDisconnectedAsync` in `FleetHub.cs` — one line each calling the tracker, then `await base.OnConnectedAsync()` / `await base.OnDisconnectedAsync(exception)`
-- [ ] Create `HealthController.cs` with `GET /api/health/signalr`
-- [ ] Register `HubConnectionTracker` as singleton in `Program.cs`
-- [ ] Run `dotnet build` — zero errors
-- [ ] Manually connect a SignalR client (or use the frontend dev server) and confirm the counter increments/decrements
+- [x] Create `HubConnectionTracker.cs` (thread-safe via `Interlocked.Increment`/`Decrement`)
+- [x] Override `OnConnectedAsync`/`OnDisconnectedAsync` in `FleetHub.cs` — one line each calling the tracker, then `await base.OnConnectedAsync()` / `await base.OnDisconnectedAsync(exception)`
+- [x] Create `HealthController.cs` with `GET /api/health/signalr`
+- [x] Register `HubConnectionTracker` as singleton in `Program.cs`
+- [x] Run `dotnet build` — zero errors
+- [ ] Manually connect a SignalR client (or use the frontend dev server) and confirm the counter increments/decrements — deferred to QA-002 (Docker stack); local `dotnet run` blocked by a host runtime-patch mismatch (8.0.28 required, 8.0.23 installed), unrelated to this task's code
 
 ---
 
