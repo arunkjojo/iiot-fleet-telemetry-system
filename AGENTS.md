@@ -156,6 +156,9 @@ These conventions are immutable. Agents MUST NOT break them.
 | `backend/Services/LiveTelemetryStore.cs` | ASP.NET | In-memory current-state cache only; no direct DB writes — persistence is `TelemetryPersistenceService`'s job |
 | `backend/Controllers/TelemetryIngestController.cs` | ASP.NET | Validates payload; never calls `SaveChangesAsync` synchronously — only enqueues to the buffered writer |
 | `iiot-emitter/**` | INFRA | Outbound HTTP client only; must only use vehicle IDs sourced from `GET /api/vehicles/metadata` |
+| `backend/Services/HubConnectionTracker.cs` | ASP.NET | Tracks active `/fleethub` SignalR connection count/state in memory; read by `/api/health/signalr`; no DB access |
+| `backend/Services/TelemetryRetentionService.cs` | ASP.NET | Background service that deletes `telemetry_snapshots` rows older than `TelemetryRetention__RetentionDays`; batches deletes by `TelemetryRetention__DeleteBatchSize`; does not create new tables |
+| `frontend/components/ConnectionStatus.tsx` | NEXT | Client component; renders SignalR connection-status indicator in the dashboard header; polls/consumes `/api/health/signalr` or the client SignalR connection state, not both as sources of truth |
 
 ---
 
@@ -288,10 +291,12 @@ docker-compose up --build
 
 ## Current Sprint
 
-**Active:** Sprint 02 — `docs/sprints/sprint-02.md`
-**Branch:** `claude/sprint-02-live-iiot-telemetry-ingestion`
-**Note:** Sprint 02 replaces the dummy in-memory simulation with a real Python IIoT emitter (10,000 simulated vehicles) posting live telemetry to a new backend ingestion endpoint, persisted to PostgreSQL and rebroadcast to the dashboard over the existing SignalR hub. Adds a `db` Dockerfile and an `iiot-emitter` Dockerfile, and a full DOCKER_README.md rewrite.
+**Active:** Sprint 03 — `docs/sprints/sprint-03.md`
+**Branch:** `claude/sprint-03-telemetry-reliability-hardening`
+**Note:** Sprint 03 adds SignalR connection-status visibility (backend `HubConnectionTracker` + `/api/health/signalr`, frontend header indicator), a client-side "inactive vehicle" concept (sustained speed=0 for 60s+, does not change the server-side `status` enum), and a telemetry retention/cleanup background service closing ADR-001 action item #5. It is the first of three themed sprints split from a larger 9-task operator brief (2026-07-13) — see `docs/sprints/BACKLOG.md` for Sprint 04 (UX/search) and Sprint 05 (infra/docs) scope.
 
-**Previous:** Sprint 01 — `docs/sprints/archive/sprint-01.md` (infrastructure & application setup — Swagger, EF Core + PostgreSQL, Docker Compose)
+**Previous:** Sprint 02 — `docs/sprints/sprint-02.md` (live IIoT telemetry ingestion — Python emitter, PostgreSQL persistence, SignalR rebroadcast; all tasks `[x]` but not yet moved to `archive/` — Sprint 02's own ARCH-002 sprint-end wrap-up was not fully run)
+
+**Roadmap:** `docs/sprints/BACKLOG.md` — Sprint 04 (editable vehicle/driver fields, search, UI polish, focused view) and Sprint 05 (CI fix, project documentation), scoped but not yet authored as full sprint files.
 
 > To start a new sprint: invoke the `sprint` skill (`.claude/skills/sprint/SKILL.md`). The skill copies `docs/sprints/archive/TEMPLATE.md`, fills every task block, registers the file here, and never branches from anything other than `origin/main`.
