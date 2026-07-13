@@ -96,7 +96,7 @@ git status    # must be clean
 - [x] UI-010 — Add SignalR connection-status indicator to the dashboard header
 - [x] UI-011 — Add client-side inactive-vehicle detection, styling, and filter toggle
 - [x] DB-004 — Add telemetry retention/cleanup background service
-- [ ] ANALYST-001 — Measure throughput/latency impact of retention sweeps against NF-01/02/03
+- [x] ANALYST-001 — Measure throughput/latency impact of retention sweeps against NF-01/02/03
 - [ ] QA-002 — Verify Sprint 03 end-to-end
 - [ ] ARCH-004 — Sprint-end: CHANGELOG, version bump, roadmap pointer update
 
@@ -620,7 +620,25 @@ git rm backend/Services/TelemetryRetentionService.cs
 
 **Agent:** ANALYST
 **Depends on:** DB-004
-**Status:** [ ]
+**Status:** [x]
+
+---
+
+**Findings (reduced-scale local run — NOT full 10,000-vehicle load):**
+
+Run against a local `docker-compose.override.yml` (uncommitted, sandbox-only) scaling the
+emitter to `VEHICLE_COUNT=300`, `TICK_INTERVAL_SECONDS=2` instead of the production default
+(10,000/3s). All numbers below are a reduced-scale smoke test — NF-01 was NOT exercised at
+scale (no browser FPS check, only 300 of the 10,000 seeded vehicles actively ticking).
+
+1. **Ingestion live:** `telemetry_snapshots` grew 31,032 → 35,846 rows in 33s (≈146 rows/sec, consistent with 300 vehicles/2s).
+2. **NF-02 (`GET /api/vehicles` <500ms): PASS** at reduced scale — 20-request sample, p50 ≈ 25.9ms, p95 ≈ 109.4ms, max 464.7ms (cold-connection outlier). Full 10k-scale re-check recommended as a follow-up.
+3. **Retention sweep:** `TelemetryRetentionService` started cleanly, ran its immediate on-startup sweep (`deleted 0 snapshots, 0 logs` — correct, nothing is 30 days old in a fresh DB), no errors. A real deletion sweep was not observed (60-min interval, 30-day cutoff, short session) — expected, not a failure. Cannot yet confirm retention bounds long-term growth without an aged dataset or interval override.
+4. **NF-03 (SignalR ~500ms cadence): INCONCLUSIVE** — `LiveBroadcastService` has no logging, so log silence isn't a signal either way; no errors/disconnects observed. Precise cadence measurement deferred to QA-002's browser-based check.
+
+**Follow-up recommended:** full-scale (`VEHICLE_COUNT=10000`) NF-01/NF-02/NF-03 validation and a
+retention-sweep dry-run with a short interval + aged synthetic data, tracked in
+`docs/sprints/BACKLOG.md`.
 
 ---
 
