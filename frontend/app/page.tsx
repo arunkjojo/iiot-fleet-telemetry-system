@@ -3,7 +3,9 @@ import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import Sidebar from '../components/Sidebar'
 import MapView from '../components/MapView'
 import DetailPanel from '../components/DetailPanel'
+import Header from '../components/Header'
 import type { Vehicle, VehicleStatus } from '../types/vehicle'
+import type { SignalRConnectionStatus } from '../components/ConnectionStatus'
 import { useFilterStore } from '../store/useFilterStore'
 import * as signalR from '@microsoft/signalr'
 import { useNotificationStore } from '../store/useNotificationStore'
@@ -16,6 +18,7 @@ export default function Page() {
   const [selected, setSelected] = useState<Vehicle | null>(null)
   const addNotif = useNotificationStore((s) => s.add)
   const [toast, setToast] = useState<{ id: string; message: string; level: string } | null>(null)
+  const [connectionStatus, setConnectionStatus] = useState<SignalRConnectionStatus>('disconnected')
   const vehiclesMap = useRef<Map<string, Vehicle>>(new Map())
   const connRef = useRef<signalR.HubConnection | null>(null)
 
@@ -117,10 +120,16 @@ export default function Page() {
           setVehicles(Array.from(vehiclesMap.current.values()))
         })
 
+        conn.onreconnecting(() => setConnectionStatus('reconnecting'))
+        conn.onreconnected(() => setConnectionStatus('connected'))
+        conn.onclose(() => setConnectionStatus('disconnected'))
+
         await conn.start()
         connRef.current = conn
+        setConnectionStatus('connected')
       } catch (e) {
         // ignore connection errors; UI remains functional with initial data
+        setConnectionStatus('disconnected')
         console.error(e)
       }
     }
@@ -134,6 +143,7 @@ export default function Page() {
 
   return (
     <div className="h-screen flex flex-col">
+      <Header connectionStatus={connectionStatus} />
       <Toast item={toast} onDone={() => setToast(null)} />
 
       <div className="flex flex-1 overflow-hidden relative">

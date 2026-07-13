@@ -93,7 +93,7 @@ git status    # must be clean
 
 - [x] ARCH-003 — Register Sprint 03 architecture decisions in AGENTS.md and REQUIREMENTS.md
 - [x] BE-005 — Add SignalR connection tracking and `/api/health/signalr` endpoint
-- [ ] UI-010 — Add SignalR connection-status indicator to the dashboard header
+- [x] UI-010 — Add SignalR connection-status indicator to the dashboard header
 - [ ] UI-011 — Add client-side inactive-vehicle detection, styling, and filter toggle
 - [x] DB-004 — Add telemetry retention/cleanup background service
 - [ ] ANALYST-001 — Measure throughput/latency impact of retention sweeps against NF-01/02/03
@@ -307,7 +307,25 @@ git rm backend/Services/HubConnectionTracker.cs backend/Controllers/HealthContro
 
 **Agent:** NEXT
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
+
+---
+
+**Execution note (scope correction found during implementation):** `Header` was rendered in
+`frontend/app/layout.tsx` (a server component ancestor of `page.tsx`, not a descendant) — there
+was no way to prop-drill `connectionStatus` from `page.tsx` down into it as originally scoped,
+short of the Context/new-store approach this task explicitly ruled out. Fix: `<Header />` was
+moved out of `layout.tsx` into `page.tsx` (now passed live `connectionStatus`) and into
+`frontend/app/system-design/page.tsx` (static, defaults to `'disconnected'`) so that route keeps
+its header. `frontend/app/layout.tsx` and `frontend/app/system-design/page.tsx` were touched in
+addition to the two files originally listed below.
+
+**Also found:** `frontend/package.json` has no `lint` or `type-check` script, and no ESLint
+config/dependency exists anywhere in `frontend/` — despite `frontend/AGENTS.md` and
+`REQUIREMENTS.md` NF-13/NF-14 documenting both as required pre-commit gates. This is a
+pre-existing gap, not introduced by this task. Verified type safety via `npx tsc --noEmit`
+(zero errors) instead; lint could not be verified at all. Flagged to the user; not fixed here
+(out of scope for UI-010).
 
 ---
 
@@ -347,12 +365,12 @@ git rm backend/Services/HubConnectionTracker.cs backend/Controllers/HealthContro
 
 **Sub-task breakdown:**
 
-- [ ] Create `ConnectionStatus.tsx` (dot + label, color per status)
-- [ ] Add `connectionStatus` state to `page.tsx`, default `'disconnected'`
-- [ ] Wire `conn.onreconnecting(() => setConnectionStatus('reconnecting'))`, `conn.onreconnected(() => setConnectionStatus('connected'))`, `conn.onclose(() => setConnectionStatus('disconnected'))`
-- [ ] Set `connectionStatus` to `'connected'` immediately after `await conn.start()` resolves
-- [ ] Pass `connectionStatus` as a prop into `<Header />`; render `<ConnectionStatus status={connectionStatus} />` in `Header.tsx`
-- [ ] Run `npm run type-check && npm run lint` — zero errors/warnings
+- [x] Create `ConnectionStatus.tsx` (dot + label, color per status)
+- [x] Add `connectionStatus` state to `page.tsx`, default `'disconnected'`
+- [x] Wire `conn.onreconnecting(() => setConnectionStatus('reconnecting'))`, `conn.onreconnected(() => setConnectionStatus('connected'))`, `conn.onclose(() => setConnectionStatus('disconnected'))`
+- [x] Set `connectionStatus` to `'connected'` immediately after `await conn.start()` resolves
+- [x] Pass `connectionStatus` as a prop into `<Header />`; render `<ConnectionStatus status={connectionStatus} />` in `Header.tsx`
+- [x] Run `npx tsc --noEmit` — zero errors (`npm run type-check`/`npm run lint` scripts do not exist in `package.json` — pre-existing gap, see Execution note above)
 
 ---
 

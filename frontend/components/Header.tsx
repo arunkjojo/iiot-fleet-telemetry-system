@@ -3,9 +3,14 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import { Satellite, Bell } from 'lucide-react'
 import NotificationModal from './NotificationModal'
+import ConnectionStatus, { type SignalRConnectionStatus } from './ConnectionStatus'
 import { useNotificationStore } from '../store/useNotificationStore'
 
-export default function Header() {
+type Props = {
+  connectionStatus?: SignalRConnectionStatus
+}
+
+export default function Header({ connectionStatus = 'disconnected' }: Props) {
   const [notifOpen, setNotifOpen] = useState(false)
 
   const unread = useNotificationStore.getState().notifications.filter(n => !n.read).length
@@ -22,6 +27,8 @@ export default function Header() {
 
         <div className="flex gap-3 items-center">
           <Link href="/system-design" className="text-sm text-primary">System Design</Link>
+
+          <ConnectionStatus status={connectionStatus} />
 
           <div className="relative">
             <button aria-label="notifications" onClick={() => { setNotifOpen(true); }} className="text-white p-2 rounded hover:bg-white/5">
