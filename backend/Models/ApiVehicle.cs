@@ -15,4 +15,5 @@ public class ApiVehicle
     [JsonPropertyName("lat")] public double Lat { get; set; }
     [JsonPropertyName("lng")] public double Lng { get; set; }
     [JsonPropertyName("displayNumber")] public string DisplayNumber { get; set; } = string.Empty;
+    [JsonPropertyName("lastSeenAtUtc")] public DateTime LastSeenAtUtc { get; set; }
 }

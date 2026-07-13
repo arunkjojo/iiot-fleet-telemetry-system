@@ -28,6 +28,19 @@ public class VehiclesController : ControllerBase
     // false (default) keeps reading from TelemetrySimulationService.Vehicles, unchanged from Sprint 01.
     private bool UseLiveTelemetry => _config.GetValue<bool>("USE_LIVE_TELEMETRY", false);
 
+    // BE-007: live mode reflects the last time this vehicle was upserted into ILiveTelemetryStore
+    // (falls back to "now" if the vehicle predates this field existing in the store); dummy mode
+    // has no meaningful staleness concept — the simulation ticks continuously — so it always
+    // reports "now".
+    private DateTime GetLastSeenUtc(string id)
+    {
+        if (UseLiveTelemetry && _liveStore.TryGetLastSeenUtc(id, out var lastSeen))
+        {
+            return lastSeen;
+        }
+        return DateTime.UtcNow;
+    }
+
     [HttpGet("{id}")]
     public IActionResult Get(string id)
     {
@@ -55,7 +68,8 @@ public class VehiclesController : ControllerBase
                 CargoLoad = v.CargoLoad,
                 Lat = v.Latitude,
                 Lng = v.Longitude,
-                DisplayNumber = v.DisplayNumber
+                DisplayNumber = v.DisplayNumber,
+                LastSeenAtUtc = GetLastSeenUtc(id)
             };
 
             // return recent logs from the active data source (live store or simulation service)
@@ -85,7 +99,8 @@ public class VehiclesController : ControllerBase
             engineHealth = v.EngineHealth,
             lat = v.Latitude,
             lng = v.Longitude,
-            displayNumber = v.DisplayNumber
+            displayNumber = v.DisplayNumber,
+            lastSeenAtUtc = GetLastSeenUtc(v.Id)
         }).ToArray();
 
         return Ok(list);
@@ -176,7 +191,8 @@ public class VehiclesController : ControllerBase
             CargoLoad = v.CargoLoad,
             Lat = v.Latitude,
             Lng = v.Longitude,
-            DisplayNumber = v.DisplayNumber
+            DisplayNumber = v.DisplayNumber,
+            LastSeenAtUtc = GetLastSeenUtc(id)
         };
 
         return Ok(api);

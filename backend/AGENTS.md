@@ -62,8 +62,8 @@ backend/
 
 | Method | Route | Response | Description |
 |--------|-------|----------|-------------|
-| GET | `/api/vehicles` | `ApiVehicle[]` | All 10,000 vehicles with current telemetry |
-| GET | `/api/vehicles/{id}` | `{ vehicle, logs }` | Single vehicle detail + last 50 log entries |
+| GET | `/api/vehicles` | `ApiVehicle[]` | All 10,000 vehicles with current telemetry, including `lastSeenAtUtc` (BE-007) — live mode: last `ILiveTelemetryStore.Upsert` time for that vehicle (falls back to "now" if not tracked); dummy mode: always current server time |
+| GET | `/api/vehicles/{id}` | `{ vehicle, logs }` | Single vehicle detail + last 50 log entries; `vehicle` includes `lastSeenAtUtc` (BE-007), same rules as `GET /api/vehicles` |
 | GET | `/api/vehicles/{vehicleId}/logs` | `VehicleLog[]` | Last 50 log entries for a vehicle |
 | GET | `/api/vehicles/metadata` | `{ id, driver }[]` | Static metadata list for all 10k vehicles |
 | POST | `/api/telemetry/ingest` | `202 { status, vehicleId, computedStatus }` | Live telemetry ingestion (BE-002) — validates payload, computes status via `VehicleStatusEvaluator`, upserts `ILiveTelemetryStore`, enqueues a buffered/batched write via `ITelemetryIngestQueue`. Only registered when `USE_LIVE_TELEMETRY=true`. `400` on missing `vehicleId` or out-of-range numeric fields. |

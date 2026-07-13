@@ -94,7 +94,7 @@ git status    # must be clean
 - [x] DB-005 — Add `display_number` column to `vehicles` (migration + entity + seeder)
 - [x] BE-006 — Add `PATCH /api/vehicles/{id}` endpoint (driver name + display number)
 - [ ] UI-012 — Add vehicle edit UI to DetailPanel
-- [ ] BE-007 — Expose `lastSeenAtUtc` per vehicle
+- [x] BE-007 — Expose `lastSeenAtUtc` per vehicle
 - [ ] UI-013 — Apply 24h-activity filter to sidebar search
 - [ ] UI-014 — Add default-on focused view (max 10 vehicles + "Show all" toggle)
 - [ ] UI-015 — Responsive/overflow audit and fix
@@ -581,7 +581,7 @@ git checkout -- frontend/types/vehicle.ts frontend/components/DetailPanel.tsx fr
 
 **Agent:** ASP.NET
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -623,10 +623,10 @@ None.
 
 **Sub-task breakdown:**
 
-- [ ] Add `_lastSeenUtc` dictionary and `TryGetLastSeenUtc` to `LiveTelemetryStore`/`ILiveTelemetryStore`, updated inside `Upsert`
-- [ ] Add `LastSeenAtUtc` to `ApiVehicle`
-- [ ] Populate it in `VehiclesController.Get`/`.List` (branching on `UseLiveTelemetry`, same pattern as every other field)
-- [ ] Run `dotnet build FleetTelemetry.csproj` — zero errors
+- [x] Add `_lastSeenUtc` dictionary and `TryGetLastSeenUtc` to `LiveTelemetryStore`/`ILiveTelemetryStore`, updated inside `Upsert`
+- [x] Add `LastSeenAtUtc` to `ApiVehicle`
+- [x] Populate it in `VehiclesController.Get`/`.List`/`.Patch` (branching on `UseLiveTelemetry`, same pattern as every other field)
+- [x] Run `dotnet build FleetTelemetry.csproj` — zero errors
 
 ---
 
