@@ -95,7 +95,7 @@ git status    # must be clean
 - [x] BE-006 — Add `PATCH /api/vehicles/{id}` endpoint (driver name + display number)
 - [x] UI-012 — Add vehicle edit UI to DetailPanel
 - [x] BE-007 — Expose `lastSeenAtUtc` per vehicle
-- [ ] UI-013 — Apply 24h-activity filter to sidebar search
+- [x] UI-013 — Apply 24h-activity filter to sidebar search
 - [ ] UI-014 — Add default-on focused view (max 10 vehicles + "Show all" toggle)
 - [ ] UI-015 — Responsive/overflow audit and fix
 - [ ] QA-003 — Verify Sprint 04 end-to-end
@@ -668,7 +668,7 @@ git checkout -- backend/Services/LiveTelemetryStore.cs backend/Models/ApiVehicle
 
 **Agent:** NEXT
 **Depends on:** BE-007
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -709,11 +709,11 @@ None.
 
 **Sub-task breakdown:**
 
-- [ ] Add `lastSeenAtUtc?: string` to `Vehicle` type
-- [ ] Map it through in `page.tsx`'s initial-load normalization
-- [ ] In `Sidebar.tsx`'s `filtered` memo, after the existing token-search/status-filter logic, add: `if (q) { out = out.filter(v => !v.lastSeenAtUtc || (Date.now() - new Date(v.lastSeenAtUtc).getTime()) <= 24 * 60 * 60 * 1000) }` — only applied when there's an active search query, not on the unfiltered default list
-- [ ] Add a small "last seen" relative-time label to matched rows when a search query is active (e.g. "2m ago", "5h ago") — reuse the existing row layout, add as a third line or inline note
-- [ ] Run `npx tsc --noEmit` — zero errors
+- [x] Add `lastSeenAtUtc?: string` to `Vehicle` type
+- [x] Map it through in `page.tsx`'s initial-load normalization
+- [x] In `Sidebar.tsx`'s `filtered` memo, after the existing token-search/status-filter logic, add the 24h exclusion, only applied when there's an active search query
+- [x] Add a small "last seen" relative-time label to matched rows when a search query is active
+- [x] Run `npx tsc --noEmit` — zero errors
 
 ---
 

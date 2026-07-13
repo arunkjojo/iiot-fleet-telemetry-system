@@ -70,7 +70,8 @@ export default function Page() {
           cargoLoad: v.cargoLoad ?? v.cargoLoad ?? 0,
           engineHealth: v.engineHealth ?? v.engineHealth ?? 100,
           lat: v.lat ?? v.latitude ?? 0,
-          lng: v.lng ?? v.longitude ?? 0
+          lng: v.lng ?? v.longitude ?? 0,
+          lastSeenAtUtc: v.lastSeenAtUtc
         }))
 
         if (!mounted) return

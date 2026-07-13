@@ -134,6 +134,14 @@ function Sidebar({ vehicles, onSelect, selectedId }: Props) {
       out = out.filter((v) => !v.inactive)
     }
 
+    // apply 24h-activity filter — only when a search query is active (Sprint 04 UI-013,
+    // decision #3). Browsing the unfiltered/status-filtered list is unaffected. A missing
+    // lastSeenAtUtc is treated as "don't exclude" (defensive default).
+    if (q) {
+      const DAY_MS = 24 * 60 * 60 * 1000
+      out = out.filter((v) => !v.lastSeenAtUtc || (Date.now() - new Date(v.lastSeenAtUtc).getTime()) <= DAY_MS)
+    }
+
     // sort matches by status priority so warnings are shown at top
     return out.sort(compare)
   }, [query, tokenIndex, idMap, vehicles, JSON.stringify(selectedStatuses), hideInactive])
@@ -158,6 +166,21 @@ function Sidebar({ vehicles, onSelect, selectedId }: Props) {
         {text.slice(qi + q.length)}
       </>
     )
+  }, [])
+
+  // Small inline "last seen" relative-time formatter — no new date library dependency.
+  // Only rendered on rows when a search query is active (Sprint 04 UI-013).
+  const formatLastSeen = useCallback((iso?: string) => {
+    if (!iso) return null
+    const diffMs = Date.now() - new Date(iso).getTime()
+    if (Number.isNaN(diffMs)) return null
+    if (diffMs < 60_000) return 'just now'
+    const mins = Math.floor(diffMs / 60_000)
+    if (mins < 60) return `${mins}m ago`
+    const hours = Math.floor(mins / 60)
+    if (hours < 24) return `${hours}h ago`
+    const days = Math.floor(hours / 24)
+    return `${days}d ago`
   }, [])
 
   const statusColor = (s: string) => {
@@ -267,6 +290,9 @@ function Sidebar({ vehicles, onSelect, selectedId }: Props) {
                       )}
                     </span>
                     <span className="text-xs text-slate-400">{highlight(`${v.model} • ${v.driver}`, query)}</span>
+                    {query && v.lastSeenAtUtc && (
+                      <span className="text-[10px] text-slate-500">Last seen {formatLastSeen(v.lastSeenAtUtc)}</span>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

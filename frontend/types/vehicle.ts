@@ -27,6 +27,10 @@ export type Vehicle = {
   // (see PATCH /api/vehicles/{id}, Sprint 04 UI-012)
   displayNumber?: string
 
+  // ISO timestamp of the vehicle's last telemetry activity, as returned by the API
+  // (live mode: last ingest time; dummy mode: always "now" — see BE-007/UI-013).
+  lastSeenAtUtc?: string
+
   // optional diagnostic fields (provided separately via API / SignalR)
 
   // client-computed only — not sent by the backend. True when speedKph has been
