@@ -40,6 +40,8 @@ function Sidebar({ vehicles, onSelect, selectedId }: Props) {
   const toggleStatus = useFilterStore((s) => s.toggleStatus)
   const hideInactive = useFilterStore((s) => s.hideInactive)
   const toggleHideInactive = useFilterStore((s) => s.toggleHideInactive)
+  const focusedView = useFilterStore((s) => s.focusedView)
+  const toggleFocusedView = useFilterStore((s) => s.toggleFocusedView)
 
   // status priority used across the component (lower = higher priority)
   const STATUS_PRIORITY = ['danger', 'warning', 'offline', 'active'] as const
@@ -146,6 +148,16 @@ function Sidebar({ vehicles, onSelect, selectedId }: Props) {
     return out.sort(compare)
   }, [query, tokenIndex, idMap, vehicles, JSON.stringify(selectedStatuses), hideInactive])
 
+  // Focused View (Sprint 04 UI-014): default-on cap to the top 10 highest-priority
+  // vehicles (status/hideInactive-filtered, priority-sorted — see `filtered` above).
+  // Applied as a final slice, AFTER status filtering, hide-inactive filtering, and
+  // priority sorting, so the 10 shown are genuinely the highest-priority ones.
+  // Does NOT apply while a search query is active (decision #4 / F-34) — search
+  // results should never be hidden behind the cap.
+  const visible = useMemo(() => {
+    if (focusedView && !query) return filtered.slice(0, 10)
+    return filtered
+  }, [filtered, focusedView, query])
 
   // debounce inputValue -> query so heavy lookups don't run on every keystroke
   useEffect(() => {
@@ -195,7 +207,7 @@ function Sidebar({ vehicles, onSelect, selectedId }: Props) {
   // Virtualizer: only render visible rows. This keeps memory and paint costs stable for 10k+ items.
   const rowHeight = 72
   const virtualizer = useVirtualizer({
-    count: filtered.length,
+    count: visible.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
     overscan: 6,
@@ -206,7 +218,7 @@ function Sidebar({ vehicles, onSelect, selectedId }: Props) {
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      setFocusedIdx((s) => Math.min(filtered.length - 1, Math.max(0, s + 1)))
+      setFocusedIdx((s) => Math.min(visible.length - 1, Math.max(0, s + 1)))
       return
     }
     if (e.key === 'ArrowUp') {
@@ -216,9 +228,9 @@ function Sidebar({ vehicles, onSelect, selectedId }: Props) {
     }
     if (e.key === 'Enter') {
       e.preventDefault()
-      if (focusedIdx >= 0 && focusedIdx < filtered.length) onSelect(filtered[focusedIdx])
+      if (focusedIdx >= 0 && focusedIdx < visible.length) onSelect(visible[focusedIdx])
     }
-  }, [filtered, focusedIdx, onSelect])
+  }, [visible, focusedIdx, onSelect])
 
   return (
     <aside className="w-80 flex flex-col border-r border-border-dark bg-surface-dark z-10 shrink-0">
@@ -268,12 +280,20 @@ function Sidebar({ vehicles, onSelect, selectedId }: Props) {
             />
             Hide Inactive
           </label>
+          <button
+            type="button"
+            onClick={() => toggleFocusedView()}
+            className="flex items-center gap-2 text-sm mt-2 px-3 py-1 rounded-md text-slate-300 hover:bg-white/5 w-fit cursor-pointer select-none"
+          >
+            <span className="w-2.5 h-2.5 rounded-full accent-primary bg-primary" style={{ opacity: focusedView ? 1 : 0.25 }} />
+            {focusedView ? 'Focused View (Top 10)' : `Show All ${vehicles.length.toLocaleString()}`}
+          </button>
         </div>
       </div>
       <div ref={parentRef} tabIndex={0} onKeyDown={handleKeyDown} className="flex-1 hide-scrollbar" style={{ overflowY: 'auto' }}>
         <div style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }}>
           {virtualItems.map((virtualRow: { index: number; start: any }) => {
-            const v = filtered[virtualRow.index]
+            const v = visible[virtualRow.index]
             const isSelected = selectedId === v.id
             const isFocused = focusedIdx === virtualRow.index
             return (

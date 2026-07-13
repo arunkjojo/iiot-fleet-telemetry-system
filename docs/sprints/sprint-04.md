@@ -96,7 +96,7 @@ git status    # must be clean
 - [x] UI-012 — Add vehicle edit UI to DetailPanel
 - [x] BE-007 — Expose `lastSeenAtUtc` per vehicle
 - [x] UI-013 — Apply 24h-activity filter to sidebar search
-- [ ] UI-014 — Add default-on focused view (max 10 vehicles + "Show all" toggle)
+- [x] UI-014 — Add default-on focused view (max 10 vehicles + "Show all" toggle)
 - [ ] UI-015 — Responsive/overflow audit and fix
 - [ ] QA-003 — Verify Sprint 04 end-to-end
 - [ ] ARCH-006 — Sprint-end: CHANGELOG, version bump, roadmap pointer update
@@ -757,7 +757,7 @@ git checkout -- frontend/types/vehicle.ts frontend/app/page.tsx frontend/compone
 
 **Agent:** NEXT
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -796,11 +796,11 @@ None.
 
 **Sub-task breakdown:**
 
-- [ ] Add `focusedView`/`toggleFocusedView` to `useFilterStore.ts`, default `true`
-- [ ] In `Sidebar.tsx`'s `filtered` memo (or immediately after it, before virtualization), when `focusedView && !query`, take only the first 10 entries of the already-sorted/filtered list
-- [ ] Add a toggle control (e.g. a labeled switch/button: "Focused View (Top 10)" / "Show All 10,000") near the existing "Hide Inactive" checkbox
-- [ ] When a search query is active, focused view's 10-item cap does NOT apply — search results show all matches (search already narrows the list meaningfully; capping search results at 10 would hide the vehicle the operator is looking for)
-- [ ] Run `npx tsc --noEmit` — zero errors
+- [x] Add `focusedView`/`toggleFocusedView` to `useFilterStore.ts`, default `true`
+- [x] In `Sidebar.tsx`'s `filtered` memo (or immediately after it, before virtualization), when `focusedView && !query`, take only the first 10 entries of the already-sorted/filtered list — implemented as a derived `visible` memo, with the virtualizer/keyboard-nav/row-lookup all switched from `filtered` to `visible`
+- [x] Add a toggle control ("Focused View (Top 10)" / "Show All {N}") near the existing "Hide Inactive" checkbox
+- [x] When a search query is active, focused view's 10-item cap does NOT apply
+- [x] Run `npx tsc --noEmit` — zero errors
 
 ---
 

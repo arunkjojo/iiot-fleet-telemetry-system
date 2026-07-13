@@ -8,6 +8,8 @@ type FilterState = {
   toggleStatus: (s: VehicleStatus) => void
   hideInactive: boolean
   toggleHideInactive: () => void
+  focusedView: boolean
+  toggleFocusedView: () => void
 }
 
 export const useFilterStore = create<FilterState>((set, get) => ({
@@ -28,5 +30,7 @@ export const useFilterStore = create<FilterState>((set, get) => ({
     set({ selectedStatuses: arr })
   },
   hideInactive: false,
-  toggleHideInactive: () => set({ hideInactive: !get().hideInactive })
+  toggleHideInactive: () => set({ hideInactive: !get().hideInactive }),
+  focusedView: true,
+  toggleFocusedView: () => set({ focusedView: !get().focusedView })
 }))
