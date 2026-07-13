@@ -19,6 +19,10 @@ public class VehicleEntity
     [MaxLength(50)]
     public string Model { get; set; } = string.Empty;
 
+    [Column("display_number")]
+    [MaxLength(30)]
+    public string? DisplayNumber { get; set; }
+
     [Column("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

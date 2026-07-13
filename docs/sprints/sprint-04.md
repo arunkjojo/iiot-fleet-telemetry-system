@@ -91,7 +91,7 @@ git status    # must be clean
 
 - [x] ARCH-005 — Register Sprint 04 architecture decisions in AGENTS.md and REQUIREMENTS.md
 - [x] BE-008 — Fix dummy-mode vehicle ID generation to be meaningful/consistent
-- [ ] DB-005 — Add `display_number` column to `vehicles` (migration + entity + seeder)
+- [x] DB-005 — Add `display_number` column to `vehicles` (migration + entity + seeder)
 - [ ] BE-006 — Add `PATCH /api/vehicles/{id}` endpoint (driver name + display number)
 - [ ] UI-012 — Add vehicle edit UI to DetailPanel
 - [ ] BE-007 — Expose `lastSeenAtUtc` per vehicle
@@ -295,7 +295,7 @@ git checkout -- backend/Services/TelemetrySimulationService.cs
 
 **Agent:** ASP.NET
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -337,12 +337,12 @@ The editable-fields feature (BE-006/UI-012) needs a place to store an operator-e
 
 **Sub-task breakdown:**
 
-- [ ] Add `DisplayNumber` to `VehicleEntity.cs`
-- [ ] Update `DbSeeder.cs` to populate it
-- [ ] Run `dotnet ef migrations add AddVehicleDisplayNumber` from `backend/`
-- [ ] Inspect the generated migration file — confirm it only adds the one nullable column, nothing else
-- [ ] Run `dotnet build FleetTelemetry.csproj` — zero errors
-- [ ] Note in the task: `dotnet ef database update` is applied automatically on next app startup (`Program.cs` already calls `db.Database.MigrateAsync()`), not run manually here — full apply + verification happens in QA-003 against the Docker stack
+- [x] Add `DisplayNumber` to `VehicleEntity.cs`
+- [x] Update `DbSeeder.cs` to populate it
+- [x] Run `dotnet ef migrations add AddVehicleDisplayNumber` from `backend/` (needed `DOTNET_ROLL_FORWARD=LatestMajor` to work around the sandbox's known host-runtime patch mismatch — migration output itself is generated from the model, unaffected by this)
+- [x] Inspect the generated migration file — confirmed it only adds `display_number VARCHAR(30)` nullable, nothing else (verified via both the migration file and the `FleetDbContextModelSnapshot.cs` diff)
+- [x] Run `dotnet build FleetTelemetry.csproj` — zero errors
+- [ ] `dotnet ef database update` — deferred to app startup against the Docker stack in QA-003, per plan
 
 ---
 

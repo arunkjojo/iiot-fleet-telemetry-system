@@ -178,6 +178,7 @@ CREATE TABLE vehicles (
     id VARCHAR(20) PRIMARY KEY,
     driver_name VARCHAR(100) NOT NULL,
     model VARCHAR(50) NOT NULL,
+    display_number VARCHAR(30),  -- nullable; operator-editable "fleet number" distinct from id (DB-005, Sprint 04); seeded as FL-{i:D5} by DbSeeder, edited via PATCH /api/vehicles/{id} (BE-006)
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
