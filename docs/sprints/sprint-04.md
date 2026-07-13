@@ -92,7 +92,7 @@ git status    # must be clean
 - [x] ARCH-005 — Register Sprint 04 architecture decisions in AGENTS.md and REQUIREMENTS.md
 - [x] BE-008 — Fix dummy-mode vehicle ID generation to be meaningful/consistent
 - [x] DB-005 — Add `display_number` column to `vehicles` (migration + entity + seeder)
-- [ ] BE-006 — Add `PATCH /api/vehicles/{id}` endpoint (driver name + display number)
+- [x] BE-006 — Add `PATCH /api/vehicles/{id}` endpoint (driver name + display number)
 - [ ] UI-012 — Add vehicle edit UI to DetailPanel
 - [ ] BE-007 — Expose `lastSeenAtUtc` per vehicle
 - [ ] UI-013 — Apply 24h-activity filter to sidebar search
@@ -389,7 +389,7 @@ git checkout -- backend/Data/Entities/VehicleEntity.cs backend/Data/DbSeeder.cs 
 
 **Agent:** ASP.NET
 **Depends on:** DB-005
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -435,12 +435,12 @@ No endpoint currently allows editing a vehicle's driver name or (new) display nu
 
 **Sub-task breakdown:**
 
-- [ ] Add `DisplayNumber` to `Vehicle.cs` (`[Key(11)]`) and `ApiVehicle.cs`
-- [ ] Create `PatchVehicleRequest.cs`
-- [ ] Add `PATCH /api/vehicles/{id}` to `VehiclesController`: validate (400 if both fields absent/empty, 400 if either exceeds its DB column's max length — 100 for driver name, 30 for display number), look up the vehicle in the currently-active in-memory store (404 if not found), apply the provided field(s), persist to Postgres via `FleetDbContext` (`db.Vehicles.FindAsync(id)`, update, `SaveChangesAsync`), return `200 OK` with the updated `ApiVehicle`
-- [ ] Update `Get`/`List` actions to map `DisplayNumber` into `ApiVehicle` alongside the existing fields
-- [ ] Run `dotnet build FleetTelemetry.csproj` — zero errors
-- [ ] Manually PATCH a vehicle and confirm both the Postgres row and a subsequent `GET` reflect the change
+- [x] Add `DisplayNumber` to `Vehicle.cs` (`[Key(11)]`) and `ApiVehicle.cs`
+- [x] Create `PatchVehicleRequest.cs`
+- [x] Add `PATCH /api/vehicles/{id}` to `VehiclesController`: validate (400 if both fields absent/empty, 400 if either exceeds its DB column's max length — 100 for driver name, 30 for display number), look up the vehicle in the currently-active in-memory store (404 if not found), apply the provided field(s), persist to Postgres via `FleetDbContext` (`db.Vehicles.FindAsync(id)`, update, `SaveChangesAsync`), return `200 OK` with the updated `ApiVehicle`
+- [x] Update `Get`/`List` actions to map `DisplayNumber` into `ApiVehicle` alongside the existing fields
+- [x] Run `dotnet build FleetTelemetry.csproj` — zero errors
+- [ ] Manually PATCH a vehicle and confirm both the Postgres row and a subsequent `GET` reflect the change — deferred to QA-003 (Docker stack); local curl testing blocked by the sandbox's known host runtime-patch mismatch
 
 ---
 

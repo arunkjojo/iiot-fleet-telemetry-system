@@ -14,4 +14,5 @@ public class ApiVehicle
     [JsonPropertyName("cargoLoad")] public int CargoLoad { get; set; }
     [JsonPropertyName("lat")] public double Lat { get; set; }
     [JsonPropertyName("lng")] public double Lng { get; set; }
+    [JsonPropertyName("displayNumber")] public string DisplayNumber { get; set; } = string.Empty;
 }

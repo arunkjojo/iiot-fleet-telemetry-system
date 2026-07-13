@@ -35,7 +35,8 @@ backend/
 │   ├── VehicleUpdate.cs            # SignalR broadcast payload (MessagePackObject)
 │   ├── ApiVehicle.cs               # REST response DTO (JsonPropertyName)
 │   ├── VehicleLog.cs               # Telemetry log entry
-│   └── TelemetryIngestRequest.cs   # POST /api/telemetry/ingest request DTO (camelCase JSON binding, BE-002)
+│   ├── TelemetryIngestRequest.cs   # POST /api/telemetry/ingest request DTO (camelCase JSON binding, BE-002)
+│   └── PatchVehicleRequest.cs      # PATCH /api/vehicles/{id} request DTO — DriverName?/DisplayNumber?, both optional (BE-006)
 ├── Services/
 │   ├── TelemetrySimulationService.cs  # BackgroundService — 10k vehicle simulation
 │   ├── VehicleStatusEvaluator.cs      # Static status evaluator (live-mode canonical rules, REQUIREMENTS.md 4.1)
@@ -67,6 +68,7 @@ backend/
 | GET | `/api/vehicles/metadata` | `{ id, driver }[]` | Static metadata list for all 10k vehicles |
 | POST | `/api/telemetry/ingest` | `202 { status, vehicleId, computedStatus }` | Live telemetry ingestion (BE-002) — validates payload, computes status via `VehicleStatusEvaluator`, upserts `ILiveTelemetryStore`, enqueues a buffered/batched write via `ITelemetryIngestQueue`. Only registered when `USE_LIVE_TELEMETRY=true`. `400` on missing `vehicleId` or out-of-range numeric fields. |
 | GET | `/api/health/signalr` | `{ connectedClients, lastEventAtUtc }` | SignalR connection health (BE-005) — reads `HubConnectionTracker`; always registered, works regardless of `USE_LIVE_TELEMETRY`. |
+| PATCH | `/api/vehicles/{id}` | `ApiVehicle` | Edit a vehicle's `driverName`/`displayNumber` (BE-006). Body: `{ driverName?, displayNumber? }` — at least one required (non-empty after trim), else `400`. `400` if `driverName` > 100 chars or `displayNumber` > 30 chars. `404` if `{id}` isn't found in the currently-active in-memory store. Mutates the in-memory `Vehicle` (`ILiveTelemetryStore` in live mode, `TelemetrySimulationService.Vehicles` in dummy mode) in place, then persists synchronously to the Postgres `vehicles` row via `FleetDbContext`. The `{id}` route parameter (primary key) is never mutated — the request body has no id field. |
 | WS | `/fleethub` | SignalR | Hub for `ReceiveFleetUpdate` broadcasts |
 
 ---

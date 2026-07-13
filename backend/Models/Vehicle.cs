@@ -16,4 +16,5 @@ public class Vehicle
     [Key(8)] public string Status { get; set; } = "active";
     [Key(9)] public int Temp { get; set; }
     [Key(10)] public int CargoLoad { get; set; }
+    [Key(11)] public string DisplayNumber { get; set; } = string.Empty;
 }
