@@ -33,14 +33,14 @@ Tracks unresolved items and sprints planned but not yet authored as full `docs/s
 
 | Brief Task | Summary | Notes |
 |-----------|---------|-------|
-| Task 7 | GitHub Actions Docker build failing: `.github/workflows/docker-image.yml:18` runs `docker build . --file Dockerfile` at the repo root, but no `Dockerfile` exists there — the 4 real Dockerfiles live under `backend/`, `frontend/`, `db/`, `iiot-emitter/`. Root cause already identified during Sprint 03 planning. | Fix: replace the single build step with a matrix strategy building all 4 service images from their actual paths. Small, low-risk, could be pulled forward and fixed standalone before Sprint 05 if the operator wants CI green sooner. |
+| Task 7 | ~~GitHub Actions Docker build failing~~ — **DONE**, pulled forward as a standalone fix (branch `claude/fix-docker-image-ci-workflow`, not merged via a sprint). `.github/workflows/docker-image.yml` now builds all 4 real service images (`db`, `backend`, `frontend`, `iiot-emitter`) via a matrix strategy instead of a nonexistent root `Dockerfile`. | No longer part of Sprint 05's scope. |
 | Task 9 | Comprehensive documentation: architecture, DevOps practices, AI-assisted workflow (Claude Code agents/skills), use case, onboarding | Operator confirmed: new `docs/PROJECT_OVERVIEW.md`, linked from `README.md`. |
 
 ---
 
 ## Notes
 
-- Sprint 03 (`docs/sprints/sprint-03.md`) covers Tasks 1, 3, 8 from the same brief (SignalR connection-status visibility, client-side inactive-vehicle detection, telemetry retention policy).
-- If the operator wants Task 7 (the CI fix) fixed immediately rather than waiting for Sprint 05, it is small enough to run as a standalone out-of-band fix — flag this to the user before Sprint 05 is authored.
+- Sprint 03 (`docs/sprints/archive/sprint-03.md`, merged to `main` via PR #2) covers Tasks 1, 3, 8 from the same brief (SignalR connection-status visibility, client-side inactive-vehicle detection, telemetry retention policy).
+- Task 7 (the CI fix) shipped as a standalone out-of-band fix, branch `claude/fix-docker-image-ci-workflow` — see the Sprint 05 table above.
 - `frontend/package.json` has no `lint`/`type-check` npm scripts and no ESLint config/dependency exists anywhere in `frontend/`, despite `frontend/AGENTS.md` and `REQUIREMENTS.md` NF-13/NF-14 documenting both as required pre-commit gates (found during Sprint 03's UI-010/UI-011). Every sprint's frontend verification commands assume these scripts exist and have not actually been runnable as written — needs a standalone fix (add the scripts + an ESLint config) before this gate can be enforced for real.
 - Sprint 03's ANALYST-001 ran against a reduced-scale local stack (`VEHICLE_COUNT=300`, not 10,000) due to sandbox constraints — NF-01 (10k vehicles, 60fps) and precise NF-03 (SignalR ~500ms cadence) were not validated at full production scale. A full-scale load test pass is recommended before relying on this sprint's NF-02 latency numbers at 10,000 vehicles.
