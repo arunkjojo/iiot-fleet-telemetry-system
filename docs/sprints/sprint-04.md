@@ -90,7 +90,7 @@ git status    # must be clean
 ## Task Index
 
 - [x] ARCH-005 — Register Sprint 04 architecture decisions in AGENTS.md and REQUIREMENTS.md
-- [ ] BE-008 — Fix dummy-mode vehicle ID generation to be meaningful/consistent
+- [x] BE-008 — Fix dummy-mode vehicle ID generation to be meaningful/consistent
 - [ ] DB-005 — Add `display_number` column to `vehicles` (migration + entity + seeder)
 - [ ] BE-006 — Add `PATCH /api/vehicles/{id}` endpoint (driver name + display number)
 - [ ] UI-012 — Add vehicle edit UI to DetailPanel
@@ -209,7 +209,7 @@ git checkout -- AGENTS.md docs/requirements/REQUIREMENTS.md
 
 **Agent:** ASP.NET
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -247,10 +247,10 @@ None.
 
 **Sub-task breakdown:**
 
-- [ ] Replace `MakeId()`'s body with `$"VEH-{i:D5}"` (or remove the local function entirely and inline the format at the call site, whichever is the smaller diff)
-- [ ] Confirm the seeding loop's index variable (`i`) is in scope at the ID-assignment call site
-- [ ] Run `dotnet build FleetTelemetry.csproj` — zero errors
-- [ ] Manually run in dummy mode and confirm `GET /api/vehicles` returns `VEH-00000`..`VEH-09999`-style IDs, not random strings
+- [x] Replace `MakeId()`'s body with `$"VEH-{i:D5}"` (or remove the local function entirely and inline the format at the call site, whichever is the smaller diff) — inlined at the call site, function removed entirely
+- [x] Confirm the seeding loop's index variable (`i`) is in scope at the ID-assignment call site
+- [x] Run `dotnet build FleetTelemetry.csproj` — zero errors
+- [ ] Manually run in dummy mode and confirm `GET /api/vehicles` returns `VEH-00000`..`VEH-09999`-style IDs, not random strings — deferred to QA-003 (Docker stack); local `dotnet run` blocked by the sandbox's known host runtime-patch mismatch
 
 ---
 
