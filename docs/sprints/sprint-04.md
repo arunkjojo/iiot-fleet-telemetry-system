@@ -89,7 +89,7 @@ git status    # must be clean
 
 ## Task Index
 
-- [ ] ARCH-005 — Register Sprint 04 architecture decisions in AGENTS.md and REQUIREMENTS.md
+- [x] ARCH-005 — Register Sprint 04 architecture decisions in AGENTS.md and REQUIREMENTS.md
 - [ ] BE-008 — Fix dummy-mode vehicle ID generation to be meaningful/consistent
 - [ ] DB-005 — Add `display_number` column to `vehicles` (migration + entity + seeder)
 - [ ] BE-006 — Add `PATCH /api/vehicles/{id}` endpoint (driver name + display number)
@@ -128,7 +128,7 @@ ARCH-005 (no deps)   BE-008 (no deps)   DB-005 (no deps)   BE-007 (no deps)   UI
 
 **Agent:** ARCH
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -167,10 +167,10 @@ None.
 
 **Sub-task breakdown:**
 
-- [ ] Add File Contracts row(s) for the PATCH endpoint's immutability rule
-- [ ] Update `## Current Sprint` to reference `sprint-04.md`
-- [ ] Add F-31, F-32, F-33, F-34 to `REQUIREMENTS.md` section 2.6 / 2.3 (as appropriate — F-33/F-34 are search/filtering, section 2.3; F-31/F-32 are API/data, section 2.6)
-- [ ] Update §5.1 and §6.1 with the new fields
+- [x] Add File Contracts row(s) for the PATCH endpoint's immutability rule
+- [x] Update `## Current Sprint` to reference `sprint-04.md` (already pointed at sprint-04.md prior to this task — left unchanged per instruction)
+- [x] Add F-31, F-32, F-33, F-34 to `REQUIREMENTS.md` section 2.6 / 2.3 (as appropriate — F-33/F-34 are search/filtering, section 2.3; F-31/F-32 are API/data, section 2.6)
+- [x] Update §5.1 and §6.1 with the new fields
 
 ---
 

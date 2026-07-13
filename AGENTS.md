@@ -159,6 +159,7 @@ These conventions are immutable. Agents MUST NOT break them.
 | `backend/Services/HubConnectionTracker.cs` | ASP.NET | Tracks active `/fleethub` SignalR connection count/state in memory; read by `/api/health/signalr`; no DB access |
 | `backend/Services/TelemetryRetentionService.cs` | ASP.NET | Background service that deletes `telemetry_snapshots` rows older than `TelemetryRetention__RetentionDays`; batches deletes by `TelemetryRetention__DeleteBatchSize`; does not create new tables |
 | `frontend/components/ConnectionStatus.tsx` | NEXT | Client component; renders SignalR connection-status indicator in the dashboard header; polls/consumes `/api/health/signalr` or the client SignalR connection state, not both as sources of truth |
+| `PATCH /api/vehicles/{id}` | ASP.NET | Edits `driver_name`/`display_number` only; MUST NEVER rename the `id` primary key (FK target for `telemetry_snapshots`/`vehicle_logs` and the exact string the Python emitter sources from `GET /api/vehicles/metadata`) |
 
 ---
 
