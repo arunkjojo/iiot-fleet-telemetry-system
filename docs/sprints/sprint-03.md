@@ -95,7 +95,7 @@ git status    # must be clean
 - [x] BE-005 — Add SignalR connection tracking and `/api/health/signalr` endpoint
 - [ ] UI-010 — Add SignalR connection-status indicator to the dashboard header
 - [ ] UI-011 — Add client-side inactive-vehicle detection, styling, and filter toggle
-- [ ] DB-004 — Add telemetry retention/cleanup background service
+- [x] DB-004 — Add telemetry retention/cleanup background service
 - [ ] ANALYST-001 — Measure throughput/latency impact of retention sweeps against NF-01/02/03
 - [ ] QA-002 — Verify Sprint 03 end-to-end
 - [ ] ARCH-004 — Sprint-end: CHANGELOG, version bump, roadmap pointer update
@@ -499,7 +499,7 @@ git checkout -- frontend/types/vehicle.ts frontend/app/page.tsx frontend/store/u
 
 **Agent:** ASP.NET
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -541,12 +541,12 @@ git checkout -- frontend/types/vehicle.ts frontend/app/page.tsx frontend/store/u
 
 **Sub-task breakdown:**
 
-- [ ] Create `TelemetryRetentionService.cs`: `BackgroundService` using `IServiceScopeFactory` to create a scoped `FleetDbContext` per sweep
-- [ ] Implement bounded-chunk deletion via EF Core 8 `ExecuteDeleteAsync` (or equivalent batched raw SQL) for both `telemetry_snapshots` and `vehicle_logs`, looping until a chunk returns 0 rows or `MaxChunksPerSweep` is hit
-- [ ] Add `TelemetryRetention` config section to `appsettings.json`
-- [ ] Register `TelemetryRetentionService` as hosted service in `Program.cs`, inside the `useLiveTelemetry` branch
-- [ ] Run `dotnet build` — zero errors
-- [ ] Manually insert a synthetic 40-day-old row, run a short-interval sweep, confirm it is deleted and recent rows are untouched
+- [x] Create `TelemetryRetentionService.cs`: `BackgroundService` using `IServiceScopeFactory` to create a scoped `FleetDbContext` per sweep
+- [x] Implement bounded-chunk deletion via EF Core 8 `ExecuteDeleteAsync` (or equivalent batched raw SQL) for both `telemetry_snapshots` and `vehicle_logs`, looping until a chunk returns 0 rows or `MaxChunksPerSweep` is hit
+- [x] Add `TelemetryRetention` config section to `appsettings.json`
+- [x] Register `TelemetryRetentionService` as hosted service in `Program.cs`, inside the `useLiveTelemetry` branch
+- [x] Run `dotnet build` — zero errors
+- [ ] Manually insert a synthetic 40-day-old row, run a short-interval sweep, confirm it is deleted and recent rows are untouched — deferred to QA-002 (Docker stack); local `dotnet run` blocked by the same host runtime-patch mismatch noted in BE-005
 
 ---
 

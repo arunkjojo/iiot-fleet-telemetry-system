@@ -42,7 +42,8 @@ backend/
 │   ├── LiveTelemetryStore.cs          # ILiveTelemetryStore — in-memory current-state cache + last-50-logs cache for live mode
 │   ├── TelemetryPersistenceService.cs # ITelemetryIngestQueue + BackgroundService — buffered batched writer draining into PostgreSQL (telemetry_snapshots, vehicle_logs), decouples emitter/request count from DB connections (BE-002). Batch/timing knobs configurable via "TelemetryPersistence" appsettings section; retries failed batches then falls back to a dead-letter JSON file on disk (ADR-001 follow-up)
 │   ├── LiveBroadcastService.cs        # BackgroundService — relays ILiveTelemetryStore.GetAndClearDirty() to SignalR every ~500ms; skips empty ticks (BE-003)
-│   └── HubConnectionTracker.cs        # Singleton — thread-safe (Interlocked) count of active /fleethub connections + LastEventAtUtc; read by HealthController (BE-005)
+│   ├── HubConnectionTracker.cs        # Singleton — thread-safe (Interlocked) count of active /fleethub connections + LastEventAtUtc; read by HealthController (BE-005)
+│   └── TelemetryRetentionService.cs   # BackgroundService — periodic bounded-batch deletion of telemetry_snapshots/vehicle_logs rows older than "TelemetryRetention" config; scoped FleetDbContext per sweep (mirrors TelemetryPersistenceService); only registered when USE_LIVE_TELEMETRY=true (DB-004). Closes ADR-001 action item #5
 ├── Data/                           # (Sprint 01) EF Core DbContext + migrations
 │   ├── FleetDbContext.cs
 │   └── Migrations/

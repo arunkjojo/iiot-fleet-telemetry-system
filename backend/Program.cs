@@ -104,6 +104,12 @@ else
     // VehiclesController/LogsController read the same store synchronously on request; this
     // service is what makes the frontend see updates without polling.
     builder.Services.AddHostedService<LiveBroadcastService>();
+
+    // Periodic bounded-batch cleanup of aged telemetry_snapshots/vehicle_logs rows (DB-004,
+    // ADR-001 action item #5). Dummy mode never writes to the DB, so retention has nothing to
+    // do there — registered only alongside the live ingestion pipeline, like the two services
+    // above.
+    builder.Services.AddHostedService<TelemetryRetentionService>();
 }
 
 var app = builder.Build();
