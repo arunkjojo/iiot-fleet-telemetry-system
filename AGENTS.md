@@ -291,12 +291,10 @@ docker-compose up --build
 
 ## Current Sprint
 
-**Active:** Sprint 03 — `docs/sprints/sprint-03.md`
-**Branch:** `claude/sprint-03-telemetry-reliability-hardening`
-**Note:** Sprint 03 adds SignalR connection-status visibility (backend `HubConnectionTracker` + `/api/health/signalr`, frontend header indicator), a client-side "inactive vehicle" concept (sustained speed=0 for 60s+, does not change the server-side `status` enum), and a telemetry retention/cleanup background service closing ADR-001 action item #5. It is the first of three themed sprints split from a larger 9-task operator brief (2026-07-13) — see `docs/sprints/BACKLOG.md` for Sprint 04 (UX/search) and Sprint 05 (infra/docs) scope.
+**Active:** None — Sprint 03 is complete and archived. Sprint 04 and Sprint 05 are scoped in `docs/sprints/BACKLOG.md` but not yet authored as full sprint files; run the `sprint` skill to author the next one.
 
-**Previous:** Sprint 02 — `docs/sprints/sprint-02.md` (live IIoT telemetry ingestion — Python emitter, PostgreSQL persistence, SignalR rebroadcast; all tasks `[x]` but not yet moved to `archive/` — Sprint 02's own ARCH-002 sprint-end wrap-up was not fully run)
+**Previous:** Sprint 03 — `docs/sprints/archive/sprint-03.md` (SignalR connection-status visibility via `HubConnectionTracker` + `/api/health/signalr` and a header indicator; a client-side "inactive vehicle" concept — sustained speed=0 for 60s+, does not change the server-side `status` enum — plus a "Hide Inactive" toggle; a telemetry retention/cleanup background service closing ADR-001 action item #5. All 8 tasks `[x]`, verified end-to-end by QA-002, shipped in `v0.3.0`. First of three themed sprints split from a larger 9-task operator brief (2026-07-13).)
 
-**Roadmap:** `docs/sprints/BACKLOG.md` — Sprint 04 (editable vehicle/driver fields, search, UI polish, focused view) and Sprint 05 (CI fix, project documentation), scoped but not yet authored as full sprint files.
+**Roadmap:** `docs/sprints/BACKLOG.md` — Sprint 04 (editable vehicle/driver fields, search, UI polish, focused view) and Sprint 05 (CI fix, project documentation), scoped but not yet authored as full sprint files. `BACKLOG.md` also tracks two carryover items from Sprint 03: the missing frontend `lint`/`type-check` npm scripts + ESLint config, and a full-scale (`VEHICLE_COUNT=10000`) NF-01/NF-03 validation follow-up.
 
 > To start a new sprint: invoke the `sprint` skill (`.claude/skills/sprint/SKILL.md`). The skill copies `docs/sprints/archive/TEMPLATE.md`, fills every task block, registers the file here, and never branches from anything other than `origin/main`.

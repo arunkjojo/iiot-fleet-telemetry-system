@@ -98,7 +98,7 @@ git status    # must be clean
 - [x] DB-004 — Add telemetry retention/cleanup background service
 - [x] ANALYST-001 — Measure throughput/latency impact of retention sweeps against NF-01/02/03
 - [x] QA-002 — Verify Sprint 03 end-to-end
-- [ ] ARCH-004 — Sprint-end: CHANGELOG, version bump, roadmap pointer update
+- [x] ARCH-004 — Sprint-end: CHANGELOG, version bump, roadmap pointer update
 
 ---
 
@@ -846,7 +846,7 @@ Not applicable — verification-only task, no files modified.
 
 **Agent:** ARCH
 **Depends on:** QA-002
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -887,10 +887,10 @@ None.
 
 **Sub-task breakdown:**
 
-- [ ] Add `## v0.3.0 — 2026-07-20` entry to `CHANGELOG.md` with `### Add` (SignalR connection-status indicator, `/api/health/signalr`, client-side inactive-vehicle detection + toggle, telemetry retention service) sections
-- [ ] Bump `frontend/package.json` version (minor bump)
-- [ ] Update `AGENTS.md` `## Current Sprint` section: mark Sprint 03 archived, reference `docs/sprints/BACKLOG.md` for Sprint 04/05 scope until one is formally authored
-- [ ] Move `docs/sprints/sprint-03.md` → `docs/sprints/archive/sprint-03.md`
+- [x] Add `## v0.3.0 — 2026-07-20` entry to `CHANGELOG.md` with `### Add` (SignalR connection-status indicator, `/api/health/signalr`, client-side inactive-vehicle detection + toggle, telemetry retention service) sections
+- [x] Bump `frontend/package.json` version (minor bump)
+- [x] Update `AGENTS.md` `## Current Sprint` section: mark Sprint 03 archived, reference `docs/sprints/BACKLOG.md` for Sprint 04/05 scope until one is formally authored
+- [x] Move `docs/sprints/sprint-03.md` → `docs/sprints/archive/sprint-03.md`
 
 ---
 
