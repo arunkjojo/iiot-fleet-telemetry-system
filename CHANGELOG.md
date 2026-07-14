@@ -7,6 +7,42 @@ Version is bumped once per sprint at sprint-end by the ARCH agent.
 
 ---
 
+## v0.6.0 — 2026-07-21
+
+### Add
+
+- **`docs/SDD_WORKFLOW.md`** — documents the Spec-Driven Development loop this project already
+  follows informally: requirements (`docs/requirements/REQUIREMENTS.md`) → sprint authoring (the
+  `sprint` skill) → task execution (the per-task, per-commit Sprint Loop) → verification (each
+  task's own acceptance criteria plus a sprint-end QA task) → changelog/archive. Linked from
+  `README.md` and `AGENTS.md`'s Key Knowledge Base Documents table. Registers `helm/**` as an
+  INFRA write-scope path ahead of the Helm chart work below.
+- **Explicit Docker Compose network** — `docker-compose.yml`'s `db`/`backend`/`frontend`/
+  `iiot-emitter` services now join a top-level, explicitly declared `iiot-fleet-net` bridge
+  network (`driver: bridge`), replacing the old `networks.default.name` shorthand. Purely
+  additive — no port, volume, or service-name change; `postgres_data` remains the sole named
+  volume.
+- **Helm chart (`helm/iiot-fleet-app/`)** — a full chart deploying all four services to
+  Kubernetes: a `db` `StatefulSet` with `volumeClaimTemplates`-backed persistent storage and a
+  headless `Service`; `backend`/`frontend` `Deployment`s + `ClusterIP` `Service`s (`tcpSocket`
+  and `httpGet` readiness/liveness probes respectively, matching each service's actual Compose
+  healthcheck behavior); a shared `ConfigMap` for non-secret env vars and a dedicated `Secret`
+  assembling the backend's `ConnectionStrings__Fleet` so the db password never lands in the
+  `ConfigMap`; an `emitter` `Deployment` (no matching `Service` — outbound-only, fixed at
+  `replicaCount: 1` since the emitter simulates the *entire* fleet per replica) gated on an
+  `initContainer` that polls the backend before starting, approximating Compose's
+  `depends_on: condition: service_healthy` (Kubernetes has no direct equivalent); and an
+  optional `Ingress`, off by default (`ingress.enabled: false`), routing `/api`/`/swagger`/
+  `/fleethub` to the backend and `/` to the frontend when enabled.
+- **`docs/HELM_GUIDE.md`** — install/configuration/troubleshooting guide for the Helm chart:
+  prerequisites, building and loading the four unpublished custom images, a full `values.yaml`
+  reference table, `helm upgrade`/`helm uninstall` (including PVC-retention behavior), `kubectl
+  port-forward` connection examples, a worked `kind`-cluster end-to-end walkthrough, and
+  troubleshooting for `ImagePullBackOff`, a `Pending` PVC, the emitter's init-gate delay, and an
+  `Ingress` with no controller installed. Linked from `README.md` and `AGENTS.md`.
+
+---
+
 ## v0.5.0 — 2026-07-16
 
 ### Add
