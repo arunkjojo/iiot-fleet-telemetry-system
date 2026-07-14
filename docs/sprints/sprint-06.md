@@ -81,7 +81,7 @@ git status    # must be clean
 - [x] INFRA-004 — Add Explicit Network to Docker Compose
 - [x] INFRA-005 — Scaffold Helm Chart Skeleton + PostgreSQL StatefulSet/PVC
 - [x] INFRA-006 — Add Helm Templates for Backend and Frontend Deployments
-- [ ] INFRA-007 — Add Helm Templates for iiot-emitter and Ingress
+- [x] INFRA-007 — Add Helm Templates for iiot-emitter and Ingress
 - [ ] ARCH-012 — Write Helm Deployment Guide Documentation
 - [ ] QA-006 — Verify Docker Compose and Helm Chart End-to-End
 - [ ] ARCH-013 — Sprint-End — CHANGELOG, Version Bump, Archive
@@ -491,7 +491,7 @@ git rm helm/iiot-fleet-app/templates/backend-deployment.yaml \
 
 **Agent:** INFRA
 **Depends on:** INFRA-005, INFRA-006
-**Status:** [ ]
+**Status:** [x]
 
 ---
 

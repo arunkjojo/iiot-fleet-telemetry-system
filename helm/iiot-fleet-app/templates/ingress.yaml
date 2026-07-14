@@ -1,0 +1,44 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "iiot-fleet-app.fullname" . }}
+  labels:
+    {{- include "iiot-fleet-app.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "iiot-fleet-app.fullname" . }}-backend
+                port:
+                  number: {{ .Values.backend.service.port }}
+          - path: /swagger
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "iiot-fleet-app.fullname" . }}-backend
+                port:
+                  number: {{ .Values.backend.service.port }}
+          - path: /fleethub
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "iiot-fleet-app.fullname" . }}-backend
+                port:
+                  number: {{ .Values.backend.service.port }}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "iiot-fleet-app.fullname" . }}-frontend
+                port:
+                  number: {{ .Values.frontend.service.port }}
+{{- end }}

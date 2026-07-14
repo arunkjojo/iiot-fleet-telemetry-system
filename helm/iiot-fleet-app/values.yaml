@@ -57,3 +57,34 @@ frontend:
     limits:
       cpu: 500m
       memory: 256Mi
+
+emitter:
+  image:
+    # Not on any public registry. Build it yourself:
+    # `docker build -t iiot-fleet-emitter ./iiot-emitter`, then push it (or
+    # `kind load docker-image iiot-fleet-emitter` for a local kind cluster).
+    repository: iiot-fleet-emitter
+    tag: latest
+    pullPolicy: IfNotPresent
+  # Fixed at 1 — not a tunable. The emitter ticks the *entire* fleet every
+  # cycle; each replica would independently re-simulate all vehicles, so N
+  # replicas multiplies telemetry volume N-fold instead of sharding it.
+  replicaCount: 1
+  vehicleCount: 10000
+  tickIntervalSeconds: 3
+  maxConcurrency: 300
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi
+
+ingress:
+  # Disabled by default — not every cluster (e.g. a bare local kind/minikube)
+  # has an Ingress controller installed.
+  enabled: false
+  className: ""
+  # Must be set when enabling, e.g. --set ingress.host=fleet.example.local
+  host: ""
