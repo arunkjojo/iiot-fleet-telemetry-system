@@ -292,7 +292,9 @@ docker-compose up --build
 
 ## Current Sprint
 
-**Active:** No active sprint. The 9-task/3-sprint operator brief opened 2026-07-13 is now fully delivered (Sprints 03-05 plus the standalone Task 7 CI fix) — see `docs/sprints/BACKLOG.md` for the delivery summary and the still-open carryover items (missing frontend `lint`/`type-check` npm scripts + ESLint config; full-scale `VEHICLE_COUNT=10000` NF-01/NF-03 validation; the `ILiveTelemetryStore`/`display_number` cold-start hydration gap found during Sprint 04's `BE-009`; the CI fix on `claude/fix-docker-image-ci-workflow` still not merged to `main`). No sprint file is currently active; the next sprint should be authored via the `sprint` skill once new scope is defined.
+**Active:** Sprint 06 — `docs/sprints/sprint-06.md` (SDD workflow documentation, explicit Docker Compose storage/network config, and a new Helm chart + deployment guide for Kubernetes). Authored 2026-07-14 from a 3-task operator brief; not yet executed — all 8 task blocks (`ARCH-011`, `INFRA-004` through `INFRA-007`, `ARCH-012`, `QA-006`, `ARCH-013`) are `Status: [ ]`. Touches no `frontend/**` or `backend/**` application code — scope is `docs/`, `docker-compose.yml`, `DOCKER_README.md`, and a new `helm/` directory.
+
+**Still open (carried over, not in Sprint 06's scope):** missing frontend `lint`/`type-check` npm scripts + ESLint config; full-scale `VEHICLE_COUNT=10000` NF-01/NF-03 validation; the `ILiveTelemetryStore`/`display_number` cold-start hydration gap found during Sprint 04's `BE-009`; the CI fix on `claude/fix-docker-image-ci-workflow` still not merged to `main`. See `docs/sprints/BACKLOG.md` for details.
 
 **Previous:** Sprint 05 — `docs/sprints/archive/sprint-05.md` (project documentation: new `docs/PROJECT_OVERVIEW.md` covering architecture, DevOps practices, the AI-assisted workflow, use case, and onboarding, linked from `README.MD`; verified link-integrity and factual consistency by QA-005). All 3 tasks `[x]`, shipped in `v0.5.0`. Third and final themed sprint split from the 2026-07-13 operator brief — see `docs/sprints/BACKLOG.md`.
 
