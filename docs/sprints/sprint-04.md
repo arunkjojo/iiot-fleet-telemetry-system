@@ -98,7 +98,8 @@ git status    # must be clean
 - [x] UI-013 — Apply 24h-activity filter to sidebar search
 - [x] UI-014 — Add default-on focused view (max 10 vehicles + "Show all" toggle)
 - [x] UI-015 — Responsive/overflow audit and fix
-- [ ] QA-003 — Verify Sprint 04 end-to-end
+- [x] BE-009 — Fix PATCH edits clobbered by the next ingest tick (QA-003 finding, ad hoc — not in the original 11-task plan)
+- [x] QA-003 — Verify Sprint 04 end-to-end
 - [ ] ARCH-006 — Sprint-end: CHANGELOG, version bump, roadmap pointer update
 
 ---
@@ -944,17 +945,125 @@ git checkout -- frontend/components/Header.tsx frontend/components/Sidebar.tsx f
 
 ---
 
+### BE-009: Fix PATCH Edits Clobbered by the Next Ingest Tick (QA-003 Finding)
+
+**Agent:** ASP.NET
+**Depends on:** BE-006, BE-007 (fixes a regression surfaced by their interaction with the live ingestion pipeline)
+**Status:** [x]
+
+**Note (ad hoc task, analogous to `IIOT-S02-BE-004`):** Not part of the original 11-task plan.
+QA-003's first verification pass found a real, sprint-blocking bug and this task fixes it before
+QA-003 could pass, mirroring how Sprint 02's QA-001 found and got `BE-004` fixed mid-sprint.
+
+---
+
+**Context:**
+
+QA-003's first pass (curl + live browser check) found that `PATCH /api/vehicles/{id}` (BE-006) appeared to work — `200 OK`, correct DB row, correct immediate `GET` — but the edit silently reverted within one ingest tick interval (a few seconds under live load). Root cause in `backend/Controllers/TelemetryIngestController.cs`'s `Ingest` action: `DriverName = request.DriverName ?? previous?.DriverName ?? string.Empty` — the Python emitter always sends a non-null `driverName` (its own immutable roster-seeded value), so the `?? previous?.DriverName` fallback never actually triggered, and `DisplayNumber` wasn't referenced in the object initializer at all, so it reset to `""` on every single ingest tick regardless of any PATCH. Every `POST /api/telemetry/ingest` call replaces the vehicle's entire in-memory `Vehicle` object in `ILiveTelemetryStore`, discarding BE-006's in-place edit the moment the next tick arrived — which defeats BE-006/UI-012 entirely under live/Docker conditions, the sprint's primary target environment.
+
+---
+
+**Files to read before starting:**
+
+- `backend/Controllers/TelemetryIngestController.cs` — the `Ingest` action's `Vehicle` object initializer, the exact bug location
+
+---
+
+**Files to modify:**
+
+- `backend/Controllers/TelemetryIngestController.cs` — flip field priority so the live store's existing state (potentially PATCH-edited) wins over the incoming ingest request for `DriverName`/`DisplayNumber` specifically
+
+---
+
+**Files to create:**
+
+None.
+
+---
+
+**Do NOT touch:**
+
+- Anything else in this file — validation logic, `Model` field mapping, log-message building, the buffered-write/channel pattern — this is a surgical two-line fix
+
+---
+
+**Sub-task breakdown:**
+
+- [x] Change `DriverName = request.DriverName ?? previous?.DriverName ?? string.Empty` to `DriverName = previous?.DriverName ?? request.DriverName ?? string.Empty`
+- [x] Add `DisplayNumber = previous?.DisplayNumber ?? string.Empty` to the same object initializer
+- [x] Run `dotnet build FleetTelemetry.csproj` — zero errors
+- [x] Rebuild + restart the `backend` Docker container, re-verify: PATCH a vehicle, wait through several ingest ticks (~12s at this sandbox's `TICK_INTERVAL_SECONDS=2`), confirm the edit survives while telemetry fields (fuel/temp/speed/lat/lng/`lastSeenAtUtc`) keep updating normally
+- [x] Re-verify 400 (empty body) / 404 (nonexistent vehicle) still behave correctly
+- [x] Re-verify the DB row itself reflects the edit (`SELECT driver_name, display_number FROM vehicles WHERE id=...`)
+
+---
+
+**Implementation notes:**
+
+1. Once a vehicle has ANY prior state in `ILiveTelemetryStore` (true after its first-ever ingest, which happens within seconds of the emitter starting), `DriverName`/`DisplayNumber` become sticky — only `PATCH /api/vehicles/{id}` changes them from then on. First-ever ingest (no `previous`) still seeds `DriverName` from the emitter's initial value, unchanged from prior behavior.
+2. Known, separate, smaller gap intentionally left unfixed here: `ILiveTelemetryStore` is never hydrated from Postgres's DB-seeded `display_number` (`FL-NNNNN`) on backend startup — a freshly-started live-mode backend shows `displayNumber: ""` for every vehicle until an operator PATCHes one in, rather than the DB-seeded default. Tracked as a follow-up in `docs/sprints/BACKLOG.md`; out of scope for this specific fix, which targets the data-loss/clobbering bug, not the cold-start-hydration gap.
+
+---
+
+**Acceptance criteria:**
+
+1. `dotnet build FleetTelemetry.csproj` passes with zero errors
+2. A `PATCH`-edited `driverName`/`displayNumber` survives at least 3 subsequent ingest ticks for that vehicle while other telemetry fields continue updating normally
+3. `400`/`404` validation behavior is unchanged
+4. The Postgres `vehicles` row reflects the edit
+
+---
+
+**Verification command:**
+
+```bash
+curl -s -X PATCH http://localhost:8080/api/vehicles/VEH-00001 -H "Content-Type: application/json" -d '{"driverName":"QA Test Driver 2","displayNumber":"FL-99999"}'
+sleep 12
+curl -s http://localhost:8080/api/vehicles/VEH-00001 | python -m json.tool
+# Expected: driver == "QA Test Driver 2", displayNumber == "FL-99999", still present after 12s
+# of live ingest ticks (confirmed by fuel/temp/speed/lat/lng/lastSeenAtUtc having changed)
+```
+
+---
+
+**Rollback:**
+
+```bash
+git checkout -- backend/Controllers/TelemetryIngestController.cs
+```
+
+---
+
 ### QA-003: Verify Sprint 04 End-to-End
 
 **Agent:** QA
-**Depends on:** BE-008, BE-006, UI-012, BE-007, UI-013, UI-014, UI-015
-**Status:** [ ]
+**Depends on:** BE-008, BE-006, UI-012, BE-007, UI-013, UI-014, UI-015, BE-009
+**Status:** [x]
 
 ---
 
 **Context:**
 
 Confirms the sprint's success metric holds against the running Docker stack: dummy-mode IDs are meaningful, the edit flow persists and reflects live, search respects the 24h rule, focused view defaults correctly, and the responsive fixes hold at the target breakpoints.
+
+---
+
+**Verification results (final pass, all 8 acceptance criteria PASS):**
+
+Scale used: local `docker-compose.override.yml` (uncommitted), `VEHICLE_COUNT=300`, `TICK_INTERVAL_SECONDS=2` — reduced from the production 10,000/3s default for sandbox feasibility, doesn't affect correctness.
+
+First pass found AC3 (PATCH-and-reflect) **failing**: a PATCH succeeded and reflected in the immediate next `GET`, but reverted within one ingest tick (~2-3s under live load) — the edit was silently discarded by `TelemetryIngestController` rebuilding a fresh `Vehicle` object from every ingest tick. Root-caused and fixed as `BE-009` (ad hoc, mirroring `IIOT-S02-BE-004`'s precedent): flipped field priority so `ILiveTelemetryStore`'s existing state wins over the incoming ingest request for `DriverName`/`DisplayNumber` specifically. Re-verified on the rebuilt `backend` container:
+
+1. **All services healthy** — `db`/`backend`/`frontend` "Up (healthy)", `iiot-emitter` "Up" (no healthcheck by design). `npx tsc --noEmit` and `dotnet build FleetTelemetry.csproj` both zero errors.
+2. **`display_number` populated** — `\d vehicles` shows the column; `SELECT display_number FROM vehicles LIMIT 3` → `FL-00000`, `FL-00001`, `FL-00002`.
+3. **PATCH-and-reflect: PASS after BE-009.** `PATCH VEH-00001 {driverName, displayNumber}` → `200`; immediate `GET` reflects it; **re-checked after 12s (≈6 ingest ticks)** — driver/displayNumber still correct while fuel/temp/speed/lat/lng/`lastSeenAtUtc` continued updating normally, proving the fix holds under live ingestion, not just at rest. `400` on empty body and `404` on nonexistent vehicle both confirmed unchanged. DB row confirmed via `psql`.
+4. **Dummy-mode IDs `VEH-NNNNN`: PASS, verified via code review** — `TelemetrySimulationService.cs:190`, `var id = $"VEH-{i:D5}";`. Local `dotnet run` blocked by this sandbox's known host .NET runtime-patch mismatch (8.0.28 required, 8.0.23 installed); code review used per that established limitation.
+5. **24h search filter: PASS, verified via code review** — `Sidebar.tsx`'s `filtered` memo excludes stale (>24h) results only when a query is active, missing timestamp defaults to "don't exclude." A live stale (>24h) test vehicle wasn't synthesized (would require direct DB manipulation beyond QA's read-only mandate).
+6. **Focused view: PASS** — CDP-driven interactive check confirmed the "Focused View (Top 10)" / "Show All 300" toggle (count matches the local `VEHICLE_COUNT=300`) both cap and reveal the list correctly.
+7. **No horizontal overflow at 375px/768px: PASS** — spot-checked via `scrollWidth`/`innerWidth` equality at both breakpoints (UI-015's own implementation already did the rigorous CDP before/after verification).
+8. **No console errors: PASS** — only a pre-existing Zustand deprecation notice observed across the full session (navigation, toggle, edit/save, reload).
+
+**Known follow-up (not a blocker):** `ILiveTelemetryStore` isn't hydrated from Postgres's DB-seeded `display_number` on backend startup — a freshly-started live-mode backend shows `displayNumber: ""` until an operator PATCHes one in. Tracked in `docs/sprints/BACKLOG.md`.
 
 ---
 
@@ -985,17 +1094,17 @@ None (report findings back to the user; do not create a report file unless expli
 
 **Sub-task breakdown:**
 
-- [ ] `cd frontend && npx tsc --noEmit` — zero errors
-- [ ] `cd backend && dotnet build FleetTelemetry.csproj` — zero errors
-- [ ] `docker-compose up --build -d` (or confirm already-healthy stack) — all services healthy
-- [ ] Confirm the `display_number` migration applied (`dotnet ef migrations list` inside the backend container, or a `\d vehicles` in `psql`) and rows are populated
-- [ ] `PATCH` a live vehicle's driver name/display number via `curl`, confirm `200`, confirm a subsequent `GET` reflects it
-- [ ] Open the dashboard, edit a vehicle via `DetailPanel`, confirm the Sidebar row updates without reload
-- [ ] Confirm dummy-mode IDs (`USE_LIVE_TELEMETRY=false`, e.g. via a local `dotnet run` or by inspecting seeded data) follow `VEH-NNNNN` — note if local `dotnet run` is blocked by the sandbox's runtime mismatch, verify via code review of `BE-008`'s diff instead and flag which was done
-- [ ] Search for a vehicle with recent activity — confirm it appears; if feasible, identify/synthesize a stale vehicle and confirm the 24h exclusion
-- [ ] Confirm the Sidebar defaults to ≤10 vehicles and "Show all" reveals the full list
-- [ ] Use the `chrome` skill to check `Header`/`Sidebar`/`MapView`/`DetailPanel` at 375px and 768px — no horizontal overflow, no clipped elements
-- [ ] Confirm no browser console errors
+- [x] `cd frontend && npx tsc --noEmit` — zero errors
+- [x] `cd backend && dotnet build FleetTelemetry.csproj` — zero errors
+- [x] `docker-compose up --build -d` (or confirm already-healthy stack) — all services healthy
+- [x] Confirm the `display_number` migration applied (`\d vehicles` in `psql`) and rows are populated
+- [x] `PATCH` a live vehicle's driver name/display number via `curl`, confirm `200`, confirm a subsequent `GET` reflects it — found it did NOT survive past one ingest tick, root-caused and fixed as `BE-009`, re-verified holding after 12s/~6 ticks
+- [x] Open the dashboard, edit a vehicle via `DetailPanel`, confirm the Sidebar row updates without reload
+- [x] Confirm dummy-mode IDs follow `VEH-NNNNN` — verified via code review (local `dotnet run` blocked by sandbox runtime mismatch)
+- [x] Search for a vehicle with recent activity — confirm it appears; 24h exclusion verified via code review (no live stale vehicle synthesized)
+- [x] Confirm the Sidebar defaults to ≤10 vehicles and "Show all" reveals the full list
+- [x] Check `Header`/`Sidebar`/`MapView`/`DetailPanel` at 375px and 768px — no horizontal overflow, no clipped elements
+- [x] Confirm no browser console errors
 
 ---
 

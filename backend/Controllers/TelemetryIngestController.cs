@@ -93,7 +93,15 @@ public class TelemetryIngestController : ControllerBase
         var vehicle = new Vehicle
         {
             Id = vehicleId,
-            DriverName = request.DriverName ?? previous?.DriverName ?? string.Empty,
+            // BE-009 (QA-003 fix): once a vehicle has prior live-store state, DriverName/
+            // DisplayNumber become sticky — only PATCH /api/vehicles/{id} (BE-006) may change
+            // them from here on. Without this, every ingest tick (every few seconds) rebuilt a
+            // fresh Vehicle from the emitter's immutable roster-seeded DriverName (and an
+            // unset, always-empty DisplayNumber), silently reverting any PATCH edit on the very
+            // next tick. First-ever ingest (no `previous`) still seeds DriverName from the
+            // request, matching original behavior.
+            DriverName = previous?.DriverName ?? request.DriverName ?? string.Empty,
+            DisplayNumber = previous?.DisplayNumber ?? string.Empty,
             Latitude = request.Latitude,
             Longitude = request.Longitude,
             FuelPercent = request.FuelPercent,
