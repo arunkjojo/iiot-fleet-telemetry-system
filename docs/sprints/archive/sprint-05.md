@@ -71,7 +71,7 @@ git status    # must be clean
 
 - [x] ARCH-009 — Write `docs/PROJECT_OVERVIEW.md` and link it from `README.md`
 - [x] QA-005 — Verify documentation completeness and link integrity
-- [ ] ARCH-010 — Sprint-end: CHANGELOG, version bump, archive
+- [x] ARCH-010 — Sprint-end: CHANGELOG, version bump, archive
 
 ---
 
@@ -293,7 +293,7 @@ Not applicable — verification-only task, no files modified.
 
 **Agent:** ARCH
 **Depends on:** QA-005
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -335,11 +335,11 @@ None.
 
 **Sub-task breakdown:**
 
-- [ ] Add `## v0.5.0 — 2026-07-16` to `CHANGELOG.md` with `### Add` (`docs/PROJECT_OVERVIEW.md`) section
-- [ ] Bump `frontend/package.json` version (patch bump — docs-only change)
-- [ ] Update `AGENTS.md` `## Current Sprint` to reflect no active sprint
-- [ ] Update `docs/sprints/BACKLOG.md` — mark the operator brief fully delivered, keep open carryover items
-- [ ] Move `docs/sprints/sprint-05.md` → `docs/sprints/archive/sprint-05.md` (`git mv`)
+- [x] Add `## v0.5.0 — 2026-07-16` to `CHANGELOG.md` with `### Add` (`docs/PROJECT_OVERVIEW.md`) section
+- [x] Bump `frontend/package.json` version (patch bump — docs-only change)
+- [x] Update `AGENTS.md` `## Current Sprint` to reflect no active sprint
+- [x] Update `docs/sprints/BACKLOG.md` — mark the operator brief fully delivered, keep open carryover items
+- [x] Move `docs/sprints/sprint-05.md` → `docs/sprints/archive/sprint-05.md` (`git mv`)
 
 ---
 
@@ -380,24 +380,38 @@ git mv docs/sprints/archive/sprint-05.md docs/sprints/sprint-05.md
 ## Sprint-End Checklist
 
 **Version and changelog:**
-- [ ] Bump `frontend/package.json` version (patch bump — docs-only sprint)
-- [ ] Add `## v0.5.0 — 2026-07-16` entry to `CHANGELOG.md`
-- [ ] Confirm `CHANGELOG.md` top version matches `frontend/package.json` version
+- [x] Bump `frontend/package.json` version (patch bump — docs-only sprint)
+- [x] Add `## v0.5.0 — 2026-07-16` entry to `CHANGELOG.md`
+- [x] Confirm `CHANGELOG.md` top version matches `frontend/package.json` version
 
 **Git and CI:**
-- [ ] All task commits follow format: `IIOT-S05-{TASK-ID}: <one-line summary>`
-- [ ] Open PR: `claude/sprint-05-project-documentation` → `main`
+- [x] All task commits follow format: `IIOT-S05-{TASK-ID}: <one-line summary>`
+- [ ] Open PR: `claude/sprint-05-project-documentation` → `main` (left to the orchestrating session/user)
 
 **Wrap-up:**
-- [ ] Move `docs/sprints/sprint-05.md` → `docs/sprints/archive/sprint-05.md`
-- [ ] Update `AGENTS.md` `## Current Sprint` to "none active"
-- [ ] Update `docs/sprints/BACKLOG.md` to reflect the brief as delivered
+- [x] Move `docs/sprints/sprint-05.md` → `docs/sprints/archive/sprint-05.md`
+- [x] Update `AGENTS.md` `## Current Sprint` to "none active"
+- [x] Update `docs/sprints/BACKLOG.md` to reflect the brief as delivered
 
 ---
 
 ## Sprint Retrospective
 
-_(fill at sprint end)_
+Sprint 05 shipped its single substantive deliverable, `docs/PROJECT_OVERVIEW.md` (ARCH-009) —
+a 7-section onboarding map (architecture, use case, key design decisions, DevOps, AI-assisted
+workflow, project history, getting started) linked from `README.MD`, summarizing rather than
+duplicating `AGENTS.md`/`REQUIREMENTS.md`/`DOCKER_README.md` so it won't drift out of sync.
+QA-005 verified all 13 unique internal link targets resolve, no placeholder text remains, and
+the document is factually consistent with `AGENTS.md` and the archived sprint history — zero
+discrepancies found. All 3 tasks (`[x]`) shipped as `v0.5.0`, closing Sprint 05 and, with it,
+the entire 9-task/3-sprint operator brief opened 2026-07-13 (Sprints 03-05 plus the standalone
+Task 7 CI fix on `claude/fix-docker-image-ci-workflow`, still unmerged to `main`). Four items
+remain open as carryover, tracked in `docs/sprints/BACKLOG.md`: the missing frontend
+`lint`/`type-check` npm scripts + ESLint config (Sprint 03), the full-scale
+`VEHICLE_COUNT=10000` NF-01/NF-03 validation follow-up (Sprint 03), the
+`ILiveTelemetryStore`/`display_number` cold-start hydration gap (Sprint 04's `BE-009` follow-up),
+and merging the standalone CI fix branch. No new sprint is currently active; `AGENTS.md`'s
+`## Current Sprint` now points to `docs/sprints/BACKLOG.md` for whoever picks up next.
 
 ---
 

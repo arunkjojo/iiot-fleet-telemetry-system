@@ -7,6 +7,28 @@ Version is bumped once per sprint at sprint-end by the ARCH agent.
 
 ---
 
+## v0.5.0 — 2026-07-16
+
+### Add
+
+- **`docs/PROJECT_OVERVIEW.md`** — a comprehensive onboarding document covering application
+  architecture (all 4 services + data flow), the use case/problem the system solves, key design
+  decisions (linking `docs/decisions/ADR-001-telemetry-ingestion-pipeline.md`), the DevOps stack
+  (Docker/Compose/GitHub Actions, linking `DOCKER_README.md`), the AI-assisted development
+  workflow (the actual ARCH/ASP.NET/NEXT/INFRA/QA/ANALYST agents, `sprint`/`devops`/`nextjs`/
+  `asp-dot-net-core`/`postgre-sql`/`caveman` skills, and the branch-per-sprint,
+  task-by-task-with-per-task-commits sprint loop used to build this codebase), a factual
+  Sprint 01-04 project history, and a "Getting Started" section — linked from `README.MD`.
+  Written as a map (short sections, links to authoritative sources) rather than a duplicate of
+  `AGENTS.md`/`REQUIREMENTS.md`/`DOCKER_README.md`, so it doesn't drift out of sync with them.
+  Closes Task 9 of the 2026-07-13 operator brief and, with it, the full 9-task/3-sprint arc
+  (Sprints 03-05 plus the standalone Task 7 CI fix) — see `docs/sprints/BACKLOG.md` for the
+  brief's final delivery summary and remaining open carryover items. Verified by QA-005: all
+  internal links resolve, no placeholder text, and content is factually consistent with
+  `AGENTS.md`/`REQUIREMENTS.md`/the archived sprint files.
+
+---
+
 ## v0.4.0 — 2026-07-20
 
 ### Add

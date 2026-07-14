@@ -4,13 +4,57 @@ Tracks unresolved items and sprints planned but not yet authored as full `docs/s
 
 ---
 
-## Origin
+## Status: 2026-07-13 Operator Brief — FULLY DELIVERED
 
-2026-07-13 operator brief listed 9 tasks. Given the sprint template's 3-12 granular-task cap, the brief was split into 3 themed sprints (operator-approved). Sprint 03 shipped (merged to `main` via PR #2). Sprint 04 (`docs/sprints/sprint-04.md`) and Sprint 05 (`docs/sprints/sprint-05.md`) are now both authored in full.
+All 9 tasks from the 2026-07-13 operator brief are now shipped. Given the sprint template's
+3-12 granular-task cap, the brief was split into 3 themed sprints (operator-approved), plus one
+task pulled forward and fixed standalone:
+
+| Sprint / Branch | Brief Tasks Covered | Version | Status |
+|---|---|---|---|
+| Sprint 03 — `docs/sprints/archive/sprint-03.md` | 1, 3, 8 | `v0.3.0` | Shipped, merged to `main` via PR #2 |
+| Standalone — `claude/fix-docker-image-ci-workflow` | 7 | — (CI fix, no app version bump) | Shipped on branch; **not yet merged to `main`** |
+| Sprint 04 — `docs/sprints/archive/sprint-04.md` | 2, 4, 5, 6 (+ ad hoc `BE-008`, `BE-009`) | `v0.4.0` | Shipped |
+| Sprint 05 — `docs/sprints/archive/sprint-05.md` | 9 | `v0.5.0` | Shipped |
+
+No new sprint is currently active — `AGENTS.md`'s `## Current Sprint` points here. The next
+sprint should be authored via the `sprint` skill once new scope is defined, starting from the
+carryover items below.
 
 ---
 
-## Sprint 04 (shipped, v0.4.0) — UX & Search
+## Still Open (Carryover)
+
+These are genuinely unresolved and were never in scope for any of the three brief sprints:
+
+1. **Frontend lint/type-check tooling gap** — `frontend/package.json` has no `lint`/`type-check`
+   npm scripts and no ESLint config/dependency exists anywhere in `frontend/`, despite
+   `frontend/AGENTS.md` and `REQUIREMENTS.md` NF-13/NF-14 documenting both as required
+   pre-commit gates. Found during Sprint 03's UI-010/UI-011; every sprint's frontend
+   verification commands assume these scripts exist and have not actually been runnable as
+   written. Needs a standalone fix: add the scripts + an ESLint config.
+2. **Full-scale NF-01/NF-03 load validation** — Sprint 03's ANALYST-001 ran against a
+   reduced-scale local stack (`VEHICLE_COUNT=300`, not 10,000) due to sandbox constraints.
+   NF-01 (10k vehicles, 60fps) and precise NF-03 (SignalR ~500ms cadence) were not validated at
+   full production scale; NF-02 passed at reduced scale (p95 ≈ 109ms). A full-scale load test
+   pass is recommended before relying on these numbers at 10,000 vehicles.
+3. **`ILiveTelemetryStore` cold-start hydration gap** — found during Sprint 04's `BE-009`:
+   `ILiveTelemetryStore` is never hydrated from Postgres's DB-seeded `display_number`
+   (`FL-NNNNN`) on backend startup, so a freshly-started live-mode backend shows
+   `displayNumber: ""` for every vehicle until an operator PATCHes one in. Intentionally left
+   out of `BE-009`'s scope (that task fixed a data-loss/clobbering bug, not this cold-start gap).
+   Needs a standalone fix: populate `ILiveTelemetryStore` from the `vehicles` table on backend
+   startup (or on first ingest per vehicle) before `USE_LIVE_TELEMETRY=true` traffic begins.
+4. **CI fix not merged to `main`** — Task 7's fix (branch `claude/fix-docker-image-ci-workflow`,
+   2 commits: the workflow fix + a `BACKLOG.md` note) has shipped on its own branch since before
+   Sprint 04 but is still not merged to `main`. Merge/PR that branch independently of the
+   Sprint 03/04/05 branches.
+
+---
+
+## Sprint Detail (historical reference)
+
+### Sprint 04 (shipped, v0.4.0) — UX & Search
 
 **Theme:** Editable vehicle/driver metadata, general UI polish, search, and the 10-vehicle focused view.
 
@@ -29,34 +73,29 @@ originally planned plus a bonus ad hoc fix, `BE-009`, found by `QA-003`'s first 
 (`TelemetryIngestController` rebuilt a fresh `Vehicle` object per tick without preserving an
 edited `DriverName`/`DisplayNumber`). Fixed by making the live store's existing state win over
 the incoming ingest request for those two fields; re-verified holding across multiple ingest
-ticks. See also the new follow-up item below.
+ticks. See the `ILiveTelemetryStore` cold-start hydration gap in "Still Open (Carryover)" above
+for the related follow-up this fix surfaced.
 
 ---
 
-## Sprint 05 (authored) — Project Documentation
+### Sprint 05 (shipped, v0.5.0) — Project Documentation
 
-**Theme:** Comprehensive project documentation (`docs/sprints/sprint-05.md`).
+**Theme:** Comprehensive project documentation (`docs/sprints/archive/sprint-05.md`).
 
 **Source tasks from the 2026-07-13 brief:**
 
 | Brief Task | Summary | Notes |
 |-----------|---------|-------|
-| Task 7 | ~~GitHub Actions Docker build failing~~ — **DONE**, shipped standalone on branch `claude/fix-docker-image-ci-workflow` (not yet merged to `main` as of Sprint 04's authoring) — see Notes below. | No longer part of Sprint 05's scope. |
-| Task 9 | Comprehensive documentation: architecture, DevOps practices, AI-assisted workflow (Claude Code agents/skills), use case, onboarding | Scoped in full in `docs/sprints/sprint-05.md` (`ARCH-009`): new `docs/PROJECT_OVERVIEW.md`, linked from `README.md`. |
+| Task 7 | ~~GitHub Actions Docker build failing~~ — **DONE**, shipped standalone on branch `claude/fix-docker-image-ci-workflow` (still not yet merged to `main` — see "Still Open" above). | Pulled forward, not part of Sprint 05's task list. |
+| Task 9 | Comprehensive documentation: architecture, DevOps practices, AI-assisted workflow (Claude Code agents/skills), use case, onboarding | Delivered as `ARCH-009`: new `docs/PROJECT_OVERVIEW.md` (7 sections), linked from `README.MD`. Verified link-integrity and factual accuracy by `QA-005`. |
+
+**Status:** Shipped in `v0.5.0` (`docs/sprints/archive/sprint-05.md`). All 3 tasks `[x]`
+(`ARCH-009`, `QA-005`, `ARCH-010`).
 
 ---
 
 ## Notes
 
 - Sprint 03 (`docs/sprints/archive/sprint-03.md`, merged to `main` via PR #2) covers Tasks 1, 3, 8 from the same brief (SignalR connection-status visibility, client-side inactive-vehicle detection, telemetry retention policy).
-- Task 7 (the CI fix) shipped standalone on `claude/fix-docker-image-ci-workflow` (2 commits: the workflow fix + a `BACKLOG.md` note) — not yet merged to `main`. Merge/PR that branch independently of the Sprint 04/05 branches.
-- Sprint 04 (`docs/sprints/sprint-04.md`) covers Tasks 2, 4, 5, 6, plus a bonus fix found while scoping Task 2: `TelemetrySimulationService.MakeId()` generates random gibberish IDs in dummy mode instead of the `VEH-NNNNN` format used everywhere else — fixed as `BE-008`.
-- `frontend/package.json` has no `lint`/`type-check` npm scripts and no ESLint config/dependency exists anywhere in `frontend/`, despite `frontend/AGENTS.md` and `REQUIREMENTS.md` NF-13/NF-14 documenting both as required pre-commit gates (found during Sprint 03's UI-010/UI-011). Every sprint's frontend verification commands assume these scripts exist and have not actually been runnable as written — needs a standalone fix (add the scripts + an ESLint config) before this gate can be enforced for real.
-- Sprint 03's ANALYST-001 ran against a reduced-scale local stack (`VEHICLE_COUNT=300`, not 10,000) due to sandbox constraints — NF-01 (10k vehicles, 60fps) and precise NF-03 (SignalR ~500ms cadence) were not validated at full production scale. A full-scale load test pass is recommended before relying on this sprint's NF-02 latency numbers at 10,000 vehicles.
-- **New (found during Sprint 04's `BE-009`):** `ILiveTelemetryStore` is never hydrated from
-  Postgres's DB-seeded `display_number` (`FL-NNNNN`) on backend startup — a freshly-started
-  live-mode backend shows `displayNumber: ""` for every vehicle until an operator PATCHes one
-  in, rather than the DB-seeded default. Intentionally left out of `BE-009`'s scope (that task
-  fixed a data-loss/clobbering bug, not this cold-start-hydration gap). Needs a standalone fix:
-  populate `ILiveTelemetryStore` from the `vehicles` table on backend startup (or on first
-  ingest per vehicle) before `USE_LIVE_TELEMETRY=true` traffic begins.
+- Sprint 04 (`docs/sprints/archive/sprint-04.md`) covers Tasks 2, 4, 5, 6, plus a bonus fix found while scoping Task 2: `TelemetrySimulationService.MakeId()` generates random gibberish IDs in dummy mode instead of the `VEH-NNNNN` format used everywhere else — fixed as `BE-008`.
+- For the still-unresolved items (lint tooling, full-scale load test, cold-start hydration gap, unmerged CI branch), see "Still Open (Carryover)" above — kept in one place rather than duplicated here.
