@@ -86,7 +86,7 @@
 | Attribute | Value |
 |-----------|-------|
 | **Read scope** | All files in the repository |
-| **Write scope** | `docker-compose.yml`, `backend/Dockerfile`, `frontend/Dockerfile`, `.github/workflows/**`, `.env*` files, `iiot-emitter/**` |
+| **Write scope** | `docker-compose.yml`, `backend/Dockerfile`, `frontend/Dockerfile`, `.github/workflows/**`, `.env*` files, `iiot-emitter/**`, `helm/**` |
 | **Prohibited writes** | Application source files under `frontend/src/` or `backend/` (non-config) |
 | **Responsibilities** | Maintain Docker Compose stack, GitHub Actions CI/CD pipeline, environment variable management, health checks, and container networking. |
 
@@ -160,6 +160,7 @@ These conventions are immutable. Agents MUST NOT break them.
 | `backend/Services/TelemetryRetentionService.cs` | ASP.NET | Background service that deletes `telemetry_snapshots` rows older than `TelemetryRetention__RetentionDays`; batches deletes by `TelemetryRetention__DeleteBatchSize`; does not create new tables |
 | `frontend/components/ConnectionStatus.tsx` | NEXT | Client component; renders SignalR connection-status indicator in the dashboard header; polls/consumes `/api/health/signalr` or the client SignalR connection state, not both as sources of truth |
 | `PATCH /api/vehicles/{id}` | ASP.NET | Edits `driver_name`/`display_number` only; MUST NEVER rename the `id` primary key (FK target for `telemetry_snapshots`/`vehicle_logs` and the exact string the Python emitter sources from `GET /api/vehicles/metadata`) |
+| `helm/iiot-fleet-app/**` | INFRA | Chart values must never hardcode real secrets; passwords are placeholder defaults in `values.yaml`, overridden at install time |
 
 ---
 
@@ -285,6 +286,7 @@ docker-compose up --build
 | Project Requirements | `docs/requirements/REQUIREMENTS.md` |
 | Sprint Template | `docs/sprints/archive/TEMPLATE.md` |
 | Docker Instructions | `DOCKER_README.md` |
+| SDD Workflow | `docs/SDD_WORKFLOW.md` |
 | Project Overview | `README.md` |
 | Changelog | `CHANGELOG.md` |
 

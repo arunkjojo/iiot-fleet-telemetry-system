@@ -5,6 +5,9 @@
 design decisions, DevOps/infrastructure, the AI-assisted development workflow, project history,
 and getting started, all in one onboarding document.
 
+**Process:** [docs/SDD_WORKFLOW.md](docs/SDD_WORKFLOW.md) — the Spec-Driven Development loop this
+project follows: requirements → sprint files → task execution → verification → changelog.
+
 **Project Overview:**
 - **What:** A high-performance real-time fleet telemetry system consisting of a .NET 8 SignalR backend simulator and a Next.js 15 frontend dashboard for visualizing and interacting with large-scale vehicle telemetry.
 - **Why:** To demonstrate a production-ready pipeline capable of tracking 10,000+ vehicles with low-latency updates, GPU-accelerated map rendering, and efficient UI virtualization.
