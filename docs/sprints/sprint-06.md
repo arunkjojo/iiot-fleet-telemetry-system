@@ -77,7 +77,7 @@ git status    # must be clean
 
 ## Task Index (Top-Level Todo)
 
-- [ ] ARCH-011 — Author SDD (Spec-Driven Development) Workflow Documentation
+- [x] ARCH-011 — Author SDD (Spec-Driven Development) Workflow Documentation
 - [ ] INFRA-004 — Add Explicit Network and PostgreSQL Backup Volume to Docker Compose
 - [ ] INFRA-005 — Scaffold Helm Chart Skeleton + PostgreSQL StatefulSet/PVC
 - [ ] INFRA-006 — Add Helm Templates for Backend and Frontend Deployments
@@ -122,7 +122,7 @@ ARCH-011 (no deps)   INFRA-004 (no deps)   INFRA-005 (no deps)
 
 **Agent:** ARCH
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
