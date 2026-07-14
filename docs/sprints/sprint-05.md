@@ -70,7 +70,7 @@ git status    # must be clean
 ## Task Index
 
 - [x] ARCH-009 — Write `docs/PROJECT_OVERVIEW.md` and link it from `README.md`
-- [ ] QA-005 — Verify documentation completeness and link integrity
+- [x] QA-005 — Verify documentation completeness and link integrity
 - [ ] ARCH-010 — Sprint-end: CHANGELOG, version bump, archive
 
 ---
@@ -198,7 +198,19 @@ git rm docs/PROJECT_OVERVIEW.md
 
 **Agent:** QA
 **Depends on:** ARCH-009
-**Status:** [ ]
+**Status:** [x]
+
+---
+
+**Verification results (all 5 acceptance criteria PASS, no discrepancies found):**
+
+1. **All 13 unique internal link targets resolve** (14 link strings total) — verified via `test -f` relative to `docs/`, including the `#local-dev-setup` anchor into `AGENTS.md` and all 7 same-doc TOC anchors matching their heading slugs.
+2. **No `{{PLACEHOLDER}}` text** — `grep -c "{{"` → 0.
+3. **Architecture section consistent with `AGENTS.md`** — tech-stack table matches exactly; PostgreSQL 16 claim cross-checked against `db/Dockerfile:10`.
+4. **Project History accurate** — cross-checked against `docs/sprints/archive/sprint-{01,03,04}.md` metadata (dates, goals all match) and `CHANGELOG.md` (versions v0.2.0–v0.4.0 confirmed); Sprint 02's unarchived state correctly reflected, not glossed over.
+5. **Every named agent/skill exists** — all 6 agents (ARCH/NEXT/ASP.NET/INFRA/QA/ANALYST → their `.claude/agents/*.md` files) and all 6 skills confirmed present on disk.
+
+Also spot-checked: `README.MD`'s link to `docs/PROJECT_OVERVIEW.md` resolves correctly (case-insensitive filesystem, same file regardless of `README.md`/`README.MD` casing used).
 
 ---
 
@@ -235,12 +247,12 @@ None.
 
 **Sub-task breakdown:**
 
-- [ ] Extract every internal markdown link (`[text](path)`) from `docs/PROJECT_OVERVIEW.md` and confirm each target file exists
-- [ ] Confirm no `{{PLACEHOLDER}}` text remains
-- [ ] Cross-check the Architecture section against `AGENTS.md`'s Stack summary table — no contradictions (e.g. wrong framework versions, missing services)
-- [ ] Cross-check the "Project History" section against `docs/sprints/archive/*.md` — confirms Sprints 01-04 are all represented (04 only if already archived — read `AGENTS.md`'s `## Current Sprint` to confirm current state)
-- [ ] Confirm the AI-Assisted Workflow section's named agents/skills actually exist under `.claude/agents/` / `.claude/skills/`
-- [ ] Report PASS/FAIL per acceptance criterion
+- [x] Extract every internal markdown link (`[text](path)`) from `docs/PROJECT_OVERVIEW.md` and confirm each target file exists
+- [x] Confirm no `{{PLACEHOLDER}}` text remains
+- [x] Cross-check the Architecture section against `AGENTS.md`'s Stack summary table — no contradictions (e.g. wrong framework versions, missing services)
+- [x] Cross-check the "Project History" section against `docs/sprints/archive/*.md` — confirms Sprints 01-04 are all represented
+- [x] Confirm the AI-Assisted Workflow section's named agents/skills actually exist under `.claude/agents/` / `.claude/skills/`
+- [x] Report PASS/FAIL per acceptance criterion
 
 ---
 
