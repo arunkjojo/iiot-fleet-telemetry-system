@@ -16,3 +16,44 @@ db:
   #   helm install iiot-fleet-app ./helm/iiot-fleet-app --set db.password=<real-password>
   password: "changeme"
   port: 5432
+
+backend:
+  image:
+    # Not on any public registry. Build it yourself:
+    # `docker build -t iiot-fleet-backend ./backend`, then push it (or `kind
+    # load docker-image iiot-fleet-backend` for a local kind cluster).
+    repository: iiot-fleet-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    port: 8080
+  aspnetEnvironment: "Production"
+  additionalFrontendOrigins: "http://localhost:3000"
+  useLiveTelemetry: "true"
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi
+
+frontend:
+  image:
+    # Not on any public registry. Build it yourself:
+    # `docker build -t iiot-fleet-frontend ./frontend`, then push it (or
+    # `kind load docker-image iiot-fleet-frontend` for a local kind cluster).
+    repository: iiot-fleet-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    port: 3000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
