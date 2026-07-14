@@ -286,6 +286,7 @@ docker-compose up --build
 | Project Requirements | `docs/requirements/REQUIREMENTS.md` |
 | Sprint Template | `docs/sprints/archive/TEMPLATE.md` |
 | Docker Instructions | `DOCKER_README.md` |
+| Helm/Kubernetes Deployment Guide | `docs/HELM_GUIDE.md` |
 | SDD Workflow | `docs/SDD_WORKFLOW.md` |
 | Project Overview | `README.md` |
 | Changelog | `CHANGELOG.md` |
