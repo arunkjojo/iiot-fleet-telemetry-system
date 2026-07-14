@@ -100,7 +100,7 @@ git status    # must be clean
 - [x] UI-015 — Responsive/overflow audit and fix
 - [x] BE-009 — Fix PATCH edits clobbered by the next ingest tick (QA-003 finding, ad hoc — not in the original 11-task plan)
 - [x] QA-003 — Verify Sprint 04 end-to-end
-- [ ] ARCH-006 — Sprint-end: CHANGELOG, version bump, roadmap pointer update
+- [x] ARCH-006 — Sprint-end: CHANGELOG, version bump, roadmap pointer update
 
 ---
 
@@ -1156,7 +1156,7 @@ Not applicable — verification-only task, no files modified.
 
 **Agent:** ARCH
 **Depends on:** QA-003
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -1197,10 +1197,10 @@ None.
 
 **Sub-task breakdown:**
 
-- [ ] Add `## v0.4.0 — 2026-07-20` to `CHANGELOG.md` with `### Add` (editable vehicle driver/display-number via `PATCH /api/vehicles/{id}`, `display_number` column) and `### Fix` (dummy-mode vehicle IDs now `VEH-NNNNN` instead of random strings) and `### Update` (24h-activity search filter, default-on focused view, responsive fixes) sections
-- [ ] Bump `frontend/package.json` version (minor bump)
-- [ ] Update `AGENTS.md` `## Current Sprint`: Sprint 04 archived, point to `docs/sprints/BACKLOG.md` for Sprint 05
-- [ ] Move `docs/sprints/sprint-04.md` → `docs/sprints/archive/sprint-04.md` (`git mv`)
+- [x] Add `## v0.4.0 — 2026-07-20` to `CHANGELOG.md` with `### Add` (editable vehicle driver/display-number via `PATCH /api/vehicles/{id}`, `display_number` column) and `### Fix` (dummy-mode vehicle IDs now `VEH-NNNNN` instead of random strings) and `### Update` (24h-activity search filter, default-on focused view, responsive fixes) sections
+- [x] Bump `frontend/package.json` version (minor bump)
+- [x] Update `AGENTS.md` `## Current Sprint`: Sprint 04 archived, point to `docs/sprints/BACKLOG.md` for Sprint 05
+- [x] Move `docs/sprints/sprint-04.md` → `docs/sprints/archive/sprint-04.md` (`git mv`)
 
 ---
 
@@ -1240,26 +1240,36 @@ git mv docs/sprints/archive/sprint-04.md docs/sprints/sprint-04.md
 ## Sprint-End Checklist
 
 **Version and changelog:**
-- [ ] Bump `frontend/package.json` version (minor bump)
-- [ ] Add `## v0.4.0 — 2026-07-20` entry to `CHANGELOG.md`
-- [ ] Confirm `CHANGELOG.md` top version matches `frontend/package.json` version
+- [x] Bump `frontend/package.json` version (minor bump)
+- [x] Add `## v0.4.0 — 2026-07-20` entry to `CHANGELOG.md`
+- [x] Confirm `CHANGELOG.md` top version matches `frontend/package.json` version
 
 **Git and CI:**
-- [ ] All task commits follow format: `IIOT-S04-{TASK-ID}: <one-line summary>`
-- [ ] `cd frontend && npx tsc --noEmit` passes on the final branch state
-- [ ] `cd backend && dotnet build FleetTelemetry.csproj` passes on the final branch state
-- [ ] Open PR: `claude/sprint-04-editing-search-focused-view` → `main`
+- [x] All task commits follow format: `IIOT-S04-{TASK-ID}: <one-line summary>`
+- [x] `cd frontend && npx tsc --noEmit` passes on the final branch state (verified by QA-003)
+- [x] `cd backend && dotnet build FleetTelemetry.csproj` passes on the final branch state (verified by QA-003)
+- [ ] Open PR: `claude/sprint-04-editing-search-focused-view` → `main` (left to the orchestrating session/user)
 
 **Wrap-up:**
-- [ ] Move `docs/sprints/sprint-04.md` → `docs/sprints/archive/sprint-04.md`
-- [ ] Update `AGENTS.md` `## Current Sprint` to point to `docs/sprints/BACKLOG.md` (Sprint 05)
-- [ ] Update `CHANGELOG.md` if system design changed further during QA
+- [x] Move `docs/sprints/sprint-04.md` → `docs/sprints/archive/sprint-04.md`
+- [x] Update `AGENTS.md` `## Current Sprint` to point to `docs/sprints/BACKLOG.md` (Sprint 05)
+- [x] Update `CHANGELOG.md` if system design changed further during QA (BE-009's mid-sprint fix documented in the `### Fix` section)
 
 ---
 
 ## Sprint Retrospective
 
-_(fill at sprint end)_
+Sprint 04 shipped all 4 originally-scoped brief tasks (2, 4, 5, 6) plus the BE-008 dummy-mode ID
+bugfix found while scoping Task 2. QA-003's first verification pass caught a real,
+sprint-blocking bug — PATCH edits silently clobbered by the next live-ingestion tick — fixed ad
+hoc as BE-009 (mirroring Sprint 02's QA-001/BE-004 precedent) before the sprint could close. All
+12 tasks (11 planned + 1 ad hoc) are `[x]`. One known, non-blocking follow-up was surfaced and
+deferred to `docs/sprints/BACKLOG.md`: `ILiveTelemetryStore` is never hydrated from Postgres's
+seeded `display_number` on backend startup, so a freshly-started live-mode backend shows
+`displayNumber: ""` until an operator PATCHes a vehicle. Two sandbox limitations meant a couple
+of QA-003 checks were verified via code review rather than a live `dotnet run`/full-scale check
+(dummy-mode ID format, 24h search filter with a synthesized stale vehicle) — both are tracked
+precedents, consistent with Sprint 03's transparency notes. Shipped as `v0.4.0`.
 
 ---
 

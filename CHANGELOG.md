@@ -7,6 +7,68 @@ Version is bumped once per sprint at sprint-end by the ARCH agent.
 
 ---
 
+## v0.4.0 — 2026-07-20
+
+### Add
+
+- **Editable vehicle driver name / fleet number** — `PATCH /api/vehicles/{id}` accepts an
+  optional `driverName` and/or `displayNumber` and updates only those fields; the `id` path
+  parameter (primary key, FK target for `telemetry_snapshots`/`vehicle_logs`, and the exact
+  string the Python emitter sources from `GET /api/vehicles/metadata`) is never renamed or
+  accepted as a mutable field. Backed by a new nullable `vehicles.display_number VARCHAR(30)`
+  column (seeded as `FL-NNNNN` for fresh rows) and surfaced via an inline edit affordance in
+  `DetailPanel.tsx` (driver name / display number fields, client-side validated, optimistic
+  local-state update on success, no page reload required)
+- **24h-activity search filter** — when the Sidebar search box has a non-empty query, results
+  additionally exclude vehicles with no telemetry activity (`lastSeenAtUtc`) in the last 24
+  hours; does not apply to the unfiltered/status-filtered list. Backed by a new
+  `lastSeenAtUtc` field exposed per vehicle on `GET /api/vehicles`/`GET /api/vehicles/{id}`
+  (live mode: last ingest time via `ILiveTelemetryStore`; dummy mode: always "now")
+- **Default-on focused view** — the Sidebar now defaults to showing at most 10 curated
+  (highest-priority, status-sorted) vehicles, with a "Show all" toggle to reveal the full
+  virtualized list; the 10-item cap does not apply while a search query is active. Builds on
+  Sprint 03's `hideInactive` mechanism in `useFilterStore.ts`
+
+### Fix
+
+- **Dummy-mode vehicle IDs are now meaningful** — `TelemetrySimulationService.MakeId()`
+  previously generated random 2-3-letter-prefix + 4-6-character-suffix gibberish IDs (e.g.
+  `"XJ-4K7Q2"`) for local `dotnet run` / dummy-mode seeding; it now generates `VEH-NNNNN`
+  (zero-padded 5-digit) IDs deterministically from the seeding loop index, matching the format
+  already used by live mode, the DB-seeded `vehicles` table, and the Python emitter
+- **PATCH edits no longer clobbered by the next live-ingestion tick** — found by QA-003's
+  first verification pass (mirroring Sprint 02's QA-001/BE-004 precedent): a successful
+  `PATCH /api/vehicles/{id}` reverted within one ingest tick under live/Docker conditions,
+  because `TelemetryIngestController`'s `Ingest` action rebuilt a fresh `Vehicle` object on
+  every tick without preserving an edited `DriverName`/`DisplayNumber`. Fixed by flipping
+  field priority so the live store's existing (potentially PATCH-edited) state wins over the
+  incoming ingest request for those two fields specifically; re-verified holding across
+  multiple ingest ticks while other telemetry fields continue updating normally
+
+### Update
+
+- **Responsive/overflow fixes** — `Header`, `Sidebar`, `MapView`, and `DetailPanel` no longer
+  clip content or force horizontal page scroll at mobile (375px) or tablet (768px) viewport
+  widths; `Sidebar`/`DetailPanel` become full-width overlays below the `md:` breakpoint instead
+  of fixed-width side panels, `Header` wraps/truncates gracefully, and a second nested overflow
+  inside `DetailPanel`'s gauge/driver-model grids was fixed along the way. Desktop (≥1024px)
+  layout is unchanged
+
+### Known Issues
+
+- `ILiveTelemetryStore` is never hydrated from Postgres's DB-seeded `display_number` on
+  backend startup — a freshly-started live-mode backend shows `displayNumber: ""` for every
+  vehicle until an operator PATCHes one in, rather than the DB-seeded `FL-NNNNN` default.
+  Intentionally out of scope for this sprint's BE-009 clobbering fix (a data-loss bug, not a
+  cold-start-hydration gap). Tracked in `docs/sprints/BACKLOG.md`.
+- QA-003 verified dummy-mode `VEH-NNNNN` ID format and the 24h search-exclusion rule via code
+  review rather than a live end-to-end run, due to this sandbox's known host .NET
+  runtime-patch mismatch (blocking local `dotnet run`) and the inability to synthesize a
+  live stale (>24h) test vehicle within QA's read-only mandate, respectively. Both carried
+  forward from prior sprints' documented sandbox limitations.
+
+---
+
 ## v0.3.0 — 2026-07-20
 
 ### Add
