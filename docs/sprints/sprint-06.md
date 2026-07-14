@@ -83,7 +83,7 @@ git status    # must be clean
 - [x] INFRA-006 — Add Helm Templates for Backend and Frontend Deployments
 - [x] INFRA-007 — Add Helm Templates for iiot-emitter and Ingress
 - [x] ARCH-012 — Write Helm Deployment Guide Documentation
-- [ ] QA-006 — Verify Docker Compose and Helm Chart End-to-End
+- [x] QA-006 — Verify Docker Compose and Helm Chart End-to-End
 - [ ] ARCH-013 — Sprint-End — CHANGELOG, Version Bump, Archive
 
 ---
@@ -667,7 +667,19 @@ git checkout -- README.md AGENTS.md
 
 **Agent:** QA
 **Depends on:** ARCH-011, INFRA-004, INFRA-005, INFRA-006, INFRA-007, ARCH-012
-**Status:** [ ]
+**Status:** [x]
+
+---
+
+**Verification results (all acceptance criteria across ARCH-011, INFRA-004, INFRA-005, INFRA-006, INFRA-007, ARCH-012 re-confirmed PASS):**
+
+1. **ARCH-011 — PASS.** `docs/SDD_WORKFLOW.md` exists; `AGENTS.md` has `helm/**` in INFRA's write scope and a `docs/SDD_WORKFLOW.md` Key Knowledge Base row; every path `docs/SDD_WORKFLOW.md` references (`docs/requirements/REQUIREMENTS.md`, `.claude/skills/sprint/SKILL.md`, `docs/sprints/archive/TEMPLATE.md`, `docs/sprints/BACKLOG.md`, `CHANGELOG.md`, `docs/sprints/archive/sprint-05.md`) confirmed to exist via `test -f`.
+2. **INFRA-004 — PASS.** `docker-compose config --quiet` exits 0. `docker-compose up --build -d` → `docker-compose ps` after a 12s grace period: `db`, `backend`, `frontend` all `Up (healthy)`; `iiot-emitter` `Up`. `docker network inspect iiot-fleet-telemetry-system_iiot-fleet-net` lists all four containers attached. Confirmed `postgres_backups` was **not** added — top-level `volumes:` has only `postgres_data`, per the operator's mid-sprint correction to INFRA-004's original scope. `docker-compose down` cleaned up correctly.
+3. **INFRA-005 — PASS.** `helm lint helm/iiot-fleet-app`: 0 errors (1 informational icon notice only). `helm template` renders exactly one `StatefulSet` (with `volumeClaimTemplates`), one headless `Service` (`clusterIP: None`), one `Secret`. No plaintext password anywhere in rendered output — `grep -i changeme` on the template output returns nothing (the value is base64-encoded in the `Secret`, not literal). `Chart.yaml`'s `appVersion: "0.5.0"` matches `frontend/package.json`'s `version: 0.5.0`.
+4. **INFRA-006 — PASS.** `helm template` renders `backend-deployment.yaml` with a `tcpSocket` readinessProbe/livenessProbe on port 8080, and `frontend-deployment.yaml` with an `httpGet` probe on `/` port 3000. Backend's `ConnectionStrings__Fleet` resolves to `Host=test-release-iiot-fleet-app-db;Port=5432;Database=fleet_telemetry;Username=postgres;Password=changeme;` (decoded from the rendered `Secret`) — correctly references the `db` Service's fullname DNS host. Frontend's `NEXT_PUBLIC_API_URL` resolves to `http://test-release-iiot-fleet-app-backend:8080` — the backend Service's in-cluster DNS, not `localhost`.
+5. **INFRA-007 — PASS.** Default `helm template` renders zero `Ingress` resources (`grep -c "kind: Ingress"` → `0`). `--set ingress.enabled=true --set ingress.host=fleet.example.local` renders exactly one `Ingress`, routing `/api`, `/swagger`, `/fleethub` to the backend Service and `/` to the frontend Service. `ls templates/ | grep emitter` → only `emitter-deployment.yaml`, no matching Service file. `values.yaml`'s `emitter.replicaCount: 1` present with its explanatory comment.
+6. **ARCH-012 — PASS.** `docs/HELM_GUIDE.md` exists with prerequisites, quick start, a full `values.yaml` reference table, upgrade/uninstall, connect-to-k8s (`kubectl port-forward` for all three ports + a worked `kind` end-to-end sequence), and troubleshooting sections. Every top-level and nested key in the final `helm/iiot-fleet-app/values.yaml` (confirmed via a key-extraction pass) appears in the reference table. `README.md` and `AGENTS.md` both link `docs/HELM_GUIDE.md` (`grep -q` confirmed on both). No `TODO`/`TBD`/`FIXME`/placeholder text found in either new doc.
+7. **Real `helm install` against a live cluster — PASS (beyond the original lint/template-only bar), by explicit operator go-ahead mid-task.** No local k8s cluster was reachable when this sprint started; one came up during execution (Docker Desktop's built-in Kubernetes, context `docker-desktop`, node `desktop-control-plane` `Ready`). Per the operator's direction to attempt a real install once available: `helm install qa-test helm/iiot-fleet-app --set db.password=qatest123 ...` — `STATUS: deployed`. Confirmed via `kubectl get pvc/secret/configmap/svc -l app.kubernetes.io/instance=qa-test`: the `StatefulSet`'s `volumeClaimTemplates` produced a `Bound` 1Gi PVC on the `standard` StorageClass; both `Secret`s and the `ConfigMap` (5 keys) were created; all three `Service`s (`db` headless, `backend`/`frontend` ClusterIP) were created with correct types. `helm uninstall qa-test` left the PVC behind, confirmed still `Bound` afterward — matching `docs/HELM_GUIDE.md`'s documented uninstall behavior exactly. **Environment-limited:** pods themselves stayed `ErrImageNeverPull`/`Init:0/1` — this Docker Desktop Kubernetes instance does not share `docker build`'s local image store with the cluster's image runtime (confirmed: the `busybox:1.36` initContainer image pulled fine from Docker Hub, proving cluster network egress works; only the four locally-built, unpublished `iiot-fleet-*` images were unreachable to kubelet). This is a local Docker Desktop image-store configuration gap, not a chart defect — the same four images run correctly under `docker-compose` (criterion 2, above). Not something this sprint's scope can fix; `docs/HELM_GUIDE.md`'s `kind load docker-image` guidance covers the `kind` case, which does not have this gap. Test release and its leftover PVC were fully cleaned up (`helm uninstall` + `kubectl delete pvc`); local image tags used for the test were removed afterward.
 
 ---
 
