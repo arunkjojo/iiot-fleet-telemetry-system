@@ -1,0 +1,19 @@
+# Headless Service — required for the StatefulSet's stable per-pod DNS
+# identity (e.g. iiot-fleet-app-db-0.iiot-fleet-app-db). Also gives the
+# backend a single, predictable hostname to connect to.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "iiot-fleet-app.fullname" . }}-db
+  labels:
+    {{- include "iiot-fleet-app.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  ports:
+    - port: {{ .Values.db.port }}
+      targetPort: {{ .Values.db.port }}
+      protocol: TCP
+      name: postgres
+  selector:
+    {{- include "iiot-fleet-app.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: db

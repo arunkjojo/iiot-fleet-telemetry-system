@@ -79,7 +79,7 @@ git status    # must be clean
 
 - [x] ARCH-011 — Author SDD (Spec-Driven Development) Workflow Documentation
 - [x] INFRA-004 — Add Explicit Network to Docker Compose
-- [ ] INFRA-005 — Scaffold Helm Chart Skeleton + PostgreSQL StatefulSet/PVC
+- [x] INFRA-005 — Scaffold Helm Chart Skeleton + PostgreSQL StatefulSet/PVC
 - [ ] INFRA-006 — Add Helm Templates for Backend and Frontend Deployments
 - [ ] INFRA-007 — Add Helm Templates for iiot-emitter and Ingress
 - [ ] ARCH-012 — Write Helm Deployment Guide Documentation
@@ -300,7 +300,7 @@ git checkout -- docker-compose.yml DOCKER_README.md
 
 **Agent:** INFRA
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
 
 ---
 

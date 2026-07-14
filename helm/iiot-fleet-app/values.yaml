@@ -1,0 +1,18 @@
+# Default values for iiot-fleet-app.
+# Override with `--set key=value` or a `-f values-override.yaml` file at install time.
+
+db:
+  image:
+    # Custom-tuned Postgres image built from db/Dockerfile — not on any public
+    # registry. Build it yourself: `docker build -t iiot-fleet-db ./db`, then
+    # push it to a registry your cluster can pull from (or `kind load
+    # docker-image iiot-fleet-db` for a local kind cluster).
+    repository: iiot-fleet-db
+    tag: latest
+    pullPolicy: IfNotPresent
+  storage:
+    size: 1Gi
+  # Placeholder only — never commit a real password. Override at install time:
+  #   helm install iiot-fleet-app ./helm/iiot-fleet-app --set db.password=<real-password>
+  password: "changeme"
+  port: 5432
