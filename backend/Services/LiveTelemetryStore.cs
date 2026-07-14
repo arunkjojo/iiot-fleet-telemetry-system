@@ -21,6 +21,9 @@ public interface ILiveTelemetryStore
     /// <summary>Attempt to read the current state for a vehicle.</summary>
     bool TryGet(string id, out Vehicle? v);
 
+    /// <summary>Attempt to read the UTC timestamp of the last upsert for a vehicle.</summary>
+    bool TryGetLastSeenUtc(string id, out DateTime lastSeenUtc);
+
     /// <summary>All vehicles currently known to the store.</summary>
     IEnumerable<Vehicle> GetAll();
 
@@ -40,6 +43,7 @@ public class LiveTelemetryStore : ILiveTelemetryStore
     private readonly ConcurrentDictionary<string, Vehicle> _vehicles = new();
     private readonly ConcurrentDictionary<string, ConcurrentQueue<VehicleLog>> _logs = new();
     private readonly ConcurrentDictionary<string, bool> _dirty = new();
+    private readonly ConcurrentDictionary<string, DateTime> _lastSeenUtc = new();
 
     private const int MaxLogEntries = 50;
 
@@ -47,6 +51,7 @@ public class LiveTelemetryStore : ILiveTelemetryStore
     {
         _vehicles[v.Id] = v;
         _dirty[v.Id] = true;
+        _lastSeenUtc[v.Id] = DateTime.UtcNow;
     }
 
     public void AddLog(string id, string level, string message)
@@ -60,6 +65,8 @@ public class LiveTelemetryStore : ILiveTelemetryStore
     }
 
     public bool TryGet(string id, out Vehicle? v) => _vehicles.TryGetValue(id, out v);
+
+    public bool TryGetLastSeenUtc(string id, out DateTime lastSeenUtc) => _lastSeenUtc.TryGetValue(id, out lastSeenUtc);
 
     public IEnumerable<Vehicle> GetAll() => _vehicles.Values;
 

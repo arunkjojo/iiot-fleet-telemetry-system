@@ -40,6 +40,8 @@ function Sidebar({ vehicles, onSelect, selectedId }: Props) {
   const toggleStatus = useFilterStore((s) => s.toggleStatus)
   const hideInactive = useFilterStore((s) => s.hideInactive)
   const toggleHideInactive = useFilterStore((s) => s.toggleHideInactive)
+  const focusedView = useFilterStore((s) => s.focusedView)
+  const toggleFocusedView = useFilterStore((s) => s.toggleFocusedView)
 
   // status priority used across the component (lower = higher priority)
   const STATUS_PRIORITY = ['danger', 'warning', 'offline', 'active'] as const
@@ -134,10 +136,28 @@ function Sidebar({ vehicles, onSelect, selectedId }: Props) {
       out = out.filter((v) => !v.inactive)
     }
 
+    // apply 24h-activity filter — only when a search query is active (Sprint 04 UI-013,
+    // decision #3). Browsing the unfiltered/status-filtered list is unaffected. A missing
+    // lastSeenAtUtc is treated as "don't exclude" (defensive default).
+    if (q) {
+      const DAY_MS = 24 * 60 * 60 * 1000
+      out = out.filter((v) => !v.lastSeenAtUtc || (Date.now() - new Date(v.lastSeenAtUtc).getTime()) <= DAY_MS)
+    }
+
     // sort matches by status priority so warnings are shown at top
     return out.sort(compare)
   }, [query, tokenIndex, idMap, vehicles, JSON.stringify(selectedStatuses), hideInactive])
 
+  // Focused View (Sprint 04 UI-014): default-on cap to the top 10 highest-priority
+  // vehicles (status/hideInactive-filtered, priority-sorted — see `filtered` above).
+  // Applied as a final slice, AFTER status filtering, hide-inactive filtering, and
+  // priority sorting, so the 10 shown are genuinely the highest-priority ones.
+  // Does NOT apply while a search query is active (decision #4 / F-34) — search
+  // results should never be hidden behind the cap.
+  const visible = useMemo(() => {
+    if (focusedView && !query) return filtered.slice(0, 10)
+    return filtered
+  }, [filtered, focusedView, query])
 
   // debounce inputValue -> query so heavy lookups don't run on every keystroke
   useEffect(() => {
@@ -160,6 +180,21 @@ function Sidebar({ vehicles, onSelect, selectedId }: Props) {
     )
   }, [])
 
+  // Small inline "last seen" relative-time formatter — no new date library dependency.
+  // Only rendered on rows when a search query is active (Sprint 04 UI-013).
+  const formatLastSeen = useCallback((iso?: string) => {
+    if (!iso) return null
+    const diffMs = Date.now() - new Date(iso).getTime()
+    if (Number.isNaN(diffMs)) return null
+    if (diffMs < 60_000) return 'just now'
+    const mins = Math.floor(diffMs / 60_000)
+    if (mins < 60) return `${mins}m ago`
+    const hours = Math.floor(mins / 60)
+    if (hours < 24) return `${hours}h ago`
+    const days = Math.floor(hours / 24)
+    return `${days}d ago`
+  }, [])
+
   const statusColor = (s: string) => {
     if (s === 'active') return 'bg-[#0bda54]'
     if (s === 'warning') return 'bg-[#f59e0b]'
@@ -172,7 +207,7 @@ function Sidebar({ vehicles, onSelect, selectedId }: Props) {
   // Virtualizer: only render visible rows. This keeps memory and paint costs stable for 10k+ items.
   const rowHeight = 72
   const virtualizer = useVirtualizer({
-    count: filtered.length,
+    count: visible.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
     overscan: 6,
@@ -183,7 +218,7 @@ function Sidebar({ vehicles, onSelect, selectedId }: Props) {
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      setFocusedIdx((s) => Math.min(filtered.length - 1, Math.max(0, s + 1)))
+      setFocusedIdx((s) => Math.min(visible.length - 1, Math.max(0, s + 1)))
       return
     }
     if (e.key === 'ArrowUp') {
@@ -193,12 +228,12 @@ function Sidebar({ vehicles, onSelect, selectedId }: Props) {
     }
     if (e.key === 'Enter') {
       e.preventDefault()
-      if (focusedIdx >= 0 && focusedIdx < filtered.length) onSelect(filtered[focusedIdx])
+      if (focusedIdx >= 0 && focusedIdx < visible.length) onSelect(visible[focusedIdx])
     }
-  }, [filtered, focusedIdx, onSelect])
+  }, [visible, focusedIdx, onSelect])
 
   return (
-    <aside className="w-80 flex flex-col border-r border-border-dark bg-surface-dark z-10 shrink-0">
+    <aside className="w-full md:w-80 h-[45vh] md:h-auto flex flex-col border-r border-border-dark bg-surface-dark z-10 shrink-0">
       <div className="p-4 border-b border-border-dark">
         <div className="flex flex-col gap-1 mb-3">
           <h1 className="text-sm font-bold tracking-widest text-primary uppercase">Fleet Inventory</h1>
@@ -245,12 +280,20 @@ function Sidebar({ vehicles, onSelect, selectedId }: Props) {
             />
             Hide Inactive
           </label>
+          <button
+            type="button"
+            onClick={() => toggleFocusedView()}
+            className="flex items-center gap-2 text-sm mt-2 px-3 py-1 rounded-md text-slate-300 hover:bg-white/5 w-fit cursor-pointer select-none"
+          >
+            <span className="w-2.5 h-2.5 rounded-full accent-primary bg-primary" style={{ opacity: focusedView ? 1 : 0.25 }} />
+            {focusedView ? 'Focused View (Top 10)' : `Show All ${vehicles.length.toLocaleString()}`}
+          </button>
         </div>
       </div>
       <div ref={parentRef} tabIndex={0} onKeyDown={handleKeyDown} className="flex-1 hide-scrollbar" style={{ overflowY: 'auto' }}>
         <div style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }}>
           {virtualItems.map((virtualRow: { index: number; start: any }) => {
-            const v = filtered[virtualRow.index]
+            const v = visible[virtualRow.index]
             const isSelected = selectedId === v.id
             const isFocused = focusedIdx === virtualRow.index
             return (
@@ -267,6 +310,9 @@ function Sidebar({ vehicles, onSelect, selectedId }: Props) {
                       )}
                     </span>
                     <span className="text-xs text-slate-400">{highlight(`${v.model} • ${v.driver}`, query)}</span>
+                    {query && v.lastSeenAtUtc && (
+                      <span className="text-[10px] text-slate-500">Last seen {formatLastSeen(v.lastSeenAtUtc)}</span>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

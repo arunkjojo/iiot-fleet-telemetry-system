@@ -41,6 +41,8 @@ The IIoT Fleet Telemetry System is a real-time industrial asset monitoring platf
 | F-11 | Search MUST return results within 200ms for a 10,000-vehicle dataset |
 | F-12 | The sidebar MUST support filtering by status: All, Active, Warning, Danger, Offline |
 | F-13 | Status filter MUST show a count per status |
+| F-33 | When the sidebar search box has a non-empty query, results MUST additionally exclude vehicles with no telemetry activity (`lastSeenAtUtc`) in the last 24 hours; this filter MUST NOT apply when the query is empty |
+| F-34 | The sidebar MUST default to showing a maximum of 10 curated (highest-priority, status-sorted) vehicles, with a toggle to reveal the full list; the cap MUST NOT apply while a search query is active |
 
 ### 2.4 Vehicle Detail
 
@@ -73,6 +75,8 @@ The IIoT Fleet Telemetry System is a real-time industrial asset monitoring platf
 | F-28 | `GET /api/health/signalr` MUST return the current `/fleethub` connection tracking state (at minimum: active connection count) as `200 OK` JSON |
 | F-29 | The frontend MAY compute a client-side "inactive vehicle" concept — sustained `speedKph = 0` for 60+ continuous seconds — for display/filtering purposes only; this is NOT a `status` enum value, is NOT computed or persisted server-side, and MUST NOT alter `VehicleStatusEvaluator.cs`'s status priority order (`offline` > `danger` > `warning` > `active`) |
 | F-30 | The backend MUST run a background retention/cleanup policy that deletes `telemetry_snapshots` rows older than a configurable retention window, without introducing new database tables |
+| F-31 | `PATCH /api/vehicles/{id}` MUST accept an optional `driverName` and/or `displayNumber` and update only those fields; the `id` path parameter (primary key, FK target, and the exact string the Python emitter sources from `GET /api/vehicles/metadata`) MUST NEVER be renamed or accepted as a mutable field |
+| F-32 | Dummy-mode vehicle IDs (`TelemetrySimulationService.MakeId()`) MUST use the same `VEH-NNNNN` (zero-padded 5-digit) format as live mode, not randomly-generated strings. This targets `TelemetrySimulationService.MakeId()` only — changing the ID format string does NOT violate that file's "in-memory only, no DB/HTTP calls" rule, since no dependency is added and no I/O is introduced, only the generated string's shape changes |
 
 ---
 
@@ -167,17 +171,19 @@ Frontend alerts fire independently of server-side status when:
 ### 5.1 Vehicle (in-memory, runtime)
 
 ```
-id          : string    — unique vehicle identifier (e.g. "VEH-00001")
-driverName  : string    — driver full name
-model       : string    — "NV Cargo" | "Apex Hauler"
-status      : string    — "active" | "warning" | "danger" | "offline"
-latitude    : double    — GPS latitude (San Francisco bbox: 37.70–37.81)
-longitude   : double    — GPS longitude (San Francisco bbox: -122.52 to -122.35)
-fuelPercent : double    — 0.0 to 100.0
-speedKph    : double    — kilometers per hour
-engineHealth: int       — 0 to 100
-temp        : int       — degrees Celsius
-cargoLoad   : int       — kilograms
+id            : string    — unique vehicle identifier (e.g. "VEH-00001"), immutable primary key
+driverName    : string    — driver full name (operator-editable via `PATCH /api/vehicles/{id}`)
+displayNumber : string    — operator-editable "fleet number" (e.g. "FL-00001"), distinct from `id`
+model         : string    — "NV Cargo" | "Apex Hauler"
+status        : string    — "active" | "warning" | "danger" | "offline"
+latitude      : double    — GPS latitude (San Francisco bbox: 37.70–37.81)
+longitude     : double    — GPS longitude (San Francisco bbox: -122.52 to -122.35)
+fuelPercent   : double    — 0.0 to 100.0
+speedKph      : double    — kilometers per hour
+engineHealth  : int       — 0 to 100
+temp          : int       — degrees Celsius
+cargoLoad     : int       — kilograms
+lastSeenAtUtc : DateTime  — UTC timestamp of last telemetry activity; live mode: last ingest time, dummy mode: always current server time
 ```
 
 ### 5.2 VehicleUpdate (SignalR broadcast payload)
@@ -204,12 +210,15 @@ message : string    — human-readable event description
 
 ```sql
 CREATE TABLE vehicles (
-    id          VARCHAR(20) PRIMARY KEY,
-    driver_name VARCHAR(100) NOT NULL,
-    model       VARCHAR(50)  NOT NULL,
-    created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+    id             VARCHAR(20) PRIMARY KEY,
+    driver_name    VARCHAR(100) NOT NULL,
+    display_number VARCHAR(30),
+    model          VARCHAR(50)  NOT NULL,
+    created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 ```
+
+`display_number` is nullable at the DB level (pre-existing rows may not have one until edited or re-seeded); `DbSeeder` populates it by default for freshly-seeded rows. Edited via `PATCH /api/vehicles/{id}`; the `id` primary key itself is never renamed (see the API/data requirement on `PATCH /api/vehicles/{id}` immutability above).
 
 ### 6.2 telemetry_snapshots
 

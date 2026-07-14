@@ -159,6 +159,7 @@ These conventions are immutable. Agents MUST NOT break them.
 | `backend/Services/HubConnectionTracker.cs` | ASP.NET | Tracks active `/fleethub` SignalR connection count/state in memory; read by `/api/health/signalr`; no DB access |
 | `backend/Services/TelemetryRetentionService.cs` | ASP.NET | Background service that deletes `telemetry_snapshots` rows older than `TelemetryRetention__RetentionDays`; batches deletes by `TelemetryRetention__DeleteBatchSize`; does not create new tables |
 | `frontend/components/ConnectionStatus.tsx` | NEXT | Client component; renders SignalR connection-status indicator in the dashboard header; polls/consumes `/api/health/signalr` or the client SignalR connection state, not both as sources of truth |
+| `PATCH /api/vehicles/{id}` | ASP.NET | Edits `driver_name`/`display_number` only; MUST NEVER rename the `id` primary key (FK target for `telemetry_snapshots`/`vehicle_logs` and the exact string the Python emitter sources from `GET /api/vehicles/metadata`) |
 
 ---
 
@@ -291,10 +292,10 @@ docker-compose up --build
 
 ## Current Sprint
 
-**Active:** None — Sprint 03 is complete and archived. Sprint 04 and Sprint 05 are scoped in `docs/sprints/BACKLOG.md` but not yet authored as full sprint files; run the `sprint` skill to author the next one.
+**Active:** Sprint 05 — `docs/sprints/sprint-05.md` (project documentation: `ARCH-009` — new `docs/PROJECT_OVERVIEW.md` covering architecture, DevOps practices, the AI-assisted workflow, use case, and onboarding, linked from `README.md`). See `docs/sprints/BACKLOG.md` for full scope and status.
 
-**Previous:** Sprint 03 — `docs/sprints/archive/sprint-03.md` (SignalR connection-status visibility via `HubConnectionTracker` + `/api/health/signalr` and a header indicator; a client-side "inactive vehicle" concept — sustained speed=0 for 60s+, does not change the server-side `status` enum — plus a "Hide Inactive" toggle; a telemetry retention/cleanup background service closing ADR-001 action item #5. All 8 tasks `[x]`, verified end-to-end by QA-002, shipped in `v0.3.0`. First of three themed sprints split from a larger 9-task operator brief (2026-07-13).)
+**Previous:** Sprint 04 — `docs/sprints/archive/sprint-04.md` (operator-editable `display_number` + driver-name field via `PATCH /api/vehicles/{id}`; fixed dummy-mode vehicle IDs, `TelemetrySimulationService` previously generated random gibberish instead of `VEH-NNNNN`; a 24h-activity search filter; a default-on "focused view" capping the sidebar to 10 vehicles; and a responsive/overflow pass across `Header`/`Sidebar`/`MapView`/`DetailPanel`. QA-003's first verification pass found a real, sprint-blocking bug — PATCH edits silently clobbered by the next live-ingestion tick — fixed ad hoc as `BE-009` before the sprint could close. All 12 tasks `[x]` (11 planned + 1 ad hoc), verified end-to-end by QA-003, shipped in `v0.4.0`. Second of three themed sprints split from a larger 9-task operator brief (2026-07-13) — see `docs/sprints/BACKLOG.md`.)
 
-**Roadmap:** `docs/sprints/BACKLOG.md` — Sprint 04 (editable vehicle/driver fields, search, UI polish, focused view) and Sprint 05 (CI fix, project documentation), scoped but not yet authored as full sprint files. `BACKLOG.md` also tracks two carryover items from Sprint 03: the missing frontend `lint`/`type-check` npm scripts + ESLint config, and a full-scale (`VEHICLE_COUNT=10000`) NF-01/NF-03 validation follow-up.
+**Roadmap:** `docs/sprints/BACKLOG.md` — tracks Sprint 05's remaining scope, the standalone CI build fix on `claude/fix-docker-image-ci-workflow` (not yet merged), the `ILiveTelemetryStore`/`display_number` cold-start hydration gap found during Sprint 04 (BE-009's known follow-up), the missing frontend `lint`/`type-check` npm scripts + ESLint config (carried over from Sprint 03), and a full-scale (`VEHICLE_COUNT=10000`) NF-01/NF-03 validation follow-up.
 
 > To start a new sprint: invoke the `sprint` skill (`.claude/skills/sprint/SKILL.md`). The skill copies `docs/sprints/archive/TEMPLATE.md`, fills every task block, registers the file here, and never branches from anything other than `origin/main`.

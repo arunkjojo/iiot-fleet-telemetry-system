@@ -30,9 +30,10 @@ public static class DbSeeder
         {
             batch.Add(new VehicleEntity
             {
-                Id         = $"VEH-{i:D5}",
-                DriverName = Drivers[i % Drivers.Length],
-                Model      = Models[i % Models.Length],
+                Id            = $"VEH-{i:D5}",
+                DriverName    = Drivers[i % Drivers.Length],
+                Model         = Models[i % Models.Length],
+                DisplayNumber = $"FL-{i:D5}",
             });
 
             if (batch.Count == batchSize)

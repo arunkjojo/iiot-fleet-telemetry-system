@@ -186,23 +186,8 @@ public class TelemetrySimulationService : BackgroundService
         for (int i = 0; i < VehicleCount; i++)
         {
             var rnd = _rand.Value;
-            // generate ids like "DF-3533" or "DJE-904U3"
-            string MakeId()
-            {
-                var prefixLen = rnd.Next(2, 4); // 2 or 3 letters
-                var prefix = new string(Enumerable.Range(0, prefixLen).Select(_ => (char)('A' + rnd.Next(0, 26))).ToArray());
-                var suffixLen = rnd.Next(4, 7);
-                var suffixChars = new char[suffixLen];
-                for (int s = 0; s < suffixLen; s++)
-                {
-                    if (rnd.NextDouble() < 0.75)
-                        suffixChars[s] = (char)('0' + rnd.Next(0, 10));
-                    else
-                        suffixChars[s] = (char)('A' + rnd.Next(0, 26));
-                }
-                return $"{prefix}-{new string(suffixChars)}";
-            }
-            var id = MakeId();
+            // deterministic VEH-NNNNN id matching live mode / DbSeeder.cs format
+            var id = $"VEH-{i:D5}";
             var corridorIdx = rnd.Next(0, _corridors.Length);
             var progress = rnd.NextDouble();
             var dir = rnd.Next(0, 2) == 0 ? 1 : -1;
