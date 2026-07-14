@@ -13,9 +13,9 @@ task pulled forward and fixed standalone:
 | Sprint / Branch | Brief Tasks Covered | Version | Status |
 |---|---|---|---|
 | Sprint 03 — `docs/sprints/archive/sprint-03.md` | 1, 3, 8 | `v0.3.0` | Shipped, merged to `main` via PR #2 |
-| Standalone — `claude/fix-docker-image-ci-workflow` | 7 | — (CI fix, no app version bump) | Shipped on branch; **not yet merged to `main`** |
-| Sprint 04 — `docs/sprints/archive/sprint-04.md` | 2, 4, 5, 6 (+ ad hoc `BE-008`, `BE-009`) | `v0.4.0` | Shipped |
-| Sprint 05 — `docs/sprints/archive/sprint-05.md` | 9 | `v0.5.0` | Shipped |
+| Standalone — `claude/fix-docker-image-ci-workflow` | 7 | — (CI fix, no app version bump) | Shipped, merged to `main` via PR #3 |
+| Sprint 04 — `docs/sprints/archive/sprint-04.md` | 2, 4, 5, 6 (+ ad hoc `BE-008`, `BE-009`) | `v0.4.0` | Shipped, merged to `main` via PR #4 |
+| Sprint 05 — `docs/sprints/archive/sprint-05.md` | 9 | `v0.5.0` | Shipped, merged to `main` via PR #5 |
 
 No new sprint is currently active — `AGENTS.md`'s `## Current Sprint` points here. The next
 sprint should be authored via the `sprint` skill once new scope is defined, starting from the
@@ -45,10 +45,6 @@ These are genuinely unresolved and were never in scope for any of the three brie
    out of `BE-009`'s scope (that task fixed a data-loss/clobbering bug, not this cold-start gap).
    Needs a standalone fix: populate `ILiveTelemetryStore` from the `vehicles` table on backend
    startup (or on first ingest per vehicle) before `USE_LIVE_TELEMETRY=true` traffic begins.
-4. **CI fix not merged to `main`** — Task 7's fix (branch `claude/fix-docker-image-ci-workflow`,
-   2 commits: the workflow fix + a `BACKLOG.md` note) has shipped on its own branch since before
-   Sprint 04 but is still not merged to `main`. Merge/PR that branch independently of the
-   Sprint 03/04/05 branches.
 
 ---
 
@@ -86,10 +82,10 @@ for the related follow-up this fix surfaced.
 
 | Brief Task | Summary | Notes |
 |-----------|---------|-------|
-| Task 7 | ~~GitHub Actions Docker build failing~~ — **DONE**, shipped standalone on branch `claude/fix-docker-image-ci-workflow` (still not yet merged to `main` — see "Still Open" above). | Pulled forward, not part of Sprint 05's task list. |
+| Task 7 | ~~GitHub Actions Docker build failing~~ — **DONE**, shipped standalone on branch `claude/fix-docker-image-ci-workflow` (PR #3, merged to `main`). `.github/workflows/docker-image.yml` now builds all 4 real service images (`db`, `backend`, `frontend`, `iiot-emitter`) via a matrix strategy instead of a nonexistent root `Dockerfile`. | Pulled forward, not part of Sprint 05's task list. |
 | Task 9 | Comprehensive documentation: architecture, DevOps practices, AI-assisted workflow (Claude Code agents/skills), use case, onboarding | Delivered as `ARCH-009`: new `docs/PROJECT_OVERVIEW.md` (7 sections), linked from `README.MD`. Verified link-integrity and factual accuracy by `QA-005`. |
 
-**Status:** Shipped in `v0.5.0` (`docs/sprints/archive/sprint-05.md`). All 3 tasks `[x]`
+**Status:** Shipped in `v0.5.0` (`docs/sprints/archive/sprint-05.md`, PR #5). All 3 tasks `[x]`
 (`ARCH-009`, `QA-005`, `ARCH-010`).
 
 ---
@@ -97,5 +93,6 @@ for the related follow-up this fix surfaced.
 ## Notes
 
 - Sprint 03 (`docs/sprints/archive/sprint-03.md`, merged to `main` via PR #2) covers Tasks 1, 3, 8 from the same brief (SignalR connection-status visibility, client-side inactive-vehicle detection, telemetry retention policy).
-- Sprint 04 (`docs/sprints/archive/sprint-04.md`) covers Tasks 2, 4, 5, 6, plus a bonus fix found while scoping Task 2: `TelemetrySimulationService.MakeId()` generates random gibberish IDs in dummy mode instead of the `VEH-NNNNN` format used everywhere else — fixed as `BE-008`.
-- For the still-unresolved items (lint tooling, full-scale load test, cold-start hydration gap, unmerged CI branch), see "Still Open (Carryover)" above — kept in one place rather than duplicated here.
+- Task 7 (the CI fix) shipped as a standalone out-of-band fix, branch `claude/fix-docker-image-ci-workflow` (PR #3) — merged to `main`.
+- Sprint 04 (`docs/sprints/archive/sprint-04.md`, PR #4) covers Tasks 2, 4, 5, 6, plus a bonus fix found while scoping Task 2: `TelemetrySimulationService.MakeId()` generates random gibberish IDs in dummy mode instead of the `VEH-NNNNN` format used everywhere else — fixed as `BE-008`.
+- For the still-unresolved items (lint tooling, full-scale load test, cold-start hydration gap), see "Still Open (Carryover)" above — kept in one place rather than duplicated here.
