@@ -1,6 +1,10 @@
 
 # IIoT Fleet Telemetry System
 
+**Full documentation:** [docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md) — architecture, key
+design decisions, DevOps/infrastructure, the AI-assisted development workflow, project history,
+and getting started, all in one onboarding document.
+
 **Project Overview:**
 - **What:** A high-performance real-time fleet telemetry system consisting of a .NET 8 SignalR backend simulator and a Next.js 15 frontend dashboard for visualizing and interacting with large-scale vehicle telemetry.
 - **Why:** To demonstrate a production-ready pipeline capable of tracking 10,000+ vehicles with low-latency updates, GPU-accelerated map rendering, and efficient UI virtualization.

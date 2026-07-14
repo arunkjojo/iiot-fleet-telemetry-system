@@ -69,7 +69,7 @@ git status    # must be clean
 
 ## Task Index
 
-- [ ] ARCH-009 — Write `docs/PROJECT_OVERVIEW.md` and link it from `README.md`
+- [x] ARCH-009 — Write `docs/PROJECT_OVERVIEW.md` and link it from `README.md`
 - [ ] QA-005 — Verify documentation completeness and link integrity
 - [ ] ARCH-010 — Sprint-end: CHANGELOG, version bump, archive
 
@@ -95,7 +95,17 @@ ARCH-009 (no deps)
 
 **Agent:** ARCH
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
+
+---
+
+**Note:** repo's README is tracked as `README.MD` (uppercase extension), not `README.md` —
+functionally identical on this case-insensitive filesystem; the link was added there.
+
+**Finding:** `docs/sprints/sprint-02.md` was never `git mv`'d into `docs/sprints/archive/` despite
+being fully shipped (`v0.2.0`, all 9 tasks `[x]`) — a pre-existing housekeeping gap, not something
+this task's scope covers. Linked to its real, existing path and called out the discrepancy
+inline in the Project History section rather than leaving a broken link.
 
 ---
 
@@ -139,9 +149,9 @@ This is the sprint's substantive deliverable (operator brief Task 9). `docs/PROJ
 
 **Sub-task breakdown:**
 
-- [ ] Write `docs/PROJECT_OVERVIEW.md` with sections (suggested order, adjust as needed for flow): 1) What This Is (use case, problem solved, who it's for), 2) Architecture (4 services, data flow diagram in text/ASCII, tech stack table — link to `AGENTS.md`/subsystem `AGENTS.md` files for detail), 3) Key Design Decisions (link ADR-001; summarize the live/dummy telemetry toggle, MessagePack-over-SignalR choice, virtualization strategy), 4) DevOps & Infrastructure (Docker Compose topology, CI, link `DOCKER_README.md` for full detail), 5) AI-Assisted Development Workflow (the agent/skill/sprint system actually used to build this repo — what `AGENTS.md`, `.claude/agents/`, `.claude/skills/`, `docs/sprints/` are and how they fit together), 6) Project History (one-paragraph-per-sprint summary of Sprints 01-04, linking each archived sprint file), 7) Getting Started (link `DOCKER_README.md` quickstart and the root `AGENTS.md` local-dev commands, don't duplicate them)
-- [ ] Add the `README.md` link
-- [ ] Confirm every internal link (`AGENTS.md`, `REQUIREMENTS.md`, `DOCKER_README.md`, ADR-001, each archived sprint file) resolves to a real path
+- [x] Write `docs/PROJECT_OVERVIEW.md` with all 7 sections
+- [x] Add the `README.MD` link
+- [x] Confirm every internal link resolves to a real path — all 13 unique link targets verified via `test -f`, zero broken
 
 ---
 
