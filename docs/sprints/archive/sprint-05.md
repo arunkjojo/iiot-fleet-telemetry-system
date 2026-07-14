@@ -69,9 +69,9 @@ git status    # must be clean
 
 ## Task Index
 
-- [ ] ARCH-009 — Write `docs/PROJECT_OVERVIEW.md` and link it from `README.md`
-- [ ] QA-005 — Verify documentation completeness and link integrity
-- [ ] ARCH-010 — Sprint-end: CHANGELOG, version bump, archive
+- [x] ARCH-009 — Write `docs/PROJECT_OVERVIEW.md` and link it from `README.md`
+- [x] QA-005 — Verify documentation completeness and link integrity
+- [x] ARCH-010 — Sprint-end: CHANGELOG, version bump, archive
 
 ---
 
@@ -95,7 +95,17 @@ ARCH-009 (no deps)
 
 **Agent:** ARCH
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
+
+---
+
+**Note:** repo's README is tracked as `README.MD` (uppercase extension), not `README.md` —
+functionally identical on this case-insensitive filesystem; the link was added there.
+
+**Finding:** `docs/sprints/sprint-02.md` was never `git mv`'d into `docs/sprints/archive/` despite
+being fully shipped (`v0.2.0`, all 9 tasks `[x]`) — a pre-existing housekeeping gap, not something
+this task's scope covers. Linked to its real, existing path and called out the discrepancy
+inline in the Project History section rather than leaving a broken link.
 
 ---
 
@@ -139,9 +149,9 @@ This is the sprint's substantive deliverable (operator brief Task 9). `docs/PROJ
 
 **Sub-task breakdown:**
 
-- [ ] Write `docs/PROJECT_OVERVIEW.md` with sections (suggested order, adjust as needed for flow): 1) What This Is (use case, problem solved, who it's for), 2) Architecture (4 services, data flow diagram in text/ASCII, tech stack table — link to `AGENTS.md`/subsystem `AGENTS.md` files for detail), 3) Key Design Decisions (link ADR-001; summarize the live/dummy telemetry toggle, MessagePack-over-SignalR choice, virtualization strategy), 4) DevOps & Infrastructure (Docker Compose topology, CI, link `DOCKER_README.md` for full detail), 5) AI-Assisted Development Workflow (the agent/skill/sprint system actually used to build this repo — what `AGENTS.md`, `.claude/agents/`, `.claude/skills/`, `docs/sprints/` are and how they fit together), 6) Project History (one-paragraph-per-sprint summary of Sprints 01-04, linking each archived sprint file), 7) Getting Started (link `DOCKER_README.md` quickstart and the root `AGENTS.md` local-dev commands, don't duplicate them)
-- [ ] Add the `README.md` link
-- [ ] Confirm every internal link (`AGENTS.md`, `REQUIREMENTS.md`, `DOCKER_README.md`, ADR-001, each archived sprint file) resolves to a real path
+- [x] Write `docs/PROJECT_OVERVIEW.md` with all 7 sections
+- [x] Add the `README.MD` link
+- [x] Confirm every internal link resolves to a real path — all 13 unique link targets verified via `test -f`, zero broken
 
 ---
 
@@ -188,7 +198,19 @@ git rm docs/PROJECT_OVERVIEW.md
 
 **Agent:** QA
 **Depends on:** ARCH-009
-**Status:** [ ]
+**Status:** [x]
+
+---
+
+**Verification results (all 5 acceptance criteria PASS, no discrepancies found):**
+
+1. **All 13 unique internal link targets resolve** (14 link strings total) — verified via `test -f` relative to `docs/`, including the `#local-dev-setup` anchor into `AGENTS.md` and all 7 same-doc TOC anchors matching their heading slugs.
+2. **No `{{PLACEHOLDER}}` text** — `grep -c "{{"` → 0.
+3. **Architecture section consistent with `AGENTS.md`** — tech-stack table matches exactly; PostgreSQL 16 claim cross-checked against `db/Dockerfile:10`.
+4. **Project History accurate** — cross-checked against `docs/sprints/archive/sprint-{01,03,04}.md` metadata (dates, goals all match) and `CHANGELOG.md` (versions v0.2.0–v0.4.0 confirmed); Sprint 02's unarchived state correctly reflected, not glossed over.
+5. **Every named agent/skill exists** — all 6 agents (ARCH/NEXT/ASP.NET/INFRA/QA/ANALYST → their `.claude/agents/*.md` files) and all 6 skills confirmed present on disk.
+
+Also spot-checked: `README.MD`'s link to `docs/PROJECT_OVERVIEW.md` resolves correctly (case-insensitive filesystem, same file regardless of `README.md`/`README.MD` casing used).
 
 ---
 
@@ -225,12 +247,12 @@ None.
 
 **Sub-task breakdown:**
 
-- [ ] Extract every internal markdown link (`[text](path)`) from `docs/PROJECT_OVERVIEW.md` and confirm each target file exists
-- [ ] Confirm no `{{PLACEHOLDER}}` text remains
-- [ ] Cross-check the Architecture section against `AGENTS.md`'s Stack summary table — no contradictions (e.g. wrong framework versions, missing services)
-- [ ] Cross-check the "Project History" section against `docs/sprints/archive/*.md` — confirms Sprints 01-04 are all represented (04 only if already archived — read `AGENTS.md`'s `## Current Sprint` to confirm current state)
-- [ ] Confirm the AI-Assisted Workflow section's named agents/skills actually exist under `.claude/agents/` / `.claude/skills/`
-- [ ] Report PASS/FAIL per acceptance criterion
+- [x] Extract every internal markdown link (`[text](path)`) from `docs/PROJECT_OVERVIEW.md` and confirm each target file exists
+- [x] Confirm no `{{PLACEHOLDER}}` text remains
+- [x] Cross-check the Architecture section against `AGENTS.md`'s Stack summary table — no contradictions (e.g. wrong framework versions, missing services)
+- [x] Cross-check the "Project History" section against `docs/sprints/archive/*.md` — confirms Sprints 01-04 are all represented
+- [x] Confirm the AI-Assisted Workflow section's named agents/skills actually exist under `.claude/agents/` / `.claude/skills/`
+- [x] Report PASS/FAIL per acceptance criterion
 
 ---
 
@@ -271,7 +293,7 @@ Not applicable — verification-only task, no files modified.
 
 **Agent:** ARCH
 **Depends on:** QA-005
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -313,11 +335,11 @@ None.
 
 **Sub-task breakdown:**
 
-- [ ] Add `## v0.5.0 — 2026-07-16` to `CHANGELOG.md` with `### Add` (`docs/PROJECT_OVERVIEW.md`) section
-- [ ] Bump `frontend/package.json` version (patch bump — docs-only change)
-- [ ] Update `AGENTS.md` `## Current Sprint` to reflect no active sprint
-- [ ] Update `docs/sprints/BACKLOG.md` — mark the operator brief fully delivered, keep open carryover items
-- [ ] Move `docs/sprints/sprint-05.md` → `docs/sprints/archive/sprint-05.md` (`git mv`)
+- [x] Add `## v0.5.0 — 2026-07-16` to `CHANGELOG.md` with `### Add` (`docs/PROJECT_OVERVIEW.md`) section
+- [x] Bump `frontend/package.json` version (patch bump — docs-only change)
+- [x] Update `AGENTS.md` `## Current Sprint` to reflect no active sprint
+- [x] Update `docs/sprints/BACKLOG.md` — mark the operator brief fully delivered, keep open carryover items
+- [x] Move `docs/sprints/sprint-05.md` → `docs/sprints/archive/sprint-05.md` (`git mv`)
 
 ---
 
@@ -358,24 +380,38 @@ git mv docs/sprints/archive/sprint-05.md docs/sprints/sprint-05.md
 ## Sprint-End Checklist
 
 **Version and changelog:**
-- [ ] Bump `frontend/package.json` version (patch bump — docs-only sprint)
-- [ ] Add `## v0.5.0 — 2026-07-16` entry to `CHANGELOG.md`
-- [ ] Confirm `CHANGELOG.md` top version matches `frontend/package.json` version
+- [x] Bump `frontend/package.json` version (patch bump — docs-only sprint)
+- [x] Add `## v0.5.0 — 2026-07-16` entry to `CHANGELOG.md`
+- [x] Confirm `CHANGELOG.md` top version matches `frontend/package.json` version
 
 **Git and CI:**
-- [ ] All task commits follow format: `IIOT-S05-{TASK-ID}: <one-line summary>`
-- [ ] Open PR: `claude/sprint-05-project-documentation` → `main`
+- [x] All task commits follow format: `IIOT-S05-{TASK-ID}: <one-line summary>`
+- [ ] Open PR: `claude/sprint-05-project-documentation` → `main` (left to the orchestrating session/user)
 
 **Wrap-up:**
-- [ ] Move `docs/sprints/sprint-05.md` → `docs/sprints/archive/sprint-05.md`
-- [ ] Update `AGENTS.md` `## Current Sprint` to "none active"
-- [ ] Update `docs/sprints/BACKLOG.md` to reflect the brief as delivered
+- [x] Move `docs/sprints/sprint-05.md` → `docs/sprints/archive/sprint-05.md`
+- [x] Update `AGENTS.md` `## Current Sprint` to "none active"
+- [x] Update `docs/sprints/BACKLOG.md` to reflect the brief as delivered
 
 ---
 
 ## Sprint Retrospective
 
-_(fill at sprint end)_
+Sprint 05 shipped its single substantive deliverable, `docs/PROJECT_OVERVIEW.md` (ARCH-009) —
+a 7-section onboarding map (architecture, use case, key design decisions, DevOps, AI-assisted
+workflow, project history, getting started) linked from `README.MD`, summarizing rather than
+duplicating `AGENTS.md`/`REQUIREMENTS.md`/`DOCKER_README.md` so it won't drift out of sync.
+QA-005 verified all 13 unique internal link targets resolve, no placeholder text remains, and
+the document is factually consistent with `AGENTS.md` and the archived sprint history — zero
+discrepancies found. All 3 tasks (`[x]`) shipped as `v0.5.0`, closing Sprint 05 and, with it,
+the entire 9-task/3-sprint operator brief opened 2026-07-13 (Sprints 03-05 plus the standalone
+Task 7 CI fix on `claude/fix-docker-image-ci-workflow`, still unmerged to `main`). Four items
+remain open as carryover, tracked in `docs/sprints/BACKLOG.md`: the missing frontend
+`lint`/`type-check` npm scripts + ESLint config (Sprint 03), the full-scale
+`VEHICLE_COUNT=10000` NF-01/NF-03 validation follow-up (Sprint 03), the
+`ILiveTelemetryStore`/`display_number` cold-start hydration gap (Sprint 04's `BE-009` follow-up),
+and merging the standalone CI fix branch. No new sprint is currently active; `AGENTS.md`'s
+`## Current Sprint` now points to `docs/sprints/BACKLOG.md` for whoever picks up next.
 
 ---
 
