@@ -21,7 +21,7 @@ Understand the below modification and bug fix and instruction, if any clarificat
 | **Start date** | 2026-07-14 |
 | **End date** | 2026-07-21 |
 | **Goal** | Operators can deploy the IIoT Fleet Telemetry stack to Kubernetes via a documented Helm chart with real persistent storage, run the local Docker Compose stack with explicit persistent volumes and networks, and every future sprint is authored against a written-down Spec-Driven Development (SDD) workflow instead of tribal knowledge. |
-| **Success metric** | `helm lint helm/iiot-fleet-app` and `helm template helm/iiot-fleet-app` both succeed with zero errors; `docker-compose up --build -d` starts all four services healthy on the explicit `iiot-fleet-net` network with `postgres_data` and `postgres_backups` volumes present; `docs/SDD_WORKFLOW.md` and `docs/HELM_GUIDE.md` exist and are linked from `README.md`. |
+| **Success metric** | `helm lint helm/iiot-fleet-app` and `helm template helm/iiot-fleet-app` both succeed with zero errors; `docker-compose up --build -d` starts all four services healthy on the explicit `iiot-fleet-net` network with the `postgres_data` volume present; `docs/SDD_WORKFLOW.md` and `docs/HELM_GUIDE.md` exist and are linked from `README.md`. |
 | **Target env** | Local (`http://localhost:3000` / `http://localhost:8080`) via Docker Compose, plus a local Kubernetes cluster (kind/minikube) for Helm verification |
 | **Agents involved** | ARCH, INFRA, QA |
 | **Token mode** | caveman (default `full`) — see `.claude/skills/sprint/SKILL.md` |
@@ -78,7 +78,7 @@ git status    # must be clean
 ## Task Index (Top-Level Todo)
 
 - [x] ARCH-011 — Author SDD (Spec-Driven Development) Workflow Documentation
-- [ ] INFRA-004 — Add Explicit Network and PostgreSQL Backup Volume to Docker Compose
+- [x] INFRA-004 — Add Explicit Network to Docker Compose
 - [ ] INFRA-005 — Scaffold Helm Chart Skeleton + PostgreSQL StatefulSet/PVC
 - [ ] INFRA-006 — Add Helm Templates for Backend and Frontend Deployments
 - [ ] INFRA-007 — Add Helm Templates for iiot-emitter and Ingress
@@ -211,17 +211,17 @@ git checkout -- AGENTS.md README.md
 
 ---
 
-### INFRA-004: Add Explicit Network and PostgreSQL Backup Volume to Docker Compose
+### INFRA-004: Add Explicit Network to Docker Compose
 
 **Agent:** INFRA
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
 **Context:**
 
-`docker-compose.yml` currently defines a single named volume (`postgres_data`) and relies on Compose's implicit default network, only renamed via `networks.default.name: iiot-fleet-net` with no explicit driver or per-service `networks:` list. This task makes the network an explicit top-level bridge network attached by name on all four services, and adds a second named volume, `postgres_backups`, mounted into the `db` service at `/backups` — giving operators a durable place to write `pg_dump` output that survives `docker-compose down -v` wiping `postgres_data` (backups living inside the data volume they're meant to protect against is not durable).
+`docker-compose.yml` currently defines a single named volume (`postgres_data`) and relies on Compose's implicit default network, only renamed via `networks.default.name: iiot-fleet-net` with no explicit driver or per-service `networks:` list. This task makes the network an explicit top-level bridge network attached by name on all four services. No second volume is added — `postgres_data` remains the only named volume.
 
 ---
 
@@ -229,14 +229,13 @@ git checkout -- AGENTS.md README.md
 
 - `docker-compose.yml` — current services/volumes/networks structure
 - `DOCKER_README.md` — currently documented volume/network behavior, to keep the new docs consistent with existing sections
-- `db/Dockerfile` — confirm base image and user, for backup-volume mount permissions
 
 ---
 
 **Files to modify:**
 
-- `docker-compose.yml` — replace the `networks.default.name` shorthand with an explicit top-level `networks.iiot-fleet-net` (`driver: bridge`) block; add `networks: [iiot-fleet-net]` to `db`, `backend`, `frontend`, `iiot-emitter`; add `postgres_backups` to top-level `volumes:`, mounted at `/backups` on `db`
-- `DOCKER_README.md` — document the new `postgres_backups` volume, the explicit network block, and a `pg_dump`/restore example
+- `docker-compose.yml` — replace the `networks.default.name` shorthand with an explicit top-level `networks.iiot-fleet-net` (`driver: bridge`) block; add `networks: [iiot-fleet-net]` to `db`, `backend`, `frontend`, `iiot-emitter`
+- `DOCKER_README.md` — document the explicit network block
 
 ---
 
@@ -246,7 +245,7 @@ git checkout -- AGENTS.md README.md
 
 **Do NOT touch:**
 
-- `backend/**`, `frontend/**`, `db/postgresql.conf`
+- `backend/**`, `frontend/**`, `db/Dockerfile`, `db/postgresql.conf`
 - `helm/**` — does not exist yet at this task's execution time
 
 ---
@@ -255,22 +254,16 @@ git checkout -- AGENTS.md README.md
 
 - [ ] Add top-level `networks: iiot-fleet-net: driver: bridge`, removing the old `networks: default: name: iiot-fleet-net` shorthand
 - [ ] Add `networks: - iiot-fleet-net` under each of `db`, `backend`, `frontend`, `iiot-emitter`
-- [ ] Add `postgres_backups:` to top-level `volumes:`; mount `postgres_backups:/backups` on `db`
-- [ ] Update `DOCKER_README.md` with the backup-volume section and a `pg_dump` example
+- [ ] Update `DOCKER_README.md` with the explicit network section
 - [ ] Run `docker-compose config` to confirm the file still parses cleanly
 
 ---
 
 **Implementation notes:**
 
-1. Keep the volume name `postgres_data` unchanged — it's referenced by name in `DOCKER_README.md`'s "Stop and wipe volumes" section.
+1. Keep the volume name `postgres_data` unchanged — it's referenced by name in `DOCKER_README.md`'s "Stop and wipe volumes" section, and no second volume is introduced by this task.
 2. Service names (`db`, `backend`, `frontend`, `iiot-emitter`) must not change — `AGENTS.md`'s File Contracts table pins these.
-3. `postgres_backups` mounts at `/backups`, writable by the `postgres` user inside `postgres:16-alpine` — no `db/Dockerfile` change needed since it's a named volume created at container start, not a bind mount.
-4. Add this example to `DOCKER_README.md`'s "Common operational commands" section:
-   ```bash
-   docker-compose exec db pg_dump -U postgres -d fleet_telemetry -f /backups/fleet_telemetry_$(date +%Y%m%d).sql
-   ```
-5. Do not add a network alias or change any port mapping — this task is additive only.
+3. Do not add a network alias or change any port mapping — this task is additive only.
 
 ---
 
@@ -278,9 +271,9 @@ git checkout -- AGENTS.md README.md
 
 1. `docker-compose config` exits `0` with no warnings about unknown top-level keys
 2. All four services list `iiot-fleet-net` under `networks:`
-3. `postgres_backups` appears under top-level `volumes:` and is mounted at `/backups` on `db`
+3. Top-level `volumes:` still contains only `postgres_data`
 4. `docker-compose up --build -d` starts all four containers, with `db`/`backend`/`frontend` reaching `Up (healthy)`
-5. `DOCKER_README.md` documents the backup volume and includes a working `pg_dump` command
+5. `DOCKER_README.md` documents the explicit network block
 
 ---
 
@@ -290,9 +283,6 @@ git checkout -- AGENTS.md README.md
 docker-compose config --quiet && echo "compose file valid"
 docker-compose up --build -d
 docker-compose ps   # expect db, backend, frontend "Up (healthy)"; iiot-emitter "Up"
-docker volume ls | grep postgres_backups
-docker-compose exec db pg_dump -U postgres -d fleet_telemetry -f /backups/test.sql
-docker-compose exec db ls /backups   # expect test.sql
 docker-compose down
 ```
 
@@ -302,7 +292,6 @@ docker-compose down
 
 ```bash
 git checkout -- docker-compose.yml DOCKER_README.md
-docker volume rm iiot-fleet-telemetry-system_postgres_backups   # if created
 ```
 
 ---
@@ -684,7 +673,7 @@ git checkout -- README.md AGENTS.md
 
 **Context:**
 
-Verify everything in this sprint actually works together before sprint-end: the Docker Compose stack with the new network and backup volume comes up healthy, the Helm chart lints and templates cleanly (and, if a local k8s cluster is available, actually installs), and both new docs are internally consistent with the artifacts they describe.
+Verify everything in this sprint actually works together before sprint-end: the Docker Compose stack with the new network comes up healthy, the Helm chart lints and templates cleanly (and, if a local k8s cluster is available, actually installs), and both new docs are internally consistent with the artifacts they describe.
 
 ---
 
@@ -794,7 +783,7 @@ All prior tasks are `[x]` and QA-006 has confirmed the sprint works end-to-end. 
 **Sub-task breakdown:**
 
 - [ ] Bump `frontend/package.json` version `0.5.0` → `0.6.0` (minor bump — new user-facing deployment capability, not a patch)
-- [ ] Add `## v0.6.0 — 2026-07-21` entry to `CHANGELOG.md` with `### Add` (Helm chart, `docs/SDD_WORKFLOW.md`, `docs/HELM_GUIDE.md`, Compose network/backup volume) sections
+- [ ] Add `## v0.6.0 — 2026-07-21` entry to `CHANGELOG.md` with `### Add` (Helm chart, `docs/SDD_WORKFLOW.md`, `docs/HELM_GUIDE.md`, Compose explicit network) sections
 - [ ] Confirm `CHANGELOG.md`'s top version matches `frontend/package.json`
 - [ ] Move `docs/sprints/sprint-06.md` → `docs/sprints/archive/sprint-06.md`
 - [ ] Update `AGENTS.md`'s `## Current Sprint` to reflect sprint 06 as delivered, no active sprint
