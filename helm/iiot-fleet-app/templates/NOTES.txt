@@ -1,0 +1,39 @@
+IIoT Fleet Telemetry System has been installed as release "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+
+Before this chart's Pods can pull images, build and make available the four
+custom images it references (none are published to a public registry):
+
+  docker build -t {{ .Values.db.image.repository }}:{{ .Values.db.image.tag }} ./db
+{{- if .Values.backend }}
+  docker build -t {{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }} ./backend
+{{- end }}
+{{- if .Values.frontend }}
+  docker build -t {{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }} ./frontend
+{{- end }}
+{{- if .Values.emitter }}
+  docker build -t {{ .Values.emitter.image.repository }}:{{ .Values.emitter.image.tag }} ./iiot-emitter
+{{- end }}
+
+For a local kind cluster, load them instead of pushing to a registry:
+
+  kind load docker-image {{ .Values.db.image.repository }}:{{ .Values.db.image.tag }}
+
+Check rollout status:
+
+  kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+{{- if .Values.ingress }}
+{{- if .Values.ingress.enabled }}
+
+The frontend is reachable via the Ingress at:
+
+  http://{{ .Values.ingress.host }}
+{{- else }}
+
+No Ingress is enabled. Reach the frontend with:
+
+  kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "iiot-fleet-app.fullname" . }}-frontend 3000:3000
+{{- end }}
+{{- end }}
+
+See docs/HELM_GUIDE.md in the repository for full install, configuration, and troubleshooting instructions.

@@ -1,0 +1,90 @@
+# Default values for iiot-fleet-app.
+# Override with `--set key=value` or a `-f values-override.yaml` file at install time.
+
+db:
+  image:
+    # Custom-tuned Postgres image built from db/Dockerfile — not on any public
+    # registry. Build it yourself: `docker build -t iiot-fleet-db ./db`, then
+    # push it to a registry your cluster can pull from (or `kind load
+    # docker-image iiot-fleet-db` for a local kind cluster).
+    repository: iiot-fleet-db
+    tag: latest
+    pullPolicy: IfNotPresent
+  storage:
+    size: 1Gi
+  # Placeholder only — never commit a real password. Override at install time:
+  #   helm install iiot-fleet-app ./helm/iiot-fleet-app --set db.password=<real-password>
+  password: "changeme"
+  port: 5432
+
+backend:
+  image:
+    # Not on any public registry. Build it yourself:
+    # `docker build -t iiot-fleet-backend ./backend`, then push it (or `kind
+    # load docker-image iiot-fleet-backend` for a local kind cluster).
+    repository: iiot-fleet-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    port: 8080
+  aspnetEnvironment: "Production"
+  additionalFrontendOrigins: "http://localhost:3000"
+  useLiveTelemetry: "true"
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi
+
+frontend:
+  image:
+    # Not on any public registry. Build it yourself:
+    # `docker build -t iiot-fleet-frontend ./frontend`, then push it (or
+    # `kind load docker-image iiot-fleet-frontend` for a local kind cluster).
+    repository: iiot-fleet-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    port: 3000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+emitter:
+  image:
+    # Not on any public registry. Build it yourself:
+    # `docker build -t iiot-fleet-emitter ./iiot-emitter`, then push it (or
+    # `kind load docker-image iiot-fleet-emitter` for a local kind cluster).
+    repository: iiot-fleet-emitter
+    tag: latest
+    pullPolicy: IfNotPresent
+  # Fixed at 1 — not a tunable. The emitter ticks the *entire* fleet every
+  # cycle; each replica would independently re-simulate all vehicles, so N
+  # replicas multiplies telemetry volume N-fold instead of sharding it.
+  replicaCount: 1
+  vehicleCount: 10000
+  tickIntervalSeconds: 3
+  maxConcurrency: 300
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi
+
+ingress:
+  # Disabled by default — not every cluster (e.g. a bare local kind/minikube)
+  # has an Ingress controller installed.
+  enabled: false
+  className: ""
+  # Must be set when enabling, e.g. --set ingress.host=fleet.example.local
+  host: ""

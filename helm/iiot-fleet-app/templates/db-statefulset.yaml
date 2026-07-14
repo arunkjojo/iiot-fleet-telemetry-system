@@ -1,0 +1,66 @@
+# k8s-native equivalent of docker-compose.yml's `db` service + `postgres_data`
+# named volume. Uses volumeClaimTemplates instead of a standalone
+# PersistentVolumeClaim — the idiomatic StatefulSet pattern for storage that
+# must survive pod rescheduling and stay bound to a stable pod identity.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "iiot-fleet-app.fullname" . }}-db
+  labels:
+    {{- include "iiot-fleet-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: db
+spec:
+  serviceName: {{ include "iiot-fleet-app.fullname" . }}-db
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "iiot-fleet-app.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: db
+  template:
+    metadata:
+      labels:
+        {{- include "iiot-fleet-app.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: db
+    spec:
+      containers:
+        - name: db
+          image: "{{ .Values.db.image.repository }}:{{ .Values.db.image.tag }}"
+          imagePullPolicy: {{ .Values.db.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.db.port }}
+              name: postgres
+          env:
+            - name: POSTGRES_DB
+              value: "fleet_telemetry"
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "iiot-fleet-app.fullname" . }}-db
+                  key: POSTGRES_PASSWORD
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.db.storage.size }}

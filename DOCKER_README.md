@@ -101,6 +101,15 @@ healthcheck before `iiot-emitter` starts posting.
   (but not `docker-compose down -v`).
 - **Resource note:** default tuning assumes at least ~1GB of memory available to the container.
 
+### Network
+
+All four services (`db`, `backend`, `frontend`, `iiot-emitter`) join one explicit
+Compose-managed bridge network, `iiot-fleet-net`, declared as a top-level `networks:` entry in
+`docker-compose.yml` (rather than relying on Compose's implicit default network). Every service
+lists `iiot-fleet-net` under its own `networks:` key. This is what makes Compose-internal DNS
+names like `db`, `backend`, and `frontend` resolvable between containers — see
+[Troubleshooting: (c) db unreachable from sibling containers](#c-db-unreachable-from-sibling-containers).
+
 ### `backend` — ASP.NET Core 8 Web API
 
 - **Dockerfile:** `backend/Dockerfile` — multi-stage build, `mcr.microsoft.com/dotnet/sdk:8.0`

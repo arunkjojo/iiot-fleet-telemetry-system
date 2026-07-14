@@ -1,0 +1,11 @@
+apiVersion: v2
+name: iiot-fleet-app
+description: IIoT Fleet Telemetry System — PostgreSQL, ASP.NET Core backend, Next.js frontend, and the Python telemetry emitter, deployed as one release.
+type: application
+version: 0.1.0
+appVersion: "0.6.0"
+keywords:
+  - iiot
+  - telemetry
+  - signalr
+  - fleet-management

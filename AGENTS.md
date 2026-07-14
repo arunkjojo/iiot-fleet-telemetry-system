@@ -86,7 +86,7 @@
 | Attribute | Value |
 |-----------|-------|
 | **Read scope** | All files in the repository |
-| **Write scope** | `docker-compose.yml`, `backend/Dockerfile`, `frontend/Dockerfile`, `.github/workflows/**`, `.env*` files, `iiot-emitter/**` |
+| **Write scope** | `docker-compose.yml`, `backend/Dockerfile`, `frontend/Dockerfile`, `.github/workflows/**`, `.env*` files, `iiot-emitter/**`, `helm/**` |
 | **Prohibited writes** | Application source files under `frontend/src/` or `backend/` (non-config) |
 | **Responsibilities** | Maintain Docker Compose stack, GitHub Actions CI/CD pipeline, environment variable management, health checks, and container networking. |
 
@@ -160,6 +160,7 @@ These conventions are immutable. Agents MUST NOT break them.
 | `backend/Services/TelemetryRetentionService.cs` | ASP.NET | Background service that deletes `telemetry_snapshots` rows older than `TelemetryRetention__RetentionDays`; batches deletes by `TelemetryRetention__DeleteBatchSize`; does not create new tables |
 | `frontend/components/ConnectionStatus.tsx` | NEXT | Client component; renders SignalR connection-status indicator in the dashboard header; polls/consumes `/api/health/signalr` or the client SignalR connection state, not both as sources of truth |
 | `PATCH /api/vehicles/{id}` | ASP.NET | Edits `driver_name`/`display_number` only; MUST NEVER rename the `id` primary key (FK target for `telemetry_snapshots`/`vehicle_logs` and the exact string the Python emitter sources from `GET /api/vehicles/metadata`) |
+| `helm/iiot-fleet-app/**` | INFRA | Chart values must never hardcode real secrets; passwords are placeholder defaults in `values.yaml`, overridden at install time |
 
 ---
 
@@ -285,6 +286,8 @@ docker-compose up --build
 | Project Requirements | `docs/requirements/REQUIREMENTS.md` |
 | Sprint Template | `docs/sprints/archive/TEMPLATE.md` |
 | Docker Instructions | `DOCKER_README.md` |
+| Helm/Kubernetes Deployment Guide | `docs/HELM_GUIDE.md` |
+| SDD Workflow | `docs/SDD_WORKFLOW.md` |
 | Project Overview | `README.md` |
 | Changelog | `CHANGELOG.md` |
 
@@ -292,11 +295,11 @@ docker-compose up --build
 
 ## Current Sprint
 
-**Active:** Sprint 06 — `docs/sprints/sprint-06.md` (SDD workflow documentation, explicit Docker Compose storage/network config, and a new Helm chart + deployment guide for Kubernetes). Authored 2026-07-14 from a 3-task operator brief; not yet executed — all 8 task blocks (`ARCH-011`, `INFRA-004` through `INFRA-007`, `ARCH-012`, `QA-006`, `ARCH-013`) are `Status: [ ]`. Touches no `frontend/**` or `backend/**` application code — scope is `docs/`, `docker-compose.yml`, `DOCKER_README.md`, and a new `helm/` directory.
+**Active:** None active.
 
 **Still open (carried over, not in Sprint 06's scope):** missing frontend `lint`/`type-check` npm scripts + ESLint config; full-scale `VEHICLE_COUNT=10000` NF-01/NF-03 validation; the `ILiveTelemetryStore`/`display_number` cold-start hydration gap found during Sprint 04's `BE-009`; the CI fix on `claude/fix-docker-image-ci-workflow` still not merged to `main`. See `docs/sprints/BACKLOG.md` for details.
 
-**Previous:** Sprint 05 — `docs/sprints/archive/sprint-05.md` (project documentation: new `docs/PROJECT_OVERVIEW.md` covering architecture, DevOps practices, the AI-assisted workflow, use case, and onboarding, linked from `README.MD`; verified link-integrity and factual consistency by QA-005). All 3 tasks `[x]`, shipped in `v0.5.0`. Third and final themed sprint split from the 2026-07-13 operator brief — see `docs/sprints/BACKLOG.md`.
+**Previous:** Sprint 06 — `docs/sprints/archive/sprint-06.md` (SDD workflow documentation (`docs/SDD_WORKFLOW.md`), an explicit Docker Compose network (`iiot-fleet-net`), and a new Helm chart (`helm/iiot-fleet-app/`) + deployment guide (`docs/HELM_GUIDE.md`) for Kubernetes — db `StatefulSet`+PVC, backend/frontend `Deployment`s+`Service`s, an emitter `Deployment` with an init-gate approximating Compose's `depends_on: service_healthy`, and an opt-in `Ingress`). All 8 tasks `[x]`, shipped in `v0.6.0`. QA-006 additionally verified a real `helm install` against a live cluster that became available mid-sprint (Docker Desktop Kubernetes) — chart-correct end-to-end; only blocked by a local image-store gap unrelated to the chart. Authored from a 3-task operator brief (SDD workflow docs, Compose storage, Helm chart) — see `docs/sprints/BACKLOG.md`.
 
 **Roadmap:** `docs/sprints/BACKLOG.md` — tracks the still-open carryover items: the standalone CI build fix on `claude/fix-docker-image-ci-workflow` (not yet merged), the `ILiveTelemetryStore`/`display_number` cold-start hydration gap found during Sprint 04 (BE-009's known follow-up), the missing frontend `lint`/`type-check` npm scripts + ESLint config (carried over from Sprint 03), and a full-scale (`VEHICLE_COUNT=10000`) NF-01/NF-03 validation follow-up.
 
