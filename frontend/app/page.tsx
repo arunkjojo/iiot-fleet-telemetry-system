@@ -13,10 +13,6 @@ import Toast from '../components/Toast'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
 
-// Client-side-only "inactive vehicle" concept: sustained speedKph == 0 for 60+ seconds.
-// Purely additive/display-only — never modifies the server-side `status` enum.
-const INACTIVE_THRESHOLD_MS = 60_000
-
 export default function Page() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [selected, setSelected] = useState<Vehicle | null>(null)
@@ -25,11 +21,6 @@ export default function Page() {
   const [connectionStatus, setConnectionStatus] = useState<SignalRConnectionStatus>('disconnected')
   const vehiclesMap = useRef<Map<string, Vehicle>>(new Map())
   const connRef = useRef<signalR.HubConnection | null>(null)
-  // Last time (Date.now() ms) each vehicle was observed with speedKph > 0.
-  // Updated on every SignalR update but the O(10k) inactive recompute happens
-  // only in the 5s sweep below — never inline in the SignalR handler.
-  const lastMovedAtMs = useRef<Map<string, number>>(new Map())
-  const mountTimeMs = useRef<number>(Date.now())
 
   // Compute alerts once; memoized to avoid recomputing on unrelated UI changes.
   const alerts = useMemo(() => vehicles.filter((v: any) => {
@@ -70,15 +61,11 @@ export default function Page() {
           cargoLoad: v.cargoLoad ?? v.cargoLoad ?? 0,
           engineHealth: v.engineHealth ?? v.engineHealth ?? 100,
           lat: v.lat ?? v.latitude ?? 0,
-          lng: v.lng ?? v.longitude ?? 0,
-          lastSeenAtUtc: v.lastSeenAtUtc
+          lng: v.lng ?? v.longitude ?? 0
         }))
 
         if (!mounted) return
         vehiclesMap.current = new Map(arr.map((v) => [v.id, v]))
-        // Seed every vehicle's last-moved timestamp with the mount time so nothing
-        // is marked inactive before any SignalR message has arrived.
-        for (const v of arr) lastMovedAtMs.current.set(v.id, mountTimeMs.current)
         setVehicles(Array.from(vehiclesMap.current.values()))
 
         // start SignalR connection
@@ -99,9 +86,6 @@ export default function Page() {
             if (u.Longitude !== undefined || u.longitude !== undefined) veh.lng = u.Longitude ?? u.longitude
             if (u.FuelPercent !== undefined || u.fuelPercent !== undefined || u.fuel !== undefined) veh.fuel = Math.round((u.FuelPercent ?? u.fuelPercent ?? u.fuel) * 100) / 100
             if (u.SpeedKph !== undefined || u.speedKph !== undefined || u.speed !== undefined) veh.speedKph = Math.round(u.SpeedKph ?? u.speedKph ?? u.speed)
-            // Track last-moved timestamp only; the O(10k) inactive recompute + flush
-            // happens in the separate 5s sweep effect, not here (this fires up to 2x/sec/vehicle).
-            if (veh.speedKph > 0) lastMovedAtMs.current.set(veh.id, Date.now())
             if (u.EngineHealth !== undefined || u.engineHealth !== undefined) veh.engineHealth = u.EngineHealth ?? u.engineHealth
             // respect server-provided status when present, otherwise fall back to heuristic
             if (u.Status !== undefined || u.status !== undefined) {
@@ -153,27 +137,6 @@ export default function Page() {
     load()
 
     return () => { mounted = false; connRef.current?.stop().catch(()=>{}) }
-  }, [])
-
-  // 5s sweep: recompute `inactive` for every vehicle and flush a single state update.
-  // Kept separate from the SignalR handler so the O(10k) scan runs at most 12x/minute
-  // instead of on every incoming update batch.
-  useEffect(() => {
-    const sweep = () => {
-      const now = Date.now()
-      let changed = false
-      for (const v of vehiclesMap.current.values()) {
-        const lastMoved = lastMovedAtMs.current.get(v.id) ?? mountTimeMs.current
-        const inactive = (now - lastMoved) > INACTIVE_THRESHOLD_MS
-        if (v.inactive !== inactive) {
-          v.inactive = inactive
-          changed = true
-        }
-      }
-      if (changed) setVehicles(Array.from(vehiclesMap.current.values()))
-    }
-    const intervalId = setInterval(sweep, 5000)
-    return () => clearInterval(intervalId)
   }, [])
 
   const handleSelect = useCallback((v: Vehicle) => setSelected(v), [])

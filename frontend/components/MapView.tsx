@@ -47,7 +47,7 @@ function MapView({ vehicles, onSelect, selectedId }: Props) {
       <div className="relative z-10 w-full h-full">
         <div className="relative w-full h-full">
           {markers.map(({ v, pos, statusHex, isSelected }) => (
-            <div key={v.id} style={{ position: 'absolute', left: pos.left, top: pos.top, transform: 'translate(-50%, -50%)', zIndex: isSelected ? 60 : 10, opacity: v.inactive ? 0.4 : 1 }}>
+            <div key={v.id} style={{ position: 'absolute', left: pos.left, top: pos.top, transform: 'translate(-50%, -50%)', zIndex: isSelected ? 60 : 10 }}>
               <div onClick={() => onSelect(v)} role="button" tabIndex={0} className="group cursor-pointer relative" onKeyDown={(e)=>{ if(e.key==='Enter') onSelect(v) }}>
                 <div className="relative flex items-center justify-center">
                   <div aria-hidden className={`absolute rounded-full ${isSelected ? 'animate-ping' : ''}`} style={{ width: isSelected ? 56 : 0, height: isSelected ? 56 : 0, backgroundColor: statusHex, opacity: isSelected ? 0.18 : 0, transform: 'translate(-50%, -50%)', left: '50%', top: '50%' }} />
