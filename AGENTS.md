@@ -284,6 +284,8 @@ docker-compose up --build
 | Document | Path |
 |----------|------|
 | Project Requirements | `docs/requirements/REQUIREMENTS.md` |
+| Application Overview | `docs/APPLICATION_OVERVIEW.md` (authored in Sprint 07) |
+| DevOps Learning Guides | `docs/devops-learn/` — `Docker_Compose.md`, `Helm.md`, `K8s.md` (authored in Sprint 07) |
 | Sprint Template | `docs/sprints/archive/TEMPLATE.md` |
 | Docker Instructions | `DOCKER_README.md` |
 | Helm/Kubernetes Deployment Guide | `docs/HELM_GUIDE.md` |
@@ -295,9 +297,9 @@ docker-compose up --build
 
 ## Current Sprint
 
-**Active:** None active.
+**Active:** Sprint 07 — `docs/sprints/sprint-07.md` (status-rules-cleanup: remove "Hide Inactive"/"Focused View" sidebar controls and the underlying client-side "inactive vehicle" concept; replace `VehicleStatusEvaluator`/`TelemetrySimulationService` status thresholds and the simulation rebalancer's fixed caps with new operator-supplied rules and ranged targets (offline 40-100, danger 100-400, warning 500-800, active = remainder); update `REQUIREMENTS.md` §4.1/§4.2 and remove F-33/F-34/§4.4; author `docs/APPLICATION_OVERVIEW.md` and three new `docs/devops-learn/` guides — Docker Compose, Helm, Kubernetes). 10 tasks across NEXT, ASP.NET, ARCH, QA.
 
-**Still open (carried over, not in Sprint 06's scope):** missing frontend `lint`/`type-check` npm scripts + ESLint config; full-scale `VEHICLE_COUNT=10000` NF-01/NF-03 validation; the `ILiveTelemetryStore`/`display_number` cold-start hydration gap found during Sprint 04's `BE-009`; the CI fix on `claude/fix-docker-image-ci-workflow` still not merged to `main`. See `docs/sprints/BACKLOG.md` for details.
+**Still open (carried over, not in Sprint 07's scope):** missing frontend `lint`/`type-check` npm scripts + ESLint config; full-scale `VEHICLE_COUNT=10000` NF-01/NF-03 validation; the `ILiveTelemetryStore`/`display_number` cold-start hydration gap found during Sprint 04's `BE-009`; the CI fix on `claude/fix-docker-image-ci-workflow` still not merged to `main`. See `docs/sprints/BACKLOG.md` for details.
 
 **Previous:** Sprint 06 — `docs/sprints/archive/sprint-06.md` (SDD workflow documentation (`docs/SDD_WORKFLOW.md`), an explicit Docker Compose network (`iiot-fleet-net`), and a new Helm chart (`helm/iiot-fleet-app/`) + deployment guide (`docs/HELM_GUIDE.md`) for Kubernetes — db `StatefulSet`+PVC, backend/frontend `Deployment`s+`Service`s, an emitter `Deployment` with an init-gate approximating Compose's `depends_on: service_healthy`, and an opt-in `Ingress`). All 8 tasks `[x]`, shipped in `v0.6.0`. QA-006 additionally verified a real `helm install` against a live cluster that became available mid-sprint (Docker Desktop Kubernetes) — chart-correct end-to-end; only blocked by a local image-store gap unrelated to the chart. Authored from a 3-task operator brief (SDD workflow docs, Compose storage, Helm chart) — see `docs/sprints/BACKLOG.md`.
 
