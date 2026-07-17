@@ -5,18 +5,18 @@ frontend/, because it routes to *two* services (backend for
 frontend-specific. Guarded by .Values.ingress.enabled (default false) since
 not every cluster has an Ingress controller installed.
 */}}
-{{- if .Values.ingress.enabled }}
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+{{- if .Values.ingress.enabled }} # if wraps the entire rest of the file. If .Values.ingress.enabled is falsy (the default), Helm renders nothing at all from this template
+apiVersion: networking.k8s.io/v1 # it moved here location in networking.k8s.io/v1 is the modern, stable form
+kind: Ingress # Ingress lives in the networking.k8s.io API group
 metadata:
   name: {{ include "iiot-fleet-app.fullname" . }}
   labels:
     {{- include "iiot-fleet-app.labels" . | nindent 4 }}
 spec:
   {{- if .Values.ingress.className }}
-  ingressClassName: {{ .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }} #  tells Kubernetes which Ingress controller should handle this object, when a cluster has more than one installed 
   {{- end }}
-  rules:
+  rules: # a list of routing rules.
     - host: {{ .Values.ingress.host | quote }}
       http:
         paths:
