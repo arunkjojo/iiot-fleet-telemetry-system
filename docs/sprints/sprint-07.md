@@ -87,7 +87,7 @@ git status    # must be clean
 
 - [x] UI-015 — Remove "Hide Inactive" / "Focused View" controls from Sidebar + filter store
 - [x] UI-016 — Remove the client-side "inactive vehicle" sweep/badge/dimming (page.tsx, MapView, DetailPanel, types)
-- [ ] BE-010 — Update `VehicleStatusEvaluator.Evaluate` to the new threshold rules
+- [x] BE-010 — Update `VehicleStatusEvaluator.Evaluate` to the new threshold rules
 - [ ] BE-011 — Update `TelemetrySimulationService` status evaluation + rebalancer to new thresholds/ranges
 - [ ] ARCH-014 — Update `REQUIREMENTS.md` thresholds/caps, remove F-33/F-34/§4.4
 - [ ] ARCH-015 — Author `docs/APPLICATION_OVERVIEW.md` (what the app is, how it works, data flow)
@@ -297,7 +297,7 @@ git checkout -- frontend/app/page.tsx frontend/components/MapView.tsx frontend/c
 
 **Agent:** ASP.NET
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
