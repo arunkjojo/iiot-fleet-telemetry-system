@@ -1,3 +1,8 @@
+# templates/frontend/deployment.yaml
+#
+# Stateless Next.js app — plain Deployment, same reasoning as backend. No
+# frontend/secret.yaml exists: every env var this service needs
+# (NEXT_PUBLIC_API_URL) is non-secret and lives in app-configmap.yaml.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -27,8 +32,9 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "iiot-fleet-app.fullname" . }}-config
-          # node:18-alpine has wget but the kubelet probes natively over HTTP,
-          # so no in-container binary is needed here either way.
+          # The kubelet probes over HTTP natively — no in-container binary
+          # (curl/wget) needed either way, unlike the backend's tcpSocket
+          # workaround.
           readinessProbe:
             httpGet:
               path: /

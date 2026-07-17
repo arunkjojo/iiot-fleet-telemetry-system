@@ -50,9 +50,9 @@ helm template ./helm/iiot-fleet-app                    # render manifests locall
 
 This repo's chart lives at `helm/iiot-fleet-app/` and renders one release covering the whole stack:
 
-- **`db-statefulset.yaml` + a PVC** — Postgres needs stable identity and storage that survives Pod rescheduling, so it's a `StatefulSet`, not a `Deployment` (see [`K8s.md`](K8s.md) for why that distinction matters).
-- **`backend-deployment.yaml` + `backend-service.yaml`**, **`frontend-deployment.yaml` + `frontend-service.yaml`** — stateless services, so plain `Deployment`+`Service` pairs, mirroring the `backend`/`frontend` split in `docker-compose.yml`.
-- **`emitter-deployment.yaml`** — the Python telemetry simulator, with an **init-container gate**: raw Kubernetes has no built-in `depends_on: service_healthy` equivalent between two Deployments (unlike Compose), so the chart approximates it by giving the emitter Pod an init container that blocks until the backend Service responds, only then letting the main emitter container start.
+- **`templates/db/statefulset.yaml` + a PVC** — Postgres needs stable identity and storage that survives Pod rescheduling, so it's a `StatefulSet`, not a `Deployment` (see [`K8s.md`](K8s.md) for why that distinction matters). `db` pulls the stock `postgres:16-alpine` image directly (`values.yaml`'s `db.image`) — no custom Dockerfile.
+- **`templates/backend/{deployment,service}.yaml`**, **`templates/frontend/{deployment,service}.yaml`** — stateless services, so plain `Deployment`+`Service` pairs, mirroring the `backend`/`frontend` split in `containers/docker-compose.yml`.
+- **`templates/emitter/deployment.yaml`** — the Python telemetry simulator, with an **init-container gate**: raw Kubernetes has no built-in `depends_on: service_healthy` equivalent between two Deployments (unlike Compose), so the chart approximates it by giving the emitter Pod an init container that blocks until the backend Service responds, only then letting the main emitter container start.
 - **`backend-secret.yaml` / `db-secret.yaml`** — passwords sourced from `values.yaml` as placeholder defaults, meant to be overridden per-environment at install time (`--set` or a values override file) — never real credentials committed to this chart.
 - **`ingress.yaml`** — opt-in (disabled by default in `values.yaml`); enable it to expose the frontend outside the cluster through a real hostname instead of `kubectl port-forward`.
 

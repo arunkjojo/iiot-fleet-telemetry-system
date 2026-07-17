@@ -20,8 +20,8 @@ The system's own status logic (`active`/`warning`/`danger`/`offline`) is determi
 └─────────────┘  Sig-  │  :8080       │        └───────────────┘
                  nalR   └──────┬───────┘
                                 │ HTTP POST (live mode only)
-                        ┌───────┴────────┐
-                        │  iiot-emitter  │
+                        ┌────────────────┐
+                        │  emitter       │
                         │  Python client │
                         └────────────────┘
 ```
@@ -29,7 +29,7 @@ The system's own status logic (`active`/`warning`/`danger`/`offline`) is determi
 - **Frontend** (`frontend/`) — Next.js 15 App Router dashboard. Opens one SignalR connection per session (`frontend/app/page.tsx`), holds live vehicle state in a `useRef<Map>` for O(1) per-vehicle updates, and renders the sidebar, map, and detail panel from that state via Zustand stores.
 - **Backend** (`backend/`) — ASP.NET Core 8 Web API. Owns the SignalR hub (`/fleethub`), the REST endpoints under `/api/`, the Swagger UI (`/swagger`), and — depending on mode — either the in-memory dummy simulation or the live-ingestion pipeline.
 - **Database** — PostgreSQL, reached via EF Core (`FleetDbContext`). Stores the `vehicles`, `telemetry_snapshots`, and `vehicle_logs` tables (see `REQUIREMENTS.md` §6).
-- **iiot-emitter** — a standalone Python client, active only in live mode, that POSTs synthetic-but-externally-sourced telemetry to the backend's ingest endpoint, simulating what a real fleet's edge devices would do.
+- **emitter** — a standalone Python client, active only in live mode, that POSTs synthetic-but-externally-sourced telemetry to the backend's ingest endpoint, simulating what a real fleet's edge devices would do.
 
 All services communicate over the Docker Compose network `iiot-fleet-net` (see [`docs/devops-learn/Docker_Compose.md`](devops-learn/Docker_Compose.md) for how that's wired) or, in Kubernetes, via the `Service` objects the Helm chart renders (see [`docs/devops-learn/K8s.md`](devops-learn/K8s.md) and [`docs/HELM_GUIDE.md`](HELM_GUIDE.md)).
 
@@ -38,7 +38,7 @@ All services communicate over the Docker Compose network `iiot-fleet-net` (see [
 The single most important fork in this codebase is the `USE_LIVE_TELEMETRY` environment variable (default `false`). It decides which of two completely different data-flow paths powers the dashboard:
 
 - **`false` (dummy mode)** — the backend generates its own fleet in-memory and simulates movement/telemetry drift every tick. No emitter, no ingest traffic, no persistence required for the live view.
-- **`true` (live mode)** — the backend instead sources current vehicle state from telemetry actually POSTed to it (by `iiot-emitter` or any other client), computed status server-side per-reading, and persisted.
+- **`true` (live mode)** — the backend instead sources current vehicle state from telemetry actually POSTed to it (by `emitter` or any other client), computed status server-side per-reading, and persisted.
 
 Both paths converge on the same SignalR broadcast to the frontend, so the dashboard code itself doesn't need to know which mode is active.
 
@@ -52,7 +52,7 @@ Both paths converge on the same SignalR broadcast to the frontend, so the dashbo
 
 ## 5. Data flow — live mode (`USE_LIVE_TELEMETRY=true`)
 
-1. `iiot-emitter` fetches the real vehicle roster from `GET /api/vehicles/metadata` (never invents vehicle IDs) and periodically POSTs one reading per vehicle to `POST /api/telemetry/ingest`.
+1. `emitter` fetches the real vehicle roster from `GET /api/vehicles/metadata` (never invents vehicle IDs) and periodically POSTs one reading per vehicle to `POST /api/telemetry/ingest`.
 2. `TelemetryIngestController` validates the payload, computes status via `VehicleStatusEvaluator.Evaluate` (the canonical, live-mode-only evaluator — intentionally a separate implementation from the simulator's, see the doc-comment on that class), and updates `LiveTelemetryStore`, an in-memory current-state cache. It never calls `SaveChangesAsync` synchronously — writes are enqueued to a buffered writer instead, so ingest requests stay fast.
 3. `TelemetryPersistenceService` drains that buffer and writes `telemetry_snapshots`/`vehicle_logs` rows to PostgreSQL in the background.
 4. `LiveBroadcastService` picks up current state from `LiveTelemetryStore` and broadcasts it over the same `/fleethub` SignalR hub the dummy-mode path uses — same wire format, same frontend handler.

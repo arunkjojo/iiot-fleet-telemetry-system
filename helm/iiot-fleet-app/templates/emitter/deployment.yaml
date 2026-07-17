@@ -1,5 +1,9 @@
-# Outbound-only Python client, no inbound ports — matches docker-compose.yml's
-# `iiot-emitter` service having no `ports:` and thus no matching Service here.
+# templates/emitter/deployment.yaml
+#
+# Outbound-only Python client, no inbound ports — matches
+# containers/docker-compose.yml's `emitter` service having no `ports:` and
+# thus no matching Service/emitter/secret.yaml here (nothing it holds is
+# secret either: BACKEND_URL/VEHICLE_COUNT/etc are plain env values below).
 apiVersion: apps/v1
 kind: Deployment
 metadata:

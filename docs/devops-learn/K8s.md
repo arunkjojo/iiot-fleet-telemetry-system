@@ -45,13 +45,13 @@ The `helm/iiot-fleet-app/templates/` directory renders the following object kind
 
 | Manifest | Kind | Role |
 |----------|------|------|
-| `db-statefulset.yaml` | `StatefulSet` | Runs Postgres with a stable identity and durable storage — a plain `Deployment` would risk two Postgres Pods racing for the same data directory during a rollout, or losing data on rescheduling without a bound PVC. |
-| `db-service.yaml` | `Service` | Stable DNS name (`db`) other Pods use to reach Postgres, regardless of which node the StatefulSet's Pod currently runs on. |
-| `backend-deployment.yaml` | `Deployment` | Stateless ASP.NET Core API — any replica can serve any request, so it's a plain rolling-update Deployment, not a StatefulSet. |
-| `backend-service.yaml` | `Service` | Stable address (`backend:8080`) for the frontend and emitter to call. |
-| `frontend-deployment.yaml` | `Deployment` | Stateless Next.js app — same reasoning as backend. |
-| `frontend-service.yaml` | `Service` | Stable address for the Ingress (or `kubectl port-forward`) to reach the frontend. |
-| `emitter-deployment.yaml` | `Deployment` | Stateless Python telemetry simulator; uses an init-container gate (see [`Helm.md`](Helm.md)) to approximate Compose's `depends_on: service_healthy` against `backend`. |
+| `templates/db/statefulset.yaml` | `StatefulSet` | Runs Postgres (stock `postgres:16-alpine`, no custom image) with a stable identity and durable storage — a plain `Deployment` would risk two Postgres Pods racing for the same data directory during a rollout, or losing data on rescheduling without a bound PVC. |
+| `templates/db/service.yaml` | `Service` | Stable DNS name (`db`) other Pods use to reach Postgres, regardless of which node the StatefulSet's Pod currently runs on. |
+| `templates/backend/deployment.yaml` | `Deployment` | Stateless ASP.NET Core API — any replica can serve any request, so it's a plain rolling-update Deployment, not a StatefulSet. |
+| `templates/backend/service.yaml` | `Service` | Stable address (`backend:8080`) for the frontend and emitter to call. |
+| `templates/frontend/deployment.yaml` | `Deployment` | Stateless Next.js app — same reasoning as backend. |
+| `templates/frontend/service.yaml` | `Service` | Stable address for the Ingress (or `kubectl port-forward`) to reach the frontend. |
+| `templates/emitter/deployment.yaml` | `Deployment` | Stateless Python telemetry simulator; uses an init-container gate (see [`Helm.md`](Helm.md)) to approximate Compose's `depends_on: service_healthy` against `backend`. |
 | `app-configmap.yaml` | `ConfigMap` | Non-secret configuration shared across Pods. |
 | `db-secret.yaml`, `backend-secret.yaml` | `Secret` | Passwords/connection strings — placeholder defaults in `values.yaml`, meant to be overridden at install time, never committed as real credentials. |
 | `ingress.yaml` | `Ingress` | Opt-in external HTTP entry point into the cluster (disabled by default in `values.yaml`). |

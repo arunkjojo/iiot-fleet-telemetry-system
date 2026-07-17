@@ -1,0 +1,25 @@
+# templates/db/service.yaml
+#
+# Headless Service (clusterIP: None) — required for the StatefulSet's stable
+# per-pod DNS identity (e.g. <release>-db-0.<release>-db). A normal
+# ClusterIP Service would load-balance across pods and hide that per-pod
+# identity; headless is what StatefulSets are designed to pair with. It also
+# gives the backend one predictable hostname to connect to.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "iiot-fleet-app.fullname" . }}-db
+  labels:
+    {{- include "iiot-fleet-app.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  ports:
+    - port: {{ .Values.db.port }}
+      targetPort: {{ .Values.db.port }}
+      protocol: TCP
+      name: postgres
+  selector:
+    # Matches the db StatefulSet's pod labels — this is what actually routes
+    # traffic to the right pods; the component label narrows it to db-only.
+    {{- include "iiot-fleet-app.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: db

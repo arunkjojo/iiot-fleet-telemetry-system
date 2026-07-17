@@ -1,3 +1,8 @@
+# templates/backend/service.yaml
+#
+# ClusterIP (the default type) — internal-only. Reached by the frontend and
+# emitter inside the cluster; external access (if enabled) goes through
+# templates/ingress.yaml instead, not through this Service directly.
 apiVersion: v1
 kind: Service
 metadata:

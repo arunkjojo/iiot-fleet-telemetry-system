@@ -1,3 +1,9 @@
+# templates/app-configmap.yaml
+#
+# Stays at the templates/ root instead of inside backend/ or frontend/
+# because it's genuinely cross-cutting — both Deployments' envFrom reference
+# it. Filing it under just one service's folder would misrepresent that.
+#
 # Non-secret env vars shared across backend/frontend, editable without
 # touching template files — the k8s-native equivalent of docker-compose.yml's
 # per-service `environment:` blocks (minus anything password-shaped).

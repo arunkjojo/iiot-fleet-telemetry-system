@@ -86,9 +86,9 @@
 | Attribute | Value |
 |-----------|-------|
 | **Read scope** | All files in the repository |
-| **Write scope** | `docker-compose.yml`, `backend/Dockerfile`, `frontend/Dockerfile`, `.github/workflows/**`, `.env*` files, `iiot-emitter/**`, `helm/**` |
+| **Write scope** | `containers/**` (Dockerfiles + `docker-compose.yml`), `.env*` files, `emitter/**`, `helm/**` |
 | **Prohibited writes** | Application source files under `frontend/src/` or `backend/` (non-config) |
-| **Responsibilities** | Maintain Docker Compose stack, GitHub Actions CI/CD pipeline, environment variable management, health checks, and container networking. |
+| **Responsibilities** | Maintain the Docker Compose stack (`containers/docker-compose.yml`), the per-service Dockerfiles under `containers/`, environment variable management, health checks, and container networking. No GitHub Actions CI/CD — this project doesn't run one. |
 
 **Key conventions:**
 - Backend service name in Compose: `backend` (frontend references it as `http://backend:8080`)
@@ -118,7 +118,7 @@ cd backend && dotnet build           # must succeed with zero errors
 cd backend && dotnet test            # must pass all tests (when test project exists)
 
 # Docker stack
-docker-compose up --build -d
+docker compose -f containers/docker-compose.yml up --build -d
 curl http://localhost:8080/api/vehicles   # must return JSON array
 curl http://localhost:3000               # must return HTTP 200
 ```
@@ -150,12 +150,12 @@ These conventions are immutable. Agents MUST NOT break them.
 | `backend/Hubs/FleetHub.cs` | ASP.NET | Hub path MUST remain `/fleethub`; hub itself stays minimal |
 | `backend/Services/TelemetrySimulationService.cs` | ASP.NET | Background service; do not add HTTP dependencies |
 | `backend/Models/*.cs` | ASP.NET | MessagePack models need `[MessagePackObject]` + `[Key(N)]`; API DTOs use `[JsonPropertyName]` |
-| `docker-compose.yml` | INFRA | Service names `backend` and `frontend` must not be renamed |
+| `containers/docker-compose.yml` | INFRA | Service names `backend`, `frontend`, `db`, `emitter` must not be renamed; Dockerfiles live under `containers/<service>/Dockerfile` with `build.context` pointed back at the real source dir (`../backend`, `../frontend`, `../emitter`) |
 | `docs/sprints/sprint-*.md` | ARCH | Created from `docs/sprints/archive/TEMPLATE.md`; never edited mid-sprint by non-ARCH agents |
 | `CHANGELOG.md` | ARCH | Updated only at sprint end; format: `## vX.Y.Z — YYYY-MM-DD` |
 | `backend/Services/LiveTelemetryStore.cs` | ASP.NET | In-memory current-state cache only; no direct DB writes — persistence is `TelemetryPersistenceService`'s job |
 | `backend/Controllers/TelemetryIngestController.cs` | ASP.NET | Validates payload; never calls `SaveChangesAsync` synchronously — only enqueues to the buffered writer |
-| `iiot-emitter/**` | INFRA | Outbound HTTP client only; must only use vehicle IDs sourced from `GET /api/vehicles/metadata` |
+| `emitter/**` | INFRA | Outbound HTTP client only; must only use vehicle IDs sourced from `GET /api/vehicles/metadata` |
 | `backend/Services/HubConnectionTracker.cs` | ASP.NET | Tracks active `/fleethub` SignalR connection count/state in memory; read by `/api/health/signalr`; no DB access |
 | `backend/Services/TelemetryRetentionService.cs` | ASP.NET | Background service that deletes `telemetry_snapshots` rows older than `TelemetryRetention__RetentionDays`; batches deletes by `TelemetryRetention__DeleteBatchSize`; does not create new tables |
 | `frontend/components/ConnectionStatus.tsx` | NEXT | Client component; renders SignalR connection-status indicator in the dashboard header; polls/consumes `/api/health/signalr` or the client SignalR connection state, not both as sources of truth |
@@ -236,7 +236,7 @@ dotnet run                    # http://localhost:8080
 ### Full Stack (Docker)
 
 ```bash
-docker-compose up --build
+docker compose -f containers/docker-compose.yml up --build
 # Frontend: http://localhost:3000
 # Backend API: http://localhost:8080
 # Swagger UI: http://localhost:8080/swagger
@@ -287,7 +287,7 @@ docker-compose up --build
 | Application Overview | `docs/APPLICATION_OVERVIEW.md` (authored in Sprint 07) |
 | DevOps Learning Guides | `docs/devops-learn/` — `Docker_Compose.md`, `Helm.md`, `K8s.md` (authored in Sprint 07) |
 | Sprint Template | `docs/sprints/archive/TEMPLATE.md` |
-| Docker Instructions | `DOCKER_README.md` |
+| Docker Instructions | `docs/DOCKER_README.md` |
 | Helm/Kubernetes Deployment Guide | `docs/HELM_GUIDE.md` |
 | SDD Workflow | `docs/SDD_WORKFLOW.md` |
 | Project Overview | `README.md` |

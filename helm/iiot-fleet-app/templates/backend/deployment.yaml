@@ -1,3 +1,8 @@
+# templates/backend/deployment.yaml
+#
+# Why Deployment (not StatefulSet): the backend is stateless — any pod can
+# serve any request, none needs a stable identity or its own storage. A
+# rolling update just replaces pods one at a time; nothing is lost.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6,6 +11,7 @@ metadata:
     {{- include "iiot-fleet-app.labels" . | nindent 4 }}
     app.kubernetes.io/component: backend
 spec:
+  # Configurable — this workload is horizontally scalable, unlike db/emitter.
   replicas: {{ .Values.backend.replicaCount }}
   selector:
     matchLabels:
@@ -25,16 +31,22 @@ spec:
             - containerPort: {{ .Values.backend.service.port }}
               name: http
           envFrom:
+            # Non-secret config (ASPNETCORE_ENVIRONMENT, CORS origins,
+            # USE_LIVE_TELEMETRY, ...) — shared with frontend where relevant,
+            # see templates/app-configmap.yaml.
             - configMapRef:
                 name: {{ include "iiot-fleet-app.fullname" . }}-config
           env:
+            # The one thing the backend needs that's actually secret: the
+            # Postgres connection string (embeds the db password). Sourced
+            # from backend/secret.yaml, never the ConfigMap.
             - name: ConnectionStrings__Fleet
               valueFrom:
                 secretKeyRef:
                   name: {{ include "iiot-fleet-app.fullname" . }}-backend
                   key: ConnectionStrings__Fleet
-          # mcr.microsoft.com/dotnet/aspnet:8.0 has neither curl nor wget, so an
-          # httpGet probe isn't available; tcpSocket matches what
+          # mcr.microsoft.com/dotnet/aspnet:8.0 has neither curl nor wget, so
+          # an httpGet probe isn't available; tcpSocket matches what
           # docker-compose.yml's healthcheck actually verifies (Kestrel
           # accepting connections), not full app readiness.
           readinessProbe:
@@ -52,4 +64,7 @@ spec:
             timeoutSeconds: 5
             failureThreshold: 3
           resources:
+            # requests/limits from values.yaml — keeps CPU/memory tuning out
+            # of the template, so an operator overrides it without touching
+            # YAML structure.
             {{- toYaml .Values.backend.resources | nindent 12 }}
