@@ -88,7 +88,7 @@ git status    # must be clean
 - [x] UI-015 — Remove "Hide Inactive" / "Focused View" controls from Sidebar + filter store
 - [x] UI-016 — Remove the client-side "inactive vehicle" sweep/badge/dimming (page.tsx, MapView, DetailPanel, types)
 - [x] BE-010 — Update `VehicleStatusEvaluator.Evaluate` to the new threshold rules
-- [ ] BE-011 — Update `TelemetrySimulationService` status evaluation + rebalancer to new thresholds/ranges
+- [x] BE-011 — Update `TelemetrySimulationService` status evaluation + rebalancer to new thresholds/ranges
 - [ ] ARCH-014 — Update `REQUIREMENTS.md` thresholds/caps, remove F-33/F-34/§4.4
 - [ ] ARCH-015 — Author `docs/APPLICATION_OVERVIEW.md` (what the app is, how it works, data flow)
 - [ ] ARCH-016 — Author `docs/devops-learn/Docker_Compose.md`
@@ -403,7 +403,7 @@ git checkout -- backend/Services/VehicleStatusEvaluator.cs
 
 **Agent:** ASP.NET
 **Depends on:** BE-010
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
