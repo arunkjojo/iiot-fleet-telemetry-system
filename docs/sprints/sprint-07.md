@@ -1118,6 +1118,50 @@ BLOCKERS
 
 ---
 
+## Addendum — Infra Restructuring (added post-QA-007, same sprint/branch/PR)
+
+The operator requested this additional INFRA-owned scope after the original 10 tasks shipped
+(PR #7 was already open against `main`). Folded into Sprint 07 rather than a new sprint number
+since it landed on the same branch before merge. Some of this scope was already partially
+scaffolded by the operator directly in the working tree (`containers/`, `emitter/`, empty
+per-service Helm template folders) before these tasks were written — each task below notes what
+was pre-existing vs. what the task actually completed.
+
+**Agent:** INFRA for all tasks below (Docker, Helm, GitHub Actions — matches `AGENTS.md`'s INFRA
+write-scope: `docker-compose.yml`, `backend/Dockerfile`, `frontend/Dockerfile`,
+`.github/workflows/**`, `iiot-emitter/**`/`emitter/**`, `helm/**`).
+
+- [x] INFRA-001 — Split Helm chart templates into per-service folders (`templates/backend/`,
+  `templates/frontend/`, `templates/db/`, `templates/emitter/`), each file commented line-by-line
+  explaining why it exists; delete the old flat per-resource files once migrated
+- [x] INFRA-002 — Remove `db/Dockerfile` + `db/postgresql.conf` (the whole `db/` directory);
+  wire `postgres:16-alpine` directly in both `containers/docker-compose.yml` (already done by the
+  operator) and the Helm chart (`values.yaml` `db.image`, `templates/db/statefulset.yaml`)
+- [x] INFRA-003 — Move `DOCKER_README.md` to `docs/DOCKER_README.md`; update every link to it
+- [x] INFRA-004 — Keep `_helpers.tpl` (required by nearly every template — see task notes); fix
+  `NOTES.txt` (drop the now-removed `./db` custom-image build line) and document what it actually
+  is inline, since the operator asked what it's for
+- [x] INFRA-005 — Fix `containers/docker-compose.yml` build contexts now that Dockerfiles live in
+  `containers/*/` but source stays in `backend/`/`frontend/`/`emitter/`; move `.dockerignore` files
+  back to the source directories (Docker's default `.dockerignore` lookup is context-root-relative,
+  not Dockerfile-relative)
+- [x] INFRA-006 — Rename `iiot-emitter` → `emitter` across every active (non-archived) reference:
+  `AGENTS.md`, `REQUIREMENTS.md`, `docs/HELM_GUIDE.md`, `docs/PROJECT_OVERVIEW.md`,
+  `docs/SDD_WORKFLOW.md`, `docs/decisions/ADR-001-telemetry-ingestion-pipeline.md`, the Helm chart,
+  `containers/docker-compose.yml`'s service name. Archived sprint files (`docs/sprints/archive/**`)
+  are historical record and are NOT rewritten.
+- [x] INFRA-007 — Remove `.github/workflows/docker-image.yml` in full (operator: no GitHub Actions
+  CI for this project going forward)
+- [x] INFRA-008 — Verify: `helm lint`/`helm template` render clean, `docker compose -f
+  containers/docker-compose.yml config` validates, frontend `tsc --noEmit`, backend `dotnet build`
+
+**Rollback (whole addendum):** `git revert` the addendum's commits, or `git checkout --
+db/ .github/workflows/docker-image.yml DOCKER_README.md helm/ containers/` plus `git clean -fd
+emitter/ containers/` to restore pre-addendum state — the individual per-task commits below are
+each independently revertable.
+
+---
+
 ## Glossary
 
 | Term | Definition |
