@@ -45,6 +45,13 @@ These are genuinely unresolved and were never in scope for any of the three brie
    out of `BE-009`'s scope (that task fixed a data-loss/clobbering bug, not this cold-start gap).
    Needs a standalone fix: populate `ILiveTelemetryStore` from the `vehicles` table on backend
    startup (or on first ingest per vehicle) before `USE_LIVE_TELEMETRY=true` traffic begins.
+4. **Local .NET runtime/SDK version mismatch** — found during Sprint 07's `QA-007`: this dev
+   machine's installed shared runtimes top out at `8.0.23`, but the backend's built binary
+   requests `8.0.28`, so `dotnet run` fails with "You must install or update .NET to run this
+   application" even though `dotnet build` succeeds cleanly. Blocked QA-007's live-mode runtime
+   smoke test (sampling `GET /api/vehicles` to confirm the new status-distribution ranges).
+   Needs either an installed 8.0.28 (or newer 8.0.x) shared runtime, or a `global.json`/SDK pin
+   compatible with what's actually installed.
 
 ---
 
