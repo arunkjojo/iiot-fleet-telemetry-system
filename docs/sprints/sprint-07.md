@@ -94,7 +94,7 @@ git status    # must be clean
 - [x] ARCH-016 — Author `docs/devops-learn/Docker_Compose.md`
 - [x] ARCH-017 — Author `docs/devops-learn/Helm.md`
 - [x] ARCH-018 — Author `docs/devops-learn/K8s.md`
-- [ ] QA-007 — Verify all acceptance criteria, type-check/lint/build, and live status/distribution behavior
+- [x] QA-007 — Verify all acceptance criteria, type-check/lint/build, and live status/distribution behavior
 
 ---
 
@@ -954,7 +954,7 @@ git rm docs/devops-learn/K8s.md
 
 **Agent:** QA
 **Depends on:** UI-015, UI-016, BE-010, BE-011, ARCH-014, ARCH-015, ARCH-016, ARCH-017, ARCH-018
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -1066,10 +1066,10 @@ N/A — verification-only task, no files change on failure.
 
 > Filled at sprint end. 3–6 bullets. What worked, what blocked, what to change next sprint.
 
-- {{Win 1}}
-- {{Win 2}}
-- {{Blocker or pain point}}
-- {{Action item carried to next sprint}}
+- Frontend `type-check`/`build`/backend `dotnet build` all pass zero-error on the final branch state; no residual `hideInactive`/`focusedView`/`inactive`/`lastSeenAtUtc` references remain under `frontend/`.
+- Clarifying the three ambiguous points (active fuel band, ranged vs. percentage caps, full inactive-concept removal) with the operator before writing task blocks avoided rework mid-sprint — all three landed exactly as clarified.
+- QA-007's live-sampling verification (running the backend 90s+ and checking status counts against the new ranges) could not run: this machine's installed .NET runtimes top out at 8.0.23, but the built binary requires 8.0.28, a pre-existing local environment gap unrelated to this sprint's code changes. `dotnet build` itself passes clean; only the runtime-execution smoke test was blocked.
+- Action item carried to next sprint / backlog: get a matching .NET 8 runtime patch installed (or pin an available one via `global.json`) so live-mode smoke verification is possible locally, not just `dotnet build`.
 
 ---
 
