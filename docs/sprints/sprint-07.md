@@ -91,9 +91,9 @@ git status    # must be clean
 - [x] BE-011 — Update `TelemetrySimulationService` status evaluation + rebalancer to new thresholds/ranges
 - [x] ARCH-014 — Update `REQUIREMENTS.md` thresholds/caps, remove F-33/F-34/§4.4
 - [ ] ARCH-015 — Author `docs/APPLICATION_OVERVIEW.md` (what the app is, how it works, data flow)
-- [ ] ARCH-016 — Author `docs/devops-learn/Docker_Compose.md`
-- [ ] ARCH-017 — Author `docs/devops-learn/Helm.md`
-- [ ] ARCH-018 — Author `docs/devops-learn/K8s.md`
+- [x] ARCH-016 — Author `docs/devops-learn/Docker_Compose.md`
+- [x] ARCH-017 — Author `docs/devops-learn/Helm.md`
+- [x] ARCH-018 — Author `docs/devops-learn/K8s.md`
 - [ ] QA-007 — Verify all acceptance criteria, type-check/lint/build, and live status/distribution behavior
 
 ---
@@ -705,7 +705,7 @@ git checkout -- README.md AGENTS.md
 
 **Agent:** ARCH
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -790,7 +790,7 @@ git rm docs/devops-learn/Docker_Compose.md
 
 **Agent:** ARCH
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -873,7 +873,7 @@ git rm docs/devops-learn/Helm.md
 
 **Agent:** ARCH
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
