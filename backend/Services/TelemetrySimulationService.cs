@@ -57,20 +57,22 @@ public class TelemetrySimulationService : BackgroundService
     // Evaluate status deterministically from metrics (priority: offline > danger > warning > active)
     private static string EvaluateStatus(double fuelPercent, int temp, double speedKph, int engineHealth)
     {
-        // offline has explicit zeroed metrics
-        if (fuelPercent <= 0.0 || temp == 0 && engineHealth == 0 && speedKph == 0.0)
+        // offline
+        if (fuelPercent < 1 || temp < 5 || engineHealth < 5 || speedKph < 2)
             return "offline";
 
-        // danger conditions
-        // tighten danger criteria so fewer vehicles are classified as danger
-        if (speedKph > 90.0 || fuelPercent < 10.0 || temp > 85 || engineHealth > 90)
+        // danger
+        if (fuelPercent < 10.0 || speedKph > 90.0 || temp > 85 || engineHealth > 90)
             return "danger";
 
-        // warning conditions
-        if ((fuelPercent < 30.0 && fuelPercent >= 10.0) || (temp > 70 && temp <= 85) || (speedKph >= 80.0 && speedKph <= 90.0))
+        // warning
+        if ((fuelPercent < 30.0 && fuelPercent >= 10.0) ||
+            (temp > 60 && temp <= 85) ||
+            (engineHealth > 60 && engineHealth <= 90) ||
+            (speedKph >= 60.0 && speedKph <= 90.0))
             return "warning";
 
-        // active conditions: broad default (ensure ranges respected elsewhere)
+        // active (default)
         return "active";
     }
 
@@ -400,10 +402,11 @@ public class TelemetrySimulationService : BackgroundService
                         int currentDanger = counts.ContainsKey("danger") ? counts["danger"] : 0;
                         int currentOffline = counts.ContainsKey("offline") ? counts["offline"] : 0;
 
-                        // enforce absolute caps so totals are stable: offline <=12, danger <=14, warning <=24
-                        int capOffline = 12;
-                        int capDanger = 14;
-                        int capWarning = 24;
+                        // rebalance target ranges (re-rolled every tick): offline 40-100,
+                        // danger 100-400, warning 500-800, active = remainder
+                        int capOffline = Random.Shared.Next(40, 101);
+                        int capDanger = Random.Shared.Next(100, 401);
+                        int capWarning = Random.Shared.Next(500, 801);
 
                         var targetOfflineCount = Math.Min(capOffline, total);
                         var targetDangerCount = Math.Min(capDanger, Math.Max(0, total - targetOfflineCount));

@@ -8,6 +8,12 @@ and getting started, all in one onboarding document.
 **Process:** [docs/SDD_WORKFLOW.md](docs/SDD_WORKFLOW.md) — the Spec-Driven Development loop this
 project follows: requirements → sprint files → task execution → verification → changelog.
 
+**Application Overview:** [docs/APPLICATION_OVERVIEW.md](docs/APPLICATION_OVERVIEW.md) — what this
+system is, its frontend/backend/db/emitter topology, and the dummy-mode vs. live-mode data flows.
+
+**DevOps Learning Guides:** [docs/devops-learn/](docs/devops-learn/) — Docker Compose, Helm, and
+Kubernetes concepts explained, then mapped onto this project's actual stack.
+
 **Project Overview:**
 - **What:** A high-performance real-time fleet telemetry system consisting of a .NET 8 SignalR backend simulator and a Next.js 15 frontend dashboard for visualizing and interacting with large-scale vehicle telemetry.
 - **Why:** To demonstrate a production-ready pipeline capable of tracking 10,000+ vehicles with low-latency updates, GPU-accelerated map rendering, and efficient UI virtualization.

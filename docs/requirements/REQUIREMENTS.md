@@ -41,8 +41,6 @@ The IIoT Fleet Telemetry System is a real-time industrial asset monitoring platf
 | F-11 | Search MUST return results within 200ms for a 10,000-vehicle dataset |
 | F-12 | The sidebar MUST support filtering by status: All, Active, Warning, Danger, Offline |
 | F-13 | Status filter MUST show a count per status |
-| F-33 | When the sidebar search box has a non-empty query, results MUST additionally exclude vehicles with no telemetry activity (`lastSeenAtUtc`) in the last 24 hours; this filter MUST NOT apply when the query is empty |
-| F-34 | The sidebar MUST default to showing a maximum of 10 curated (highest-priority, status-sorted) vehicles, with a toggle to reveal the full list; the cap MUST NOT apply while a search query is active |
 
 ### 2.4 Vehicle Detail
 
@@ -73,10 +71,11 @@ The IIoT Fleet Telemetry System is a real-time industrial asset monitoring platf
 | F-26 | The backend MUST support a `USE_LIVE_TELEMETRY` toggle; when `true`, vehicle state MUST be sourced from live ingestion instead of the in-memory dummy simulation; default `false` |
 | F-27 | The Python IIoT emitter MUST only emit telemetry for vehicle IDs that already exist in the `vehicles` table, obtained via `GET /api/vehicles/metadata` |
 | F-28 | `GET /api/health/signalr` MUST return the current `/fleethub` connection tracking state (at minimum: active connection count) as `200 OK` JSON |
-| F-29 | The frontend MAY compute a client-side "inactive vehicle" concept — sustained `speedKph = 0` for 60+ continuous seconds — for display/filtering purposes only; this is NOT a `status` enum value, is NOT computed or persisted server-side, and MUST NOT alter `VehicleStatusEvaluator.cs`'s status priority order (`offline` > `danger` > `warning` > `active`) |
+| F-29 | *(Removed in Sprint 07 — the client-side "inactive vehicle" concept and its backing rules were removed entirely; see `F-35`.)* |
 | F-30 | The backend MUST run a background retention/cleanup policy that deletes `telemetry_snapshots` rows older than a configurable retention window, without introducing new database tables |
 | F-31 | `PATCH /api/vehicles/{id}` MUST accept an optional `driverName` and/or `displayNumber` and update only those fields; the `id` path parameter (primary key, FK target, and the exact string the Python emitter sources from `GET /api/vehicles/metadata`) MUST NEVER be renamed or accepted as a mutable field |
 | F-32 | Dummy-mode vehicle IDs (`TelemetrySimulationService.MakeId()`) MUST use the same `VEH-NNNNN` (zero-padded 5-digit) format as live mode, not randomly-generated strings. This targets `TelemetrySimulationService.MakeId()` only — changing the ID format string does NOT violate that file's "in-memory only, no DB/HTTP calls" rule, since no dependency is added and no I/O is introduced, only the generated string's shape changes |
+| F-35 | The sidebar MUST always list every vehicle matching the current search/status filter — no inactivity-based hiding and no top-N display cap (Sprint 07 removed the prior 24h-activity-filter and top-10-cap requirements this supersedes) |
 
 ---
 
@@ -128,21 +127,21 @@ Status is assigned in priority order (highest wins):
 
 | Status | Condition |
 |--------|-----------|
-| `offline` | fuel ≤ 0 OR (temp = 0 AND engineHealth = 0 AND speed = 0) |
-| `danger` | speed > 90 kph OR fuel < 10% OR temp > 85°C OR engineHealth > 90 |
-| `warning` | fuel 10–30% OR temp 65–85°C OR speed 80–90 kph |
-| `active` | all other cases (default) |
+| `offline` | `fuelPercent < 1` OR `temp < 5` OR `engineHealth < 5` OR `speedKph < 2` |
+| `danger` | `fuelPercent < 10.0` OR `speedKph > 90.0` OR `temp > 85` OR `engineHealth > 90` |
+| `warning` | `(fuelPercent < 30.0 AND fuelPercent >= 10.0)` OR `(temp > 60 AND temp <= 85)` OR `(engineHealth > 60 AND engineHealth <= 90)` OR `(speedKph >= 60.0 AND speedKph <= 90.0)` |
+| `active` | `30.0 <= fuelPercent <= 100.0` OR `5 <= temp <= 60` OR `5 <= engineHealth <= 60` OR `2 <= speedKph <= 60.0` (all other cases, default) |
 
 ### 4.2 Fleet Distribution Caps (Simulation)
 
-The simulation enforces these caps every ~20 seconds to maintain a realistic fleet distribution:
+The simulation re-rolls a random target within each range every ~20 seconds (rebalance tick) to maintain a realistic, drifting fleet distribution:
 
-| Status | Maximum Count |
-|--------|--------------|
-| offline | 12 vehicles |
-| danger | 14 vehicles |
-| warning | 24 vehicles |
-| active | remainder (~9,950+) |
+| Status | Range | Approx. @ 10,000 vehicles |
+|--------|-------|---------------------------|
+| offline | 40–100 | 40–100 |
+| danger | 100–400 | 100–400 |
+| warning | 500–800 | 500–800 |
+| active | remainder | ~8,700+ |
 
 ### 4.3 Alert Thresholds (Frontend)
 
@@ -154,15 +153,6 @@ Frontend alerts fire independently of server-side status when:
 | Temperature | > 65°C |
 | Speed | > 80 kph |
 | Engine Health | < 15 |
-
-### 4.4 Inactive Vehicle Threshold (Client-Side)
-
-| ID | Requirement |
-|----|-------------|
-| BR-01 | A vehicle is considered "inactive" (client-side display concept only) when its `speedKph` has been sustained at `0` for 60 continuous seconds or more, as observed from the stream of SignalR updates received by the client |
-| BR-02 | "Inactive" is computed and tracked entirely in the frontend; it is never sent to, stored by, or derived by the backend |
-| BR-03 | "Inactive" is independent of and MUST NOT be confused with the `offline` value of the `status` enum (see section 4.1) — a vehicle can be `active`, `warning`, or `danger` and simultaneously "inactive", and vice versa |
-| BR-04 | Introducing or evolving the "inactive" concept MUST NOT modify `VehicleStatusEvaluator.cs`'s status priority order (`offline` > `danger` > `warning` > `active`) |
 
 ---
 

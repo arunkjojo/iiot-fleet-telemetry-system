@@ -11,24 +11,27 @@ public static class VehicleStatusEvaluator
     /// <summary>
     /// Evaluate vehicle status from raw metrics. Priority order (highest wins):
     /// offline > danger > warning > active.
+    /// Active band (terminal default, not re-checked): 30.0 &lt;= fuelPercent &lt;= 100.0 ||
+    /// 5 &lt;= temp &lt;= 60 || 5 &lt;= engineHealth &lt;= 60 || 2 &lt;= speedKph &lt;= 60.0.
     /// </summary>
     public static string Evaluate(double fuelPercent, int temp, double speedKph, int engineHealth)
     {
-        // offline: fuel depleted, or all core metrics explicitly zeroed
-        if (fuelPercent <= 0.0 || (temp == 0 && engineHealth == 0 && speedKph == 0.0))
+        // offline
+        if (fuelPercent < 1 || temp < 5 || engineHealth < 5 || speedKph < 2)
             return "offline";
 
-        // danger conditions
-        if (speedKph > 90.0 || fuelPercent < 10.0 || temp > 85 || engineHealth > 90)
+        // danger
+        if (fuelPercent < 10.0 || speedKph > 90.0 || temp > 85 || engineHealth > 90)
             return "danger";
 
-        // warning conditions
-        if ((fuelPercent >= 10.0 && fuelPercent < 30.0) ||
-            (temp >= 65 && temp <= 85) ||
-            (speedKph >= 80.0 && speedKph <= 90.0))
+        // warning
+        if ((fuelPercent < 30.0 && fuelPercent >= 10.0) ||
+            (temp > 60 && temp <= 85) ||
+            (engineHealth > 60 && engineHealth <= 90) ||
+            (speedKph >= 60.0 && speedKph <= 90.0))
             return "warning";
 
-        // default
+        // active (default)
         return "active";
     }
 }

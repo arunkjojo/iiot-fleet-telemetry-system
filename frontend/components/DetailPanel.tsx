@@ -202,9 +202,6 @@ function DetailPanel({ vehicle, onClose, onVehicleUpdated }: Props) {
             <span className="text-primary text-xs font-bold tracking-widest uppercase flex items-center gap-1 mt-1">
               <span className={`w-1.5 h-1.5 rounded-full ${statusColor(vehicle.status)} animate-pulse`} />
               {vehicle.status === 'active' ? 'Online • Transmitting' : vehicle.status === 'warning' ? 'Warning' : 'Offline'}
-              {vehicle.inactive && (
-                <span className="ml-2 text-[10px] font-bold tracking-wide text-slate-300 bg-white/10 px-1.5 py-0.5 rounded normal-case">Inactive</span>
-              )}
             </span>
           </div>
           <div className="ml-4 flex items-center gap-1">

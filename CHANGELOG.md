@@ -7,6 +7,46 @@ Version is bumped once per sprint at sprint-end by the ARCH agent.
 
 ---
 
+## v0.7.0 — 2026-07-17
+
+### Add
+
+- **`docs/APPLICATION_OVERVIEW.md`** — explains what the system is, its frontend/backend/db/emitter
+  topology, and both data-flow paths (dummy-mode simulation loop, live-mode ingestion →
+  persistence → broadcast), including the `USE_LIVE_TELEMETRY` branch point. Linked from
+  `README.md` and `AGENTS.md`.
+- **`docs/devops-learn/`** — three new onboarding guides distinct from the existing operational
+  docs (`DOCKER_README.md`, `docs/HELM_GUIDE.md`): `Docker_Compose.md`, `Helm.md`, and `K8s.md`,
+  each covering core concepts first and then mapping them onto this repo's actual
+  `docker-compose.yml` / `helm/iiot-fleet-app/` chart.
+- **`REQUIREMENTS.md` `F-35`** — the sidebar's "always show the full filtered list, no inactivity
+  hiding, no top-N cap" behavior, replacing the removed `F-33`/`F-34`.
+
+### Fix
+
+- Rebalancer caps in `TelemetrySimulationService` no longer sit at three fixed constants
+  (offline 12 / danger 14 / warning 24) that under-represented `danger`/`warning` at fleet scale —
+  each rebalance tick now re-rolls a random target within a wider range (offline 40–100, danger
+  100–400, warning 500–800), giving a more realistic, drifting distribution.
+
+### Update
+
+- **Vehicle status thresholds** — `VehicleStatusEvaluator.Evaluate` (live mode) and
+  `TelemetrySimulationService.EvaluateStatus` (dummy mode) both now implement new
+  offline/danger/warning/active threshold rules (see `REQUIREMENTS.md` §4.1); the `active` band's
+  fuel condition is a closed range, `30.0 <= fuelPercent <= 100.0`.
+- **Sidebar simplified** — the "Hide Inactive" checkbox and "Focused View (Top 10)" toggle are
+  removed from `frontend/components/Sidebar.tsx` and `frontend/store/useFilterStore.ts`; the
+  sidebar always lists the full search/status-filtered result set.
+- **Client-side "inactive vehicle" concept removed entirely** — the 60s-sustained-zero-speed sweep
+  in `frontend/app/page.tsx`, the dimming in `MapView.tsx`, the badge in `DetailPanel.tsx`, and the
+  `inactive`/`lastSeenAtUtc` fields on the frontend `Vehicle` type are all gone, since nothing in
+  `REQUIREMENTS.md` backs the concept anymore (`F-29`, `F-33`, `F-34`, and §4.4/`BR-01`–`BR-04`
+  are all removed/superseded by `F-35`).
+- **`REQUIREMENTS.md`** §4.1 and §4.2 rewritten to match the new thresholds/caps; §4.4 deleted.
+
+---
+
 ## v0.6.0 — 2026-07-21
 
 ### Add
