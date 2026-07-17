@@ -1,13 +1,13 @@
-# Non-secret env vars shared across backend/frontend, editable without
-# touching template files — the k8s-native equivalent of docker-compose.yml's
-# per-service `environment:` blocks (minus anything password-shaped).
-apiVersion: v1
-kind: ConfigMap
+# Stays at the templates/ root instead of inside backend/ or frontend/ because it's genuinely cross-cutting — both Deployments' envFrom reference it. Filing it under just one service's folder would misrepresent that.
+#
+# Non-secret env vars shared across backend/frontend, editable without touching template files — the k8s-native equivalent of docker-compose.yml's per-service `environment:` blocks (minus anything password-shaped).
+apiVersion: v1 # ConfigMap, like Service and Secret, is a core Kubernetes type, so no group prefix is needed.
+kind: ConfigMap # declares the object type.
 metadata:
   name: {{ include "iiot-fleet-app.fullname" . }}-config
   labels:
     {{- include "iiot-fleet-app.labels" . | nindent 4 }}
-data:
+data: # a Secret, a ConfigMap's data: values are plain text — no base64 encoding required
   ASPNETCORE_ENVIRONMENT: {{ .Values.backend.aspnetEnvironment | quote }}
   FRONTEND_ORIGIN: "http://{{ include "iiot-fleet-app.fullname" . }}-frontend:{{ .Values.frontend.service.port }}"
   ADDITIONAL_FRONTEND_ORIGINS: {{ .Values.backend.additionalFrontendOrigins | quote }}

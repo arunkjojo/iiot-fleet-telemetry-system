@@ -77,7 +77,7 @@ command actually passing.
 | **ARCH** | `docs/**`, `AGENTS.md`, `README.md`, `CHANGELOG.md` | Step 1 (spec updates), step 2 (sprint authoring), step 5 (sprint-end) |
 | **NEXT** | `frontend/**` | Step 3 (frontend tasks) |
 | **ASP.NET** | `backend/**` | Step 3 (backend tasks) |
-| **INFRA** | `docker-compose.yml`, Dockerfiles, `.github/workflows/**`, `.env*`, `iiot-emitter/**`, `helm/**` | Step 3 (infra tasks) |
+| **INFRA** | `containers/**` (Dockerfiles + `docker-compose.yml`), `.env*`, `emitter/**`, `helm/**` | Step 3 (infra tasks) |
 | **QA** | `frontend/**/*.test.*`, `backend/**/*Tests*`, `docs/sprints/**` (acceptance-criteria updates only) | Step 4 |
 | **ANALYST** | reads only; no write scope | Ad hoc, performance/telemetry measurement outside the sprint loop |
 

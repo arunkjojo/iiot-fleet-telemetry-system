@@ -27,8 +27,6 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ include "iiot-fleet-app.fullname" . }}-config
-          # node:18-alpine has wget but the kubelet probes natively over HTTP,
-          # so no in-container binary is needed here either way.
           readinessProbe:
             httpGet:
               path: /

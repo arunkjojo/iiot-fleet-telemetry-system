@@ -1,4 +1,17 @@
 {{/*
+_helpers.tpl — required, not optional. Every other template in this chart
+(db/, backend/, frontend/, emitter/, ingress.yaml, app-configmap.yaml)
+calls `include "iiot-fleet-app.fullname"`/`.labels`/`.selectorLabels` from
+here. It stays at the templates/ root rather than inside any one per-service
+folder because Helm loads *.tpl files from anywhere under templates/
+recursively — there's no per-folder scoping, so one shared copy is correct
+and moving it into e.g. backend/ would not make it backend-only, only
+confusing to find. Removing it would break every template that references
+these three helpers (grep them if in doubt: they're used far more than they
+look).
+*/}}
+
+{{/*
 Expand the name of the chart.
 */}}
 {{- define "iiot-fleet-app.name" -}}

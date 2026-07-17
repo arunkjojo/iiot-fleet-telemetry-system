@@ -86,9 +86,9 @@
 | Attribute | Value |
 |-----------|-------|
 | **Read scope** | All files in the repository |
-| **Write scope** | `docker-compose.yml`, `backend/Dockerfile`, `frontend/Dockerfile`, `.github/workflows/**`, `.env*` files, `iiot-emitter/**`, `helm/**` |
+| **Write scope** | `containers/**` (Dockerfiles + `docker-compose.yml`), `.env*` files, `emitter/**`, `helm/**` |
 | **Prohibited writes** | Application source files under `frontend/src/` or `backend/` (non-config) |
-| **Responsibilities** | Maintain Docker Compose stack, GitHub Actions CI/CD pipeline, environment variable management, health checks, and container networking. |
+| **Responsibilities** | Maintain the Docker Compose stack (`containers/docker-compose.yml`), the per-service Dockerfiles under `containers/`, environment variable management, health checks, and container networking. No GitHub Actions CI/CD — this project doesn't run one. |
 
 **Key conventions:**
 - Backend service name in Compose: `backend` (frontend references it as `http://backend:8080`)
@@ -118,7 +118,7 @@ cd backend && dotnet build           # must succeed with zero errors
 cd backend && dotnet test            # must pass all tests (when test project exists)
 
 # Docker stack
-docker-compose up --build -d
+docker compose -f containers/docker-compose.yml up --build -d
 curl http://localhost:8080/api/vehicles   # must return JSON array
 curl http://localhost:3000               # must return HTTP 200
 ```
@@ -150,12 +150,12 @@ These conventions are immutable. Agents MUST NOT break them.
 | `backend/Hubs/FleetHub.cs` | ASP.NET | Hub path MUST remain `/fleethub`; hub itself stays minimal |
 | `backend/Services/TelemetrySimulationService.cs` | ASP.NET | Background service; do not add HTTP dependencies |
 | `backend/Models/*.cs` | ASP.NET | MessagePack models need `[MessagePackObject]` + `[Key(N)]`; API DTOs use `[JsonPropertyName]` |
-| `docker-compose.yml` | INFRA | Service names `backend` and `frontend` must not be renamed |
+| `containers/docker-compose.yml` | INFRA | Service names `backend`, `frontend`, `db`, `emitter` must not be renamed; Dockerfiles live under `containers/<service>/Dockerfile` with `build.context` pointed back at the real source dir (`../backend`, `../frontend`, `../emitter`) |
 | `docs/sprints/sprint-*.md` | ARCH | Created from `docs/sprints/archive/TEMPLATE.md`; never edited mid-sprint by non-ARCH agents |
 | `CHANGELOG.md` | ARCH | Updated only at sprint end; format: `## vX.Y.Z — YYYY-MM-DD` |
 | `backend/Services/LiveTelemetryStore.cs` | ASP.NET | In-memory current-state cache only; no direct DB writes — persistence is `TelemetryPersistenceService`'s job |
 | `backend/Controllers/TelemetryIngestController.cs` | ASP.NET | Validates payload; never calls `SaveChangesAsync` synchronously — only enqueues to the buffered writer |
-| `iiot-emitter/**` | INFRA | Outbound HTTP client only; must only use vehicle IDs sourced from `GET /api/vehicles/metadata` |
+| `emitter/**` | INFRA | Outbound HTTP client only; must only use vehicle IDs sourced from `GET /api/vehicles/metadata` |
 | `backend/Services/HubConnectionTracker.cs` | ASP.NET | Tracks active `/fleethub` SignalR connection count/state in memory; read by `/api/health/signalr`; no DB access |
 | `backend/Services/TelemetryRetentionService.cs` | ASP.NET | Background service that deletes `telemetry_snapshots` rows older than `TelemetryRetention__RetentionDays`; batches deletes by `TelemetryRetention__DeleteBatchSize`; does not create new tables |
 | `frontend/components/ConnectionStatus.tsx` | NEXT | Client component; renders SignalR connection-status indicator in the dashboard header; polls/consumes `/api/health/signalr` or the client SignalR connection state, not both as sources of truth |
@@ -236,7 +236,7 @@ dotnet run                    # http://localhost:8080
 ### Full Stack (Docker)
 
 ```bash
-docker-compose up --build
+docker compose -f containers/docker-compose.yml up --build
 # Frontend: http://localhost:3000
 # Backend API: http://localhost:8080
 # Swagger UI: http://localhost:8080/swagger
@@ -287,7 +287,7 @@ docker-compose up --build
 | Application Overview | `docs/APPLICATION_OVERVIEW.md` (authored in Sprint 07) |
 | DevOps Learning Guides | `docs/devops-learn/` — `Docker_Compose.md`, `Helm.md`, `K8s.md` (authored in Sprint 07) |
 | Sprint Template | `docs/sprints/archive/TEMPLATE.md` |
-| Docker Instructions | `DOCKER_README.md` |
+| Docker Instructions | `docs/DOCKER_README.md` |
 | Helm/Kubernetes Deployment Guide | `docs/HELM_GUIDE.md` |
 | SDD Workflow | `docs/SDD_WORKFLOW.md` |
 | Project Overview | `README.md` |
@@ -299,9 +299,9 @@ docker-compose up --build
 
 **Active:** None active.
 
-**Still open (carried over, not in Sprint 07's scope):** missing frontend `lint`/`type-check` npm scripts + ESLint config; full-scale `VEHICLE_COUNT=10000` NF-01/NF-03 validation; the `ILiveTelemetryStore`/`display_number` cold-start hydration gap found during Sprint 04's `BE-009`; the CI fix on `claude/fix-docker-image-ci-workflow` still not merged to `main`; this dev machine's installed .NET runtimes (top out at 8.0.23) don't match what the built backend binary requests (8.0.28), which blocked QA-007's live-mode runtime smoke test in Sprint 07 (build itself is unaffected). See `docs/sprints/BACKLOG.md` for details.
+**Still open (carried over, not in Sprint 07's scope):** missing frontend `lint`/`type-check` npm scripts + ESLint config; full-scale `VEHICLE_COUNT=10000` NF-01/NF-03 validation; the `ILiveTelemetryStore`/`display_number` cold-start hydration gap found during Sprint 04's `BE-009`; this dev machine's installed .NET runtimes (top out at 8.0.23) don't match what the built backend binary requests (8.0.28), which blocked QA-007's live-mode runtime smoke test in Sprint 07 (build itself is unaffected). The standalone CI-fix branch `claude/fix-docker-image-ci-workflow` is now moot — Sprint 07's infra addendum removed the GitHub Actions workflow entirely. See `docs/sprints/BACKLOG.md` for details.
 
-**Previous:** Sprint 07 — `docs/sprints/archive/sprint-07.md` (removed the "Hide Inactive"/"Focused View" sidebar controls and the underlying client-side "inactive vehicle" concept entirely; replaced `VehicleStatusEvaluator`/`TelemetrySimulationService` status thresholds and the simulation rebalancer's fixed caps with new thresholds and ranged targets — offline 40-100, danger 100-400, warning 500-800, active = remainder; updated `REQUIREMENTS.md` §4.1/§4.2 and removed F-33/F-34/§4.4; authored `docs/APPLICATION_OVERVIEW.md` and three new `docs/devops-learn/` guides — Docker Compose, Helm, Kubernetes). All 10 tasks `[x]`, shipped in `v0.7.0`. (SDD workflow documentation (`docs/SDD_WORKFLOW.md`), an explicit Docker Compose network (`iiot-fleet-net`), and a new Helm chart (`helm/iiot-fleet-app/`) + deployment guide (`docs/HELM_GUIDE.md`) for Kubernetes — db `StatefulSet`+PVC, backend/frontend `Deployment`s+`Service`s, an emitter `Deployment` with an init-gate approximating Compose's `depends_on: service_healthy`, and an opt-in `Ingress`). All 8 tasks `[x]`, shipped in `v0.6.0`. QA-006 additionally verified a real `helm install` against a live cluster that became available mid-sprint (Docker Desktop Kubernetes) — chart-correct end-to-end; only blocked by a local image-store gap unrelated to the chart. Authored from a 3-task operator brief (SDD workflow docs, Compose storage, Helm chart) — see `docs/sprints/BACKLOG.md`.
+**Previous:** Sprint 07 — `docs/sprints/archive/sprint-07.md`. Main scope (10 tasks, `v0.7.0`): removed the "Hide Inactive"/"Focused View" sidebar controls and the underlying client-side "inactive vehicle" concept entirely; replaced `VehicleStatusEvaluator`/`TelemetrySimulationService` status thresholds and the simulation rebalancer's fixed caps with new thresholds and ranged targets — offline 40-100, danger 100-400, warning 500-800, active = remainder; updated `REQUIREMENTS.md` §4.1/§4.2 and removed F-33/F-34/§4.4; authored `docs/APPLICATION_OVERVIEW.md` and three new `docs/devops-learn/` guides — Docker Compose, Helm, Kubernetes. Operator addendum on the same branch/PR (8 tasks, `v0.7.1`): Dockerfiles moved to `containers/<service>/Dockerfile`; `db` now pulls `postgres:16-alpine` directly (`db/Dockerfile` removed); Helm chart templates split into per-service folders; `DOCKER_README.md` moved to `docs/`; `iiot-emitter` renamed to `emitter` throughout; GitHub Actions workflow removed entirely. All 18 tasks `[x]`.
 
 **Roadmap:** `docs/sprints/BACKLOG.md` — tracks the still-open carryover items: the standalone CI build fix on `claude/fix-docker-image-ci-workflow` (not yet merged), the `ILiveTelemetryStore`/`display_number` cold-start hydration gap found during Sprint 04 (BE-009's known follow-up), the missing frontend `lint`/`type-check` npm scripts + ESLint config (carried over from Sprint 03), and a full-scale (`VEHICLE_COUNT=10000`) NF-01/NF-03 validation follow-up.
 

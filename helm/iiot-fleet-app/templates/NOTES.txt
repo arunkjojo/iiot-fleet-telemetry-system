@@ -1,17 +1,28 @@
+{{/*
+NOTES.txt is a special filename Helm recognizes: it is never applied to the
+cluster like the other templates in this directory. Helm renders it (same Go
+templating, same .Values/.Release context) and prints the result straight to
+the terminal after a successful `helm install`/`helm upgrade` — nothing here
+is written to disk anywhere, and it creates no Kubernetes object. It exists
+purely to hand the operator their next steps (build images, check rollout,
+find the frontend URL) without them having to go dig through the chart.
+This comment block itself is stripped from that output — Go template
+comments never render.
+*/}}
 IIoT Fleet Telemetry System has been installed as release "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
 
-Before this chart's Pods can pull images, build and make available the four
-custom images it references (none are published to a public registry):
+`db` pulls the stock public `{{ .Values.db.image.repository }}:{{ .Values.db.image.tag }}` image —
+nothing to build. Before this chart's other Pods can pull images, build and make available the
+three custom images they reference (none are published to a public registry):
 
-  docker build -t {{ .Values.db.image.repository }}:{{ .Values.db.image.tag }} ./db
 {{- if .Values.backend }}
-  docker build -t {{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }} ./backend
+  docker build -f containers/backend/Dockerfile -t {{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }} ./backend
 {{- end }}
 {{- if .Values.frontend }}
-  docker build -t {{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }} ./frontend
+  docker build -f containers/frontend/Dockerfile -t {{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }} ./frontend
 {{- end }}
 {{- if .Values.emitter }}
-  docker build -t {{ .Values.emitter.image.repository }}:{{ .Values.emitter.image.tag }} ./iiot-emitter
+  docker build -f containers/emitter/Dockerfile -t {{ .Values.emitter.image.repository }}:{{ .Values.emitter.image.tag }} ./emitter
 {{- end }}
 
 For a local kind cluster, load them instead of pushing to a registry:

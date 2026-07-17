@@ -1,6 +1,6 @@
 # Learning Guide: Docker & Docker Compose
 
-> Concepts-first guide. For step-by-step run commands for this repo, see [`DOCKER_README.md`](../../DOCKER_README.md).
+> Concepts-first guide. For step-by-step run commands for this repo, see [`DOCKER_README.md`](../DOCKER_README.md).
 
 ---
 
@@ -57,21 +57,21 @@ docker compose down -v               # also remove volumes (destructive — wipe
 
 ## 5. How this project uses them
 
-This repo's `docker-compose.yml` defines four services on one custom network, `iiot-fleet-net`:
+This repo's `containers/docker-compose.yml` defines four services on one custom network, `iiot-fleet-net`:
 
 ```
-db (postgres, built from ./db)
+db (stock postgres:16-alpine — no build, pulled directly)
   └─ healthcheck: pg_isready
 
-backend (ASP.NET Core 8, built from ./backend)
+backend (ASP.NET Core 8, built from containers/backend/Dockerfile, context ../backend)
   └─ depends_on: db (service_healthy)
   └─ healthcheck: /dev/tcp probe on :8080 (the aspnet base image has neither curl nor wget)
 
-frontend (Next.js 15, built from ./frontend)
+frontend (Next.js 15, built from containers/frontend/Dockerfile, context ../frontend)
   └─ depends_on: backend (started — not health-gated in this service's depends_on entry)
   └─ healthcheck: wget spider on :3000 (node:18-alpine has wget, not curl)
 
-iiot-emitter (Python telemetry simulator, built from ./iiot-emitter)
+emitter (Python telemetry simulator, built from containers/emitter/Dockerfile, context ../emitter)
   └─ depends_on: backend (service_healthy)
 ```
 
@@ -79,9 +79,10 @@ Notable specifics:
 
 - **`ConnectionStrings__Fleet`** on `backend` is ASP.NET Core's double-underscore convention for nested config — it binds to `ConnectionStrings:Fleet` inside the app. See `.claude/skills/devops/SKILL.md` for the full environment-variable rule set this project follows.
 - **`postgres_data`** is the one named volume — without it, `docker compose down` (even without `-v`) would still preserve data since volumes aren't removed by a plain `down`, but a full teardown/rebuild of the `db` container would otherwise lose all rows.
-- **Multi-stage Dockerfiles** — both `backend/Dockerfile` and `frontend/Dockerfile` build in one stage (SDK / full `node`) and copy only the compiled output into a slim runtime stage (`aspnet` / `node:alpine`). This keeps the shipped image small and avoids bundling build-only tooling (the .NET SDK, dev dependencies) into what actually runs.
-- **`iiot-emitter`** only starts once `backend` reports healthy — it POSTs synthetic telemetry to `http://backend:8080`, and it has nothing useful to do before the API is up.
+- **Multi-stage Dockerfiles** — both `containers/backend/Dockerfile` and `containers/frontend/Dockerfile` build in one stage (SDK / full `node`) and copy only the compiled output into a slim runtime stage (`aspnet` / `node:alpine`). This keeps the shipped image small and avoids bundling build-only tooling (the .NET SDK, dev dependencies) into what actually runs.
+- **`emitter`** only starts once `backend` reports healthy — it POSTs synthetic telemetry to `http://backend:8080`, and it has nothing useful to do before the API is up.
+- **Dockerfiles live under `containers/<service>/Dockerfile`**, separate from each service's source directory. Each service's `build.context` still points at its real source dir (`../backend`, `../frontend`, `../emitter`) so the Dockerfile's `COPY` instructions keep working unchanged — only where the Dockerfile *file* lives moved, not what it builds from.
 
-Run commands, troubleshooting, and env var setup for actually standing this stack up locally: [`DOCKER_README.md`](../../DOCKER_README.md).
+Run commands, troubleshooting, and env var setup for actually standing this stack up locally: [`DOCKER_README.md`](../DOCKER_README.md).
 
 **See also:** [`Helm.md`](Helm.md) · [`K8s.md`](K8s.md)

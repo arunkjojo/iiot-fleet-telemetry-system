@@ -1,0 +1,51 @@
+apiVersion: apps/v1 # Kubernetes which API group/version defines this object's schema.
+kind: Deployment # Why Deployment (not StatefulSet): the backend is stateless — any pod can serve any request, none needs a stable identity or its own storage. A rolling update just replaces pods one at a time; nothing is lost.
+metadata:
+  name: {{ include "iiot-fleet-app.fullname" . }}-backend # calls the fullname helper from _helpers.tpl and appends -backend.
+  labels:
+    {{- include "iiot-fleet-app.labels" . | nindent 4 }} # pulls in the full common-labels block from _helpers.tpl, pipes the multi-line string through the nindent function, which adds a newline then indents every line by 4 spaces
+    app.kubernetes.io/component: backend # an extra label appended after the common set, following the Kubernetes recommended labels convention, where component distinguishes sub-parts of an application
+spec: # begins the Deployment's desired-state specification.
+  replicas: {{ .Values.backend.replicaCount }}
+  selector:
+    matchLabels: # tells the Deployment controller which Pods it owns/manages, by label match. This field is immutable after creation
+      {{- include "iiot-fleet-app.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: backend
+  template: # this whole block is the Pod template: the spec Kubernetes uses to stamp out each replica Pod.
+    metadata:
+      labels:
+        {{- include "iiot-fleet-app.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: backend
+    spec: # he Pod spec — what actually runs inside each Pod.
+      containers: # the list of containers that run inside each Pod. The backend is a single-container Pod, so this list has one item.
+        - name: backend
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }} # configurable, typically IfNotPresent (use local/cached image if available) or Always (always re-pull, common when using a mutable :latest-style tag).
+          ports: # declares which container port(s) the app listens
+            - containerPort: {{ .Values.backend.service.port }}
+              name: http
+          envFrom: # Kubernetes mechanism to inject every key from a ConfigMap (or Secret) as environment variables in bulk, rather than listing each one individually under env:
+            - configMapRef: # points at a ConfigMap named <fullname>-config
+                name: {{ include "iiot-fleet-app.fullname" . }}-config
+          env: # used for a single, individually-named environment variable
+            - name: ConnectionStrings__Fleet # the env var name. The double-underscore (__) is a .NET / ASP.NET Core configuration convention
+              valueFrom: # rather than a literal value, this pulls the variable's value from a Kubernetes Secret at Pod-start time:
+                secretKeyRef:
+                  name: {{ include "iiot-fleet-app.fullname" . }}-backend # Secret object named <fullname>-backend, defined in backend/secret.yaml per the comment.
+                  key: ConnectionStrings__Fleet # the specific key within that Secret's data to use.
+          readinessProbe: # determines whether the Pod should receive traffic from a Service. A failing readiness probe pulls the Pod out of Service endpoints, but doesn't restart it.
+            tcpSocket: # the simplest probe type: the kubelet just tries to open a TCP connection to the given port. If it succeeds, the probe passes.
+              port: {{ .Values.backend.service.port }} # checks the same configurable port the container actually listens on.
+            initialDelaySeconds: 10 # wait 10s after container start before the first check (give the app time to boot).
+            periodSeconds: 30 # check every 30 seconds thereafter.
+            timeoutSeconds: 5 # each individual check attempt must complete within 5 seconds or it counts as a failure.
+            failureThreshold: 3 # the probe must fail 3 consecutive times before Kubernetes acts (marks not-ready, or restarts) — this avoids one-off transient blips causing unnecessary restarts/traffic removal.
+          livenessProbe: # determines whether the container should be restarted. A failing liveness probe kills and recreates the container.
+            tcpSocket:
+              port: {{ .Values.backend.service.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources: # requests/limits from values.yaml — keeps CPU/memory tuning out of the template, so an operator overrides it without touching YAML structure.
+            {{- toYaml .Values.backend.resources | nindent 12 }} # converts a Helm value into a YAML-formatted string.  indents that resulting block to the correct depth under resources:.

@@ -1,0 +1,16 @@
+apiVersion: v1 # a core Kubernetes type, so it's in the original v1 API group with no prefix
+kind: Service #  declares the object type.
+metadata:
+  name: {{ include "iiot-fleet-app.fullname" . }}-backend
+  labels:
+    {{- include "iiot-fleet-app.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP # ClusterIP (the default type) — internal-only. Reached by the frontend and emitter inside the cluster; external access (if enabled) goes through templates/ingress.yaml instead, not through this Service directly.
+  ports:
+    - port: {{ .Values.backend.service.port }}
+      targetPort: {{ .Values.backend.service.port }}
+      protocol: TCP # explicit, though TCP is the default anyway.
+      name: http # names the port; required when other resources need to reference it by name, and documents that it's HTTP traffic.
+  selector:
+    {{- include "iiot-fleet-app.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: backend

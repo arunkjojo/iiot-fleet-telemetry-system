@@ -3,12 +3,10 @@
 
 db:
   image:
-    # Custom-tuned Postgres image built from db/Dockerfile — not on any public
-    # registry. Build it yourself: `docker build -t iiot-fleet-db ./db`, then
-    # push it to a registry your cluster can pull from (or `kind load
-    # docker-image iiot-fleet-db` for a local kind cluster).
-    repository: iiot-fleet-db
-    tag: latest
+    # Stock public image — no custom Dockerfile/build step for the database.
+    # Pulled straight from Docker Hub like any other chart dependency.
+    repository: postgres
+    tag: 16-alpine
     pullPolicy: IfNotPresent
   storage:
     size: 1Gi
@@ -20,8 +18,9 @@ db:
 backend:
   image:
     # Not on any public registry. Build it yourself:
-    # `docker build -t iiot-fleet-backend ./backend`, then push it (or `kind
-    # load docker-image iiot-fleet-backend` for a local kind cluster).
+    # `docker build -f containers/backend/Dockerfile -t iiot-fleet-backend ./backend`,
+    # then push it (or `kind load docker-image iiot-fleet-backend` for a
+    # local kind cluster).
     repository: iiot-fleet-backend
     tag: latest
     pullPolicy: IfNotPresent
@@ -42,8 +41,9 @@ backend:
 frontend:
   image:
     # Not on any public registry. Build it yourself:
-    # `docker build -t iiot-fleet-frontend ./frontend`, then push it (or
-    # `kind load docker-image iiot-fleet-frontend` for a local kind cluster).
+    # `docker build -f containers/frontend/Dockerfile -t iiot-fleet-frontend ./frontend`,
+    # then push it (or `kind load docker-image iiot-fleet-frontend` for a
+    # local kind cluster).
     repository: iiot-fleet-frontend
     tag: latest
     pullPolicy: IfNotPresent
@@ -61,8 +61,9 @@ frontend:
 emitter:
   image:
     # Not on any public registry. Build it yourself:
-    # `docker build -t iiot-fleet-emitter ./iiot-emitter`, then push it (or
-    # `kind load docker-image iiot-fleet-emitter` for a local kind cluster).
+    # `docker build -f containers/emitter/Dockerfile -t iiot-fleet-emitter ./emitter`,
+    # then push it (or `kind load docker-image iiot-fleet-emitter` for a
+    # local kind cluster).
     repository: iiot-fleet-emitter
     tag: latest
     pullPolicy: IfNotPresent

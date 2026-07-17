@@ -1,6 +1,3 @@
-# Headless Service — required for the StatefulSet's stable per-pod DNS
-# identity (e.g. iiot-fleet-app-db-0.iiot-fleet-app-db). Also gives the
-# backend a single, predictable hostname to connect to.
 apiVersion: v1
 kind: Service
 metadata:

@@ -314,10 +314,10 @@ CREATE INDEX idx_logs_vehicle_time ON vehicle_logs(vehicle_id, logged_at DESC);
 | `ConnectionStrings__Fleet` | Backend | PostgreSQL connection string |
 | `ASPNETCORE_ENVIRONMENT` | Backend | `Development` or `Production` |
 | `USE_LIVE_TELEMETRY` | Backend | Toggles live ingestion vs. dummy simulation as the vehicle data source; default `false` |
-| `BACKEND_URL` | iiot-emitter | Base URL of the backend API the emitter posts telemetry to (e.g. `http://backend:8080`) |
-| `VEHICLE_COUNT` | iiot-emitter | Number of vehicles the emitter simulates, sliced from the fetched roster; default `10000` |
-| `TICK_INTERVAL_SECONDS` | iiot-emitter | Seconds between telemetry ticks per simulated vehicle; default `3` |
-| `MAX_CONCURRENCY` | iiot-emitter | Maximum concurrent outbound HTTP POSTs the emitter issues; default `300` |
+| `BACKEND_URL` | emitter | Base URL of the backend API the emitter posts telemetry to (e.g. `http://backend:8080`) |
+| `VEHICLE_COUNT` | emitter | Number of vehicles the emitter simulates, sliced from the fetched roster; default `10000` |
+| `TICK_INTERVAL_SECONDS` | emitter | Seconds between telemetry ticks per simulated vehicle; default `3` |
+| `MAX_CONCURRENCY` | emitter | Maximum concurrent outbound HTTP POSTs the emitter issues; default `300` |
 | `TelemetryRetention__RetentionDays` | Backend | Number of days of `telemetry_snapshots` history to retain before rows are eligible for deletion; default `30` |
 | `TelemetryRetention__SweepIntervalMinutes` | Backend | Minutes between successive retention sweep runs of `TelemetryRetentionService`; default `60` |
 | `TelemetryRetention__DeleteBatchSize` | Backend | Maximum number of rows deleted per batch during a retention sweep, to bound lock/IO impact; default `5000` |

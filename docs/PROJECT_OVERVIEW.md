@@ -45,13 +45,13 @@ one-paragraph summary of it, not a replacement.
 |---|---|---|
 | `frontend` | Next.js 15 (App Router) + TypeScript | Browser dashboard: map, sidebar, detail panel, notifications. Also hosts REST route handlers under `app/api/` (see [`frontend/AGENTS.md`](../frontend/AGENTS.md)). |
 | `backend` | ASP.NET Core 8 Web API | REST endpoints (`/api/vehicles*`, `/api/telemetry/ingest`, `/api/health/signalr`), the `/fleethub` SignalR hub, and the background services that simulate or ingest/persist/broadcast telemetry (see [`backend/AGENTS.md`](../backend/AGENTS.md)). |
-| `db` | PostgreSQL 16 (tuned image) | Persists `vehicles`, `telemetry_snapshots`, `vehicle_logs` via EF Core migrations. |
-| `iiot-emitter` | Python 3.12 (`asyncio` + `aiohttp`) | Simulates up to 10,000 independent onboard IIoT devices, each posting its own telemetry tick to the backend over HTTP. Outbound-only; no inbound ports. |
+| `db` | PostgreSQL 16 (stock `postgres:16-alpine`) | Persists `vehicles`, `telemetry_snapshots`, `vehicle_logs` via EF Core migrations. |
+| `emitter` | Python 3.12 (`asyncio` + `aiohttp`) | Simulates up to 10,000 independent onboard IIoT devices, each posting its own telemetry tick to the backend over HTTP. Outbound-only; no inbound ports. |
 
 ### Data flow
 
 ```
- iiot-emitter                 backend                      frontend
+ emitter                      backend                      frontend
  (10,000 async   ── POST ──►  ASP.NET Core 8               Next.js 15
   vehicle tasks)   /api/       ├─ TelemetryIngestController  (browser)
                     telemetry/    → validates, computes
@@ -73,7 +73,7 @@ one-paragraph summary of it, not a replacement.
 `frontend` also calls `backend`'s REST endpoints directly (`GET /api/vehicles`,
 `GET /api/vehicles/{id}`, `GET /api/vehicles/{id}/logs`) for initial load and detail views. When
 `USE_LIVE_TELEMETRY=false` (default outside Docker), the ingest pipeline above is replaced by an
-in-memory `TelemetrySimulationService` on the backend — no `db` or `iiot-emitter` involvement;
+in-memory `TelemetrySimulationService` on the backend — no `db` or `emitter` involvement;
 see [§3](#3-key-design-decisions).
 
 ### Tech stack
@@ -84,7 +84,7 @@ see [§3](#3-key-design-decisions).
 | Backend | ASP.NET Core 8 Web API + SignalR + MessagePack + Entity Framework Core |
 | Database | PostgreSQL 16 |
 | Emitter | Python 3.12 + `asyncio` + `aiohttp` |
-| DevOps | Docker + Docker Compose + GitHub Actions |
+| DevOps | Docker + Docker Compose |
 | AI Tools | Claude Code, GitHub Copilot, Gemini |
 
 For full stack versions, directory maps, coding conventions, and API/data contracts, see the
@@ -99,7 +99,7 @@ summarizes.
 **Live vs. dummy telemetry toggle (`USE_LIVE_TELEMETRY`).** The backend can source vehicle state
 two ways: a legacy in-memory `TelemetrySimulationService` (random-walk simulation, no DB, no
 HTTP — used by default for local `dotnet run`), or the live ingestion pipeline fed by
-`iiot-emitter` and persisted to PostgreSQL (`USE_LIVE_TELEMETRY=true`, the Docker Compose
+`emitter` and persisted to PostgreSQL (`USE_LIVE_TELEMETRY=true`, the Docker Compose
 default). Both paths produce byte-identical `ApiVehicle` response shapes, so the frontend needs
 zero changes regardless of which is active. This lets local development stay dependency-free
 while the containerized stack demonstrates the real pipeline.
@@ -122,32 +122,31 @@ partial-update batches sent to every connected client roughly every 500ms — me
 **Virtualization strategy.** The frontend renders the 10,000-vehicle sidebar list with
 `@tanstack/react-virtual` (only visible rows mount), holds live vehicle state in a
 `useRef<Map<string, Vehicle>>` for O(1) SignalR-driven updates without triggering a re-render
-per tick, and flushes to rendered `useState` at most once per animation frame. A default-on
-"focused view" additionally caps the sidebar to 10 curated vehicles with a "show all" toggle,
-so the full virtualized list is opt-in rather than the default render path. See
-[`frontend/AGENTS.md`](../frontend/AGENTS.md)'s Performance Rules for the complete list.
+per tick, and flushes to rendered `useState` at most once per animation frame. The sidebar always
+renders the full search/status-filtered list — the earlier "hide inactive" toggle and
+default-on 10-vehicle "focused view" cap were removed in Sprint 07 (`REQUIREMENTS.md` `F-35`).
+See [`frontend/AGENTS.md`](../frontend/AGENTS.md)'s Performance Rules for the complete list.
 
 ---
 
 ## 4. DevOps & Infrastructure
 
-**Docker Compose topology (4 services):** `db` → `backend` → `frontend` and `iiot-emitter` →
-`backend`, all on the `iiot-fleet-net` network. `iiot-emitter` and `frontend` both depend on
+**Docker Compose topology (4 services):** `db` → `backend` → `frontend` and `emitter` →
+`backend`, all on the `iiot-fleet-net` network. `emitter` and `frontend` both depend on
 `backend`'s healthcheck; `backend` depends on `db`'s. `USE_LIVE_TELEMETRY=true` is set on
-`backend` in the committed `docker-compose.yml`, making the containerized stack live-by-default
-even though bare `dotnet run` still defaults to the dummy simulation. `db` uses a custom
-`postgres:16-alpine`-based image (`db/Dockerfile`) tuned for sustained batched-write throughput
-(`max_connections`, `shared_buffers`, `work_mem`, etc.) rather than the stock image.
+`backend` in the committed `containers/docker-compose.yml`, making the containerized stack
+live-by-default even though bare `dotnet run` still defaults to the dummy simulation. `db` pulls
+the stock `postgres:16-alpine` image directly — no custom Dockerfile, no build step (an earlier
+revision built a tuned image; that layer was removed as of Sprint 07).
 
-**CI:** a single GitHub Actions workflow, [`.github/workflows/docker-image.yml`](../.github/workflows/docker-image.yml),
-builds the Docker image on push/PR to `main`. A fix for a previously-failing build
-(`claude/fix-docker-image-ci-workflow`) shipped standalone ahead of this document and is not yet
-merged to `main` — see [`docs/sprints/BACKLOG.md`](sprints/BACKLOG.md) for current status.
+**CI:** none. This project does not run GitHub Actions or any other CI pipeline — verification
+(`type-check`/`lint`/`dotnet build`) happens per-task during sprint execution instead (see
+[§5](#5-ai-assisted-development-workflow)).
 
 **Full detail — quickstart, per-service breakdown, the complete environment variable reference,
 switching back to dummy mode, scaling the emitter down, and a troubleshooting section (emitter
 can't reach backend, FK violations, `db` unreachable from siblings, missing frontend `public/`)
-— all live in [`DOCKER_README.md`](../DOCKER_README.md).** This section intentionally does not
+— all live in [`DOCKER_README.md`](DOCKER_README.md).** This section intentionally does not
 duplicate those tables.
 
 ---
@@ -165,7 +164,7 @@ part of the project's design, documented in full in the root [`AGENTS.md`](../AG
 | System designer | ARCH | `docs/**`, `AGENTS.md`, `README.md`, `CHANGELOG.md` — sprint files, requirements, changelog. Never writes application code. |
 | Next.js engineer | NEXT | `frontend/**` — components, Zustand stores, SignalR client, route handlers. |
 | .NET Core engineer | ASP.NET | `backend/**` — controllers, SignalR hub, MessagePack models, EF Core, background services. |
-| Infrastructure engineer | INFRA | `docker-compose.yml`, both `Dockerfile`s, `.github/workflows/**`, `.env*`, `iiot-emitter/**`. |
+| Infrastructure engineer | INFRA | `containers/**` (Dockerfiles + `docker-compose.yml`), `.env*`, `emitter/**`, `helm/**`. |
 | Quality analyst | QA | Test files and sprint acceptance-criteria updates only; verifies type-check/lint/build/tests and reports failures with file:line references. |
 | Analyst | ANALYST | Performance/telemetry metrics analysis (SignalR latency, status distribution, alert counts). |
 
@@ -238,7 +237,7 @@ how it was split across Sprints 03–05.
 ## 7. Getting Started
 
 For the fastest path to a running stack (all 4 services via Docker Compose, including live
-telemetry), follow the **Quick start** section of [`DOCKER_README.md`](../DOCKER_README.md).
+telemetry), follow the **Quick start** section of [`DOCKER_README.md`](DOCKER_README.md).
 
 For running the frontend or backend individually against a local PostgreSQL install instead of
 Docker, follow the **Local Dev Setup** section (Prerequisites, Frontend, Backend, Full Stack

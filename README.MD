@@ -46,12 +46,12 @@ npm run dev
 ```
 
 **Docker**
-- See [DOCKER_README.md](DOCKER_README.md) for full Docker instructions and notes.
+- See [docs/DOCKER_README.md](docs/DOCKER_README.md) for full Docker instructions and notes.
 - See [docs/HELM_GUIDE.md](docs/HELM_GUIDE.md) for deploying to Kubernetes via Helm.
 - Quick Docker compose (builds images and starts both services):
 
 ```bash
-docker-compose up --build
+docker compose -f containers/docker-compose.yml up --build
 ```
 
 After startup:
