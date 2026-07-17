@@ -7,6 +7,37 @@ Version is bumped once per sprint at sprint-end by the ARCH agent.
 
 ---
 
+## v0.7.1 — 2026-07-17
+
+### Update
+
+- **Docker/Helm infra restructured** (operator addendum to Sprint 07, same branch/PR):
+  - Dockerfiles moved to `containers/<service>/Dockerfile` (`backend`, `frontend`, `emitter`);
+    `containers/docker-compose.yml`'s `build.context` repointed at the real source dirs
+    (`../backend`, `../frontend`, `../emitter`); `.dockerignore` files moved back into those
+    source dirs to match Docker's context-root-relative lookup.
+  - `db` no longer builds a custom image — `db/Dockerfile` and `db/postgresql.conf` are removed;
+    both `containers/docker-compose.yml` and the Helm chart now pull `postgres:16-alpine`
+    directly.
+  - `iiot-emitter` renamed to `emitter` throughout the codebase, Helm chart, and active docs
+    (directory, Compose service name, Helm values/templates, env-var docs). Archived sprint
+    files and the existing ADR are left as historical record, unchanged.
+  - `DOCKER_README.md` moved to `docs/DOCKER_README.md`; every link across `README.md`,
+    `AGENTS.md`, `docs/HELM_GUIDE.md`, `docs/PROJECT_OVERVIEW.md`, and
+    `docs/devops-learn/Docker_Compose.md` updated to match.
+  - `.github/workflows/docker-image.yml` removed — this project runs no CI pipeline.
+- **Helm chart templates reorganized into per-service folders** — `templates/{backend,frontend,
+  db,emitter}/` each hold that service's `Deployment`/`Service`/`Secret`, with inline comments
+  explaining why each file exists and why it's shaped the way it is. `_helpers.tpl`,
+  `app-configmap.yaml`, `ingress.yaml`, and `NOTES.txt` stay at the templates root since they're
+  genuinely cross-cutting, not service-specific (each now documents why in a header comment).
+  `NOTES.txt` also gained a comment explaining what it actually is: Helm-rendered CLI text shown
+  after `helm install`/`upgrade`, never applied to the cluster and never written to disk.
+  Chart version bumped `0.1.0` → `0.2.0` for the structural change; `appVersion` synced to
+  `0.7.1`.
+
+---
+
 ## v0.7.0 — 2026-07-17
 
 ### Add
