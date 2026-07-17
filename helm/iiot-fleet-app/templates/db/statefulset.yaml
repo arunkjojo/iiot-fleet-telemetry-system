@@ -1,33 +1,14 @@
-# templates/db/statefulset.yaml
-#
-# Why a StatefulSet and not a Deployment: Postgres needs a stable identity and
-# storage that follows it across pod rescheduling. A Deployment's pods are
-# interchangeable and their storage isn't guaranteed to reattach to the "same"
-# pod — fine for the stateless backend/frontend, wrong for a database.
-#
-# Why postgres:16-alpine directly (no custom Dockerfile): this used to build a
-# tuned image from db/Dockerfile + db/postgresql.conf; that layer was removed
-# so the chart has one fewer image to build/maintain. Server tuning, if
-# needed again later, can come back as a ConfigMap mounted over
-# /etc/postgresql/postgresql.conf without reintroducing a custom image.
-apiVersion: apps/v1
-kind: StatefulSet
+# Why postgres:16-alpine directly (no custom Dockerfile): this used to build a tuned image from db/Dockerfile + db/postgresql.conf; that layer was removed so the chart has one fewer image to build/maintain. Server tuning, if needed again later, can come back as a ConfigMap mounted over /etc/postgresql/postgresql.conf without reintroducing a custom image.
+apiVersion: apps/v1 # Kubernetes which API group/version defines this object's schema.
+kind: StatefulSet # Why a StatefulSet and not a Deployment: Postgres needs a stable identity and storage that follows it across pod rescheduling. A Deployment's pods are interchangeable and their storage isn't guaranteed to reattach to the "same" pod — fine for the stateless backend/frontend, wrong for a database.
 metadata:
   name: {{ include "iiot-fleet-app.fullname" . }}-db
   labels:
-    # Shared chart/release labels (see _helpers.tpl) so `kubectl get all -l
-    # app.kubernetes.io/instance=<release>` finds this alongside every other
-    # resource the chart renders.
     {{- include "iiot-fleet-app.labels" . | nindent 4 }}
-    # Component label distinguishes "the db part of this release" from
-    # backend/frontend/emitter, used below in matchLabels/selector.
     app.kubernetes.io/component: db
 spec:
-  # Must match metadata.name — the StatefulSet's governing Service, giving
-  # each pod a stable DNS name (<pod>.<serviceName>).
   serviceName: {{ include "iiot-fleet-app.fullname" . }}-db
-  # Single instance: this chart doesn't attempt Postgres replication/HA.
-  replicas: 1
+  replicas: 1 # Single instance: this chart doesn't attempt Postgres replication/HA.
   selector:
     matchLabels:
       {{- include "iiot-fleet-app.selectorLabels" . | nindent 6 }}
@@ -40,39 +21,27 @@ spec:
     spec:
       containers:
         - name: db
-          # Stock public image + tag, both overridable via values.yaml —
-          # no build step, no private registry.
           image: "{{ .Values.db.image.repository }}:{{ .Values.db.image.tag }}"
           imagePullPolicy: {{ .Values.db.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.db.port }}
               name: postgres
           env:
-            # First-run database name — the official postgres image's
-            # entrypoint creates this database (and the matching role below)
-            # on an empty data directory only.
             - name: POSTGRES_DB
               value: "fleet_telemetry"
             - name: POSTGRES_USER
               value: "postgres"
-            # Never a plaintext value here — sourced from db/secret.yaml so
-            # the password never appears in `helm get values` or `kubectl get
-            # statefulset -o yaml` output.
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ include "iiot-fleet-app.fullname" . }}-db
                   key: POSTGRES_PASSWORD
-          volumeMounts:
-            # Mounts the volumeClaimTemplates PVC below at Postgres's actual
-            # data directory, so writes survive pod restarts/rescheduling.
-            - name: postgres-data
-              mountPath: /var/lib/postgresql/data
+          volumeMounts: # attaches a volume inside the container's filesystem
+            - name: postgres-data # match the name of a volume made available to the Pod — here, that volume comes from the volumeClaimTemplates
+              mountPath: /var/lib/postgresql/data # actual directory the official Postgres image writes its data files to. Mounting persistent storage exactly here
           readinessProbe:
-            # pg_isready is the officially-recommended readiness check;
-            # ships in every postgres image, no extra tooling needed.
             exec:
-              command: ["pg_isready", "-U", "postgres"]
+              command: ["pg_isready", "-U", "postgres"] # is a small utility bundled with every official Postgres image specifically for this purpose
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 5
@@ -84,15 +53,11 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 5
-  volumeClaimTemplates:
-    # volumeClaimTemplates (not a standalone PVC) is the StatefulSet-specific
-    # mechanism: each replica gets its own PVC, bound for that replica's
-    # lifetime — the k8s-native equivalent of docker-compose.yml's
-    # `postgres_data` named volume.
+  volumeClaimTemplates: # It is the StatefulSet-specific mechanism: each replica gets its own PVC, bound for that replica's lifetime — the k8s-native equivalent of docker-compose.yml's `postgres_data` named volume.
     - metadata:
         name: postgres-data
       spec:
-        accessModes: ["ReadWriteOnce"]
+        accessModes: ["ReadWriteOnce"] # volume can be mounted read-write by a single node at a time.
         resources:
           requests:
             storage: {{ .Values.db.storage.size }}

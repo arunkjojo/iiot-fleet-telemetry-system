@@ -1,7 +1,3 @@
-# templates/frontend/service.yaml
-#
-# Stable internal address the Ingress (when enabled) routes `/` to; also
-# usable directly via `kubectl port-forward` when Ingress is off.
 apiVersion: v1
 kind: Service
 metadata:
