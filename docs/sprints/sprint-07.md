@@ -85,8 +85,8 @@ git status    # must be clean
 
 ## Task Index (Top-Level Todo)
 
-- [ ] UI-015 — Remove "Hide Inactive" / "Focused View" controls from Sidebar + filter store
-- [ ] UI-016 — Remove the client-side "inactive vehicle" sweep/badge/dimming (page.tsx, MapView, DetailPanel, types)
+- [x] UI-015 — Remove "Hide Inactive" / "Focused View" controls from Sidebar + filter store
+- [x] UI-016 — Remove the client-side "inactive vehicle" sweep/badge/dimming (page.tsx, MapView, DetailPanel, types)
 - [ ] BE-010 — Update `VehicleStatusEvaluator.Evaluate` to the new threshold rules
 - [ ] BE-011 — Update `TelemetrySimulationService` status evaluation + rebalancer to new thresholds/ranges
 - [ ] ARCH-014 — Update `REQUIREMENTS.md` thresholds/caps, remove F-33/F-34/§4.4
@@ -120,7 +120,7 @@ UI-016                 BE-011 (needs BE-010)                            ARCH-018
 
 **Agent:** NEXT
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -209,7 +209,7 @@ git checkout -- frontend/store/useFilterStore.ts frontend/components/Sidebar.tsx
 
 **Agent:** NEXT
 **Depends on:** UI-015
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
