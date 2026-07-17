@@ -90,7 +90,7 @@ git status    # must be clean
 - [x] BE-010 — Update `VehicleStatusEvaluator.Evaluate` to the new threshold rules
 - [x] BE-011 — Update `TelemetrySimulationService` status evaluation + rebalancer to new thresholds/ranges
 - [x] ARCH-014 — Update `REQUIREMENTS.md` thresholds/caps, remove F-33/F-34/§4.4
-- [ ] ARCH-015 — Author `docs/APPLICATION_OVERVIEW.md` (what the app is, how it works, data flow)
+- [x] ARCH-015 — Author `docs/APPLICATION_OVERVIEW.md` (what the app is, how it works, data flow)
 - [x] ARCH-016 — Author `docs/devops-learn/Docker_Compose.md`
 - [x] ARCH-017 — Author `docs/devops-learn/Helm.md`
 - [x] ARCH-018 — Author `docs/devops-learn/K8s.md`
@@ -615,7 +615,7 @@ git checkout -- docs/requirements/REQUIREMENTS.md
 
 **Agent:** ARCH
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
