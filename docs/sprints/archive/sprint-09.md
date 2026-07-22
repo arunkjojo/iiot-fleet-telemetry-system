@@ -85,6 +85,7 @@ git status    # must be clean
 - [x] UI-003 — Add marker clustering to `MapView.tsx`
 - [x] QA-002 — Verify land-constrained positions and map performance
 - [x] LEAD-001 — Convention-compliance review and sprint readiness verdict
+- [x] EMIT-002 — Spread the fleet worldwide instead of San Francisco-only (added post-archive, per direct user request — no new sprint file opened)
 
 ---
 
@@ -593,6 +594,73 @@ git show <each-task-commit> --stat
 **Rollback:**
 
 N/A — this task performs no writes.
+
+---
+
+### EMIT-002: Spread the fleet worldwide instead of San Francisco-only
+
+> Added after this sprint was already archived and merged to `main` (v0.8.1). The user
+> reported all vehicles still clustering at a single lat/lng region and asked for a
+> worldwide, all-continents spread — explicitly instructed to fix it as part of this
+> sprint file rather than opening a new sprint. Executed directly against `main`, no
+> feature branch cut.
+
+**Agent:** EMIT
+**Depends on:** EMIT-001
+**Status:** [x]
+
+---
+
+**Context:**
+
+EMIT-001 fixed vehicles landing in water by constraining them to 35 curated on-land
+waypoints — but all 35 were still within San Francisco. The user wants a truly worldwide
+fleet: vehicles spread across all inhabited continents, still never in open water/sea or
+off any landmass.
+
+---
+
+**Implementation:**
+
+`emitter/emitter.py`:
+- Replaced the SF-only `SF_LAND_WAYPOINTS` list and SF bbox `LAT_MIN`/`LAT_MAX`/`LNG_MIN`/`LNG_MAX`
+  constants with `WORLD_LAND_ANCHORS` — 35 real city centers spanning North America, South
+  America, Europe, Africa, Asia, and Oceania (Sydney/Melbourne/Auckland) — plus universal
+  lat/lng validity bounds (`-85..85` / `-180..180`) as the new defense-in-depth clamp.
+- Each vehicle is assigned one fixed `home_lat`/`home_lng` anchor at creation (`make_initial_state`),
+  permanent for its lifetime — this is what gives worldwide *spread* without any single
+  vehicle "driving" across an ocean tick-to-tick.
+- Added `local_destination(home_lat, home_lng)`: picks a point within `ROAM_RADIUS_DEG`
+  (0.06°, ~6-7km) of the vehicle's home anchor, with longitude jitter scaled by
+  `1/cos(latitude)` so the roam radius reads as a consistent real-world distance regardless
+  of how close the anchor is to the equator or a pole.
+- `evolve_state`'s waypoint-arrival logic now calls `local_destination(state.home_lat, state.home_lng)`
+  instead of picking a destination from the old flat SF waypoint list — motion stays local
+  to each vehicle's home city, never a straight line to a different continent.
+
+`docs/requirements/REQUIREMENTS.md` §5.1 (`latitude`/`longitude` field docs) and §10
+(out-of-scope note) updated to describe worldwide ranges instead of the SF bbox — direct
+edit, not routed through a separate ARCH task, per the user's instruction to fix this
+inline rather than open a new sprint.
+
+---
+
+**Acceptance criteria:**
+
+1. `emitter/emitter.py` contains no reference to `SF_LAND_WAYPOINTS` or `random_land_point` (grep clean).
+2. `WORLD_LAND_ANCHORS` spans at least 5 distinct continents.
+3. `cd emitter && python -m py_compile emitter.py` succeeds.
+4. `docs/requirements/REQUIREMENTS.md` §5.1 no longer says "San Francisco bbox".
+
+---
+
+**Verification command:**
+
+```bash
+cd emitter && python -m py_compile emitter.py
+grep -n "SF_LAND_WAYPOINTS\|random_land_point" emitter.py || echo "clean"
+grep -n "San Francisco bbox" ../docs/requirements/REQUIREMENTS.md || echo "clean"
+```
 
 ---
 

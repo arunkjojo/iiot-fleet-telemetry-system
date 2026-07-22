@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import math
 import os
 import random
 import signal
@@ -46,55 +47,72 @@ REQUEST_TIMEOUT_SECONDS = float(os.environ.get("REQUEST_TIMEOUT_SECONDS", "5"))
 METADATA_URL = f"{BACKEND_URL}/api/vehicles/metadata"
 INGEST_URL = f"{BACKEND_URL}/api/telemetry/ingest"
 
-# San Francisco bounding box (docs/requirements/REQUIREMENTS.md section 5.1) — kept only
-# as a defense-in-depth clamp() bound, never as a sampling range (see SF_LAND_WAYPOINTS below).
-LAT_MIN, LAT_MAX = 37.70, 37.81
-LNG_MIN, LNG_MAX = -122.52, -122.35
+# Universal lat/lng validity bounds — a defense-in-depth clamp() safety net only,
+# never a sampling range (see WORLD_LAND_ANCHORS below).
+LAT_MIN, LAT_MAX = -85.0, 85.0
+LNG_MIN, LNG_MAX = -180.0, 180.0
 
-# Curated real, confirmed-on-land SF waypoints spanning the documented bbox — avoids
-# random.uniform-across-bbox sampling landing vehicles in SF Bay/the Pacific Ocean.
-# Positions are only ever chosen from (or interpolated between) this list.
-SF_LAND_WAYPOINTS: list[tuple[float, float]] = [
-    (37.7749, -122.4194),  # Market St / downtown
-    (37.7599, -122.4148),  # Mission District (24th St)
-    (37.7935, -122.4399),  # Pacific Heights
-    (37.7910, -122.4010),  # Financial District
-    (37.7599, -122.4869),  # Sunset District (Irving St)
-    (37.7806, -122.4644),  # Richmond District (Clement St)
-    (37.7783, -122.4390),  # Hayes Valley
-    (37.7609, -122.4350),  # Noe Valley
-    (37.7609, -122.4351),  # Castro District
-    (37.7692, -122.4481),  # Haight-Ashbury
-    (37.8008, -122.4100),  # North Beach
-    (37.7827, -122.4090),  # SoMa (5th & Mission)
-    (37.7695, -122.3928),  # Dogpatch
-    (37.7285, -122.4530),  # Ingleside
-    (37.7419, -122.4700),  # Balboa Terrace
-    (37.7180, -122.4438),  # Excelsior
-    (37.7423, -122.3823),  # Bayview (inland, not waterfront)
-    (37.7355, -122.4188),  # Bernal Heights
-    (37.7500, -122.4300),  # Glen Park
-    (37.7838, -122.4270),  # Western Addition
-    (37.7963, -122.4302),  # Russian Hill
-    (37.8005, -122.4180),  # Telegraph Hill (inland side)
-    (37.7614, -122.4835),  # Parkside
-    (37.7444, -122.4864),  # Lakeshore (inland of the lake)
-    (37.7869, -122.4324),  # Nob Hill
-    (37.7550, -122.4470),  # West Portal
-    (37.7686, -122.4300),  # Duboce Triangle
-    (37.7280, -122.3823),  # Silver Terrace / Portola (inland)
-    (37.7970, -122.3985),  # Embarcadero (inland side, not the pier edge)
-    (37.7860, -122.4550),  # Anza Vista
-    (37.7515, -122.4160),  # Mission Terrace
-    (37.7350, -122.4550),  # Miraloma Park
-    (37.7719, -122.4090),  # Rincon Hill
-    (37.7204, -122.4468),  # Oceanview
-    (37.7645, -122.4187),  # Mission Dolores
+# Curated real, confirmed-on-land city anchors spanning every inhabited continent
+# (IIOT-S09-EMIT-002: fleet is now worldwide, not San Francisco-only). Each vehicle
+# is assigned one fixed "home" anchor for its lifetime and roams a small radius
+# around it (see local_destination) — this spreads the fleet across the globe while
+# never generating a straight-line "drive" across an ocean between two anchors.
+WORLD_LAND_ANCHORS: list[tuple[float, float]] = [
+    (40.7128, -74.0060),    # New York, USA
+    (34.0522, -118.2437),   # Los Angeles, USA
+    (41.8781, -87.6298),    # Chicago, USA
+    (37.7749, -122.4194),   # San Francisco, USA
+    (19.4326, -99.1332),    # Mexico City, Mexico
+    (43.6532, -79.3832),    # Toronto, Canada
+    (-23.5505, -46.6333),   # Sao Paulo, Brazil
+    (-34.6037, -58.3816),   # Buenos Aires, Argentina
+    (4.7110, -74.0721),     # Bogota, Colombia
+    (-12.0464, -77.0428),   # Lima, Peru
+    (-33.4489, -70.6693),   # Santiago, Chile
+    (51.5074, -0.1278),     # London, UK
+    (48.8566, 2.3522),      # Paris, France
+    (52.5200, 13.4050),     # Berlin, Germany
+    (40.4168, -3.7038),     # Madrid, Spain
+    (41.9028, 12.4964),     # Rome, Italy
+    (52.2297, 21.0122),     # Warsaw, Poland
+    (59.3293, 18.0686),     # Stockholm, Sweden
+    (30.0444, 31.2357),     # Cairo, Egypt
+    (6.5244, 3.3792),       # Lagos, Nigeria
+    (-1.2921, 36.8219),     # Nairobi, Kenya
+    (-26.2041, 28.0473),    # Johannesburg, South Africa
+    (33.5731, -7.5898),     # Casablanca, Morocco
+    (35.6762, 139.6503),    # Tokyo, Japan
+    (28.7041, 77.1025),     # Delhi, India
+    (19.0760, 72.8777),     # Mumbai, India
+    (39.9042, 116.4074),    # Beijing, China
+    (31.2304, 121.4737),    # Shanghai, China
+    (1.3521, 103.8198),     # Singapore
+    (25.2048, 55.2708),     # Dubai, UAE
+    (13.7563, 100.5018),    # Bangkok, Thailand
+    (37.5665, 126.9780),    # Seoul, South Korea
+    (-6.2088, 106.8456),    # Jakarta, Indonesia
+    (-33.8688, 151.2093),   # Sydney, Australia
+    (-37.8136, 144.9631),   # Melbourne, Australia
+    (-36.8485, 174.7633),   # Auckland, New Zealand
 ]
 
+# Vehicles roam within this radius (degrees latitude, ~6-7 km) of their assigned home
+# anchor — small enough that every generated position stays within the same city/land
+# mass as its anchor, never crossing open water to reach it.
+ROAM_RADIUS_DEG = 0.06
 
-def random_land_point() -> tuple[float, float]:
-    return random.choice(SF_LAND_WAYPOINTS)
+
+def local_destination(home_lat: float, home_lng: float) -> tuple[float, float]:
+    """Pick a point within ROAM_RADIUS_DEG of a home anchor. Longitude jitter is scaled
+    by 1/cos(latitude) so the roam radius reads as roughly the same real-world distance
+    at any latitude (a degree of longitude shrinks toward the poles)."""
+    lat_jitter = random.uniform(-ROAM_RADIUS_DEG, ROAM_RADIUS_DEG)
+    lng_scale = max(0.15, math.cos(math.radians(home_lat)))
+    lng_jitter = random.uniform(-ROAM_RADIUS_DEG, ROAM_RADIUS_DEG) / lng_scale
+    return (
+        clamp(home_lat + lat_jitter, LAT_MIN, LAT_MAX),
+        clamp(home_lng + lng_jitter, LNG_MIN, LNG_MAX),
+    )
 
 
 # Alternate by roster index — stable for a vehicle's lifetime (never changed tick-to-tick).
@@ -124,6 +142,8 @@ class VehicleState:
     vehicle_id: str
     driver_name: str
     model: str
+    home_lat: float
+    home_lng: float
     latitude: float
     longitude: float
     dest_lat: float
@@ -137,14 +157,15 @@ class VehicleState:
 
 def make_initial_state(vehicle_id: str, driver_name: str, index: int) -> VehicleState:
     model = MODELS[index % len(MODELS)]
-    start_lat, start_lng = random_land_point()
-    dest_lat, dest_lng = random_land_point()
-    while dest_lat == start_lat and dest_lng == start_lng:
-        dest_lat, dest_lng = random_land_point()
+    home_lat, home_lng = random.choice(WORLD_LAND_ANCHORS)
+    start_lat, start_lng = local_destination(home_lat, home_lng)
+    dest_lat, dest_lng = local_destination(home_lat, home_lng)
     return VehicleState(
         vehicle_id=vehicle_id,
         driver_name=driver_name,
         model=model,
+        home_lat=home_lat,
+        home_lng=home_lng,
         latitude=start_lat,
         longitude=start_lng,
         dest_lat=dest_lat,
@@ -182,14 +203,15 @@ def evolve_state(state: VehicleState) -> None:
     if random.random() < 0.02:
         state.cargo_load = random.randint(0, 8000)
 
-    # Position: waypoint-to-waypoint motion — step toward the current destination each
-    # tick; on arrival, pick a new random on-land destination. clamp() stays as a
-    # defense-in-depth safety net even though this stepping should never leave the bbox.
+    # Position: waypoint-to-waypoint motion within the vehicle's home region — step
+    # toward the current destination each tick; on arrival, pick a new destination near
+    # the same home anchor (never a different city/continent, so the vehicle never
+    # "drives" across an ocean). clamp() stays as a defense-in-depth safety net.
     if (
         abs(state.latitude - state.dest_lat) < 0.0005
         and abs(state.longitude - state.dest_lng) < 0.0005
     ):
-        state.dest_lat, state.dest_lng = random_land_point()
+        state.dest_lat, state.dest_lng = local_destination(state.home_lat, state.home_lng)
 
     step = 0.0015
     d_lat = state.dest_lat - state.latitude
