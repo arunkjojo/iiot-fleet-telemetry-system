@@ -89,7 +89,7 @@ git status    # must be clean
 - [ ] BE-002 — Wire Swagger/OpenAPI generation into `Program.cs` for local dev
 - [ ] INFRA-002 — Expose Swagger UI through the containerized Docker stack
 - [ ] INFRA-003 — Expose Swagger UI through the Helm chart
-- [ ] ARCH-001 — Add a data-flow Mermaid diagram to `docs/APPLICATION_OVERVIEW.md`
+- [x] ARCH-001 — Add a data-flow Mermaid diagram to `docs/APPLICATION_OVERVIEW.md`
 - [ ] QA-001 — Verify map, live-only mode, and Swagger across local/Docker/Helm
 
 ---
@@ -766,7 +766,7 @@ git checkout -- helm/iiot-fleet-app/templates/ docs/HELM_GUIDE.md
 
 **Agent:** ARCH
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -805,11 +805,11 @@ git checkout -- helm/iiot-fleet-app/templates/ docs/HELM_GUIDE.md
 
 **Sub-task breakdown:**
 
-- [ ] Read `docs/APPLICATION_OVERVIEW.md` in full to find heading conventions and insertion point
-- [ ] Draft a Mermaid `flowchart LR` (or `TD`) covering: Python emitter → Ingest Controller → Ingest Queue/Persistence Service → PostgreSQL, and → Live Telemetry Store → Live Broadcast Service → SignalR Hub (`/fleethub`) → Frontend Dashboard; plus the separate REST read path (`GET /api/vehicles*` → Live Telemetry Store → Frontend)
-- [ ] Insert the diagram in a fenced ` ```mermaid ` code block under a new/existing "Data Flow" heading
-- [ ] Add short prose (2-4 sentences) explaining the write path vs. read path distinction
-- [ ] Reflect BE-001's dummy-mode removal in the diagram — do not depict `TelemetrySimulationService` or a dummy/live branch, since the pipeline is now live-only
+- [x] Read `docs/APPLICATION_OVERVIEW.md` in full to find heading conventions and insertion point
+- [x] Draft a Mermaid `flowchart LR` (or `TD`) covering: Python emitter → Ingest Controller → Ingest Queue/Persistence Service → PostgreSQL, and → Live Telemetry Store → Live Broadcast Service → SignalR Hub (`/fleethub`) → Frontend Dashboard; plus the separate REST read path (`GET /api/vehicles*` → Live Telemetry Store → Frontend)
+- [x] Insert the diagram in a fenced ` ```mermaid ` code block under a new/existing "Data Flow" heading
+- [x] Add short prose (2-4 sentences) explaining the write path vs. read path distinction
+- [x] Reflect BE-001's dummy-mode removal in the diagram — do not depict `TelemetrySimulationService` or a dummy/live branch, since the pipeline is now live-only
 
 ---
 
