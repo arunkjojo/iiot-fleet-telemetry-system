@@ -1,5 +1,8 @@
 "use client"
-import React, { useMemo } from 'react'
+import React, { useEffect, useMemo, useRef } from 'react'
+import 'leaflet/dist/leaflet.css'
+import L from 'leaflet'
+import { MapContainer, TileLayer, Marker, Tooltip, useMap } from 'react-leaflet'
 import { Vehicle } from '../types/vehicle'
 
 type Props = {
@@ -8,60 +11,111 @@ type Props = {
   selectedId?: string
 }
 
-// Simple mapper to transform lat/lng into percentage positions inside a box
-function project(lat: number, lng: number) {
-  // Use San Francisco bbox center heuristics from sample data
-  const minLat = 37.755
-  const maxLat = 37.800
-  const minLng = -122.45
-  const maxLng = -122.395
+// Fallback view used when there are no vehicles yet (San Francisco bbox center).
+const DEFAULT_CENTER: [number, number] = [37.7775, -122.4225]
+const DEFAULT_ZOOM = 12
 
-  const y = (1 - (lat - minLat) / (maxLat - minLat)) * 100
-  const x = ((lng - minLng) / (maxLng - minLng)) * 100
-  // clamp to 0-100% so markers remain inside the map image bounds
-  const clamp = (v: number) => Math.max(0, Math.min(100, v))
-  return { left: `${clamp(x)}%`, top: `${clamp(y)}%` }
+function statusColor(status: Vehicle['status']) {
+  return status === 'active'
+    ? '#0bda54'
+    : status === 'warning'
+    ? '#f59e0b'
+    : status === 'danger'
+    ? '#ef4444'
+    : '#9ca3af'
+}
+
+// Builds a colored dot divIcon (and an optional larger pulsing-ring divIcon for the
+// selected vehicle) so we never reference Leaflet's default marker png assets, which
+// 404 under Next.js's bundler.
+function buildIcon(statusHex: string, isSelected: boolean) {
+  const ringHtml = isSelected
+    ? `<div style="position:absolute;left:50%;top:50%;width:56px;height:56px;transform:translate(-50%,-50%);border-radius:9999px;background:${statusHex};opacity:0.18;" class="animate-ping"></div>`
+    : ''
+  const html = `
+    <div style="position:relative;width:16px;height:16px;">
+      ${ringHtml}
+      <div style="position:absolute;left:50%;top:50%;width:16px;height:16px;transform:translate(-50%,-50%);border-radius:9999px;background:${statusHex};box-shadow:0 0 12px rgba(19,200,236,0.2);"></div>
+    </div>
+  `
+  return L.divIcon({
+    html,
+    className: '',
+    iconSize: [16, 16],
+  })
+}
+
+// Fits the map's view to the current vehicle bounding box once on initial load so
+// every marker starts inside the viewport. Falls back to the default SF center/zoom
+// when there are no vehicles yet (fitBounds throws on an empty/invalid bounds).
+function FitBoundsOnLoad({ vehicles }: { vehicles: Vehicle[] }) {
+  const map = useMap()
+  const hasFitted = useRef(false)
+
+  useEffect(() => {
+    if (hasFitted.current) return
+    if (!vehicles || vehicles.length === 0) return
+
+    const bounds = L.latLngBounds(vehicles.map((v) => [v.lat, v.lng] as [number, number]))
+    if (bounds.isValid()) {
+      map.fitBounds(bounds, { padding: [40, 40] })
+      hasFitted.current = true
+    }
+  }, [vehicles, map])
+
+  return null
 }
 
 function MapView({ vehicles, onSelect, selectedId }: Props) {
   // By default hide 'active' vehicles to reduce clutter; always include the selected vehicle.
   const visible = useMemo(() => {
-    const list = vehicles || [];
-    return list; //.filter((v) => v.status !== 'active' || v.id === selectedId)
+    const list = vehicles || []
+    return list //.filter((v) => v.status !== 'active' || v.id === selectedId)
   }, [vehicles, selectedId])
 
   // Memoize marker computations to avoid re-rendering markers when unrelated props change.
   // This reduces map re-paints for large datasets.
-  const markers = useMemo(() => (visible || []).map((v) => {
-    const pos = project(v.lat, v.lng)
-    const statusHex = v.status === 'active' ? '#0bda54' : v.status === 'warning' ? '#f59e0b' : v.status === 'danger' ? '#ef4444' : '#9ca3af';
-    const isSelected = selectedId === v.id;
-    return { v, pos, statusHex, isSelected }
-  }), [visible, selectedId])
+  const markers = useMemo(
+    () =>
+      (visible || []).map((v) => {
+        const statusHex = statusColor(v.status)
+        const isSelected = selectedId === v.id
+        return { v, statusHex, isSelected, icon: buildIcon(statusHex, isSelected) }
+      }),
+    [visible, selectedId]
+  )
 
   return (
     <main className="flex-1 relative bg-black flex flex-col">
-      <div className="absolute inset-0 bg-cover bg-center z-0 opacity-80" style={{ backgroundImage: "linear-gradient(transparent, rgba(0,0,0,0.6)), url('https://i.pinimg.com/736x/33/63/21/3363219f117127d8423bc28d88043425.jpg')" }} />
-      <div className="absolute inset-0 z-0 bg-gradient-to-b from-black/60 via-transparent to-black/60 pointer-events-none" />
-
-      <div className="relative z-10 w-full h-full">
-        <div className="relative w-full h-full">
-          {markers.map(({ v, pos, statusHex, isSelected }) => (
-            <div key={v.id} style={{ position: 'absolute', left: pos.left, top: pos.top, transform: 'translate(-50%, -50%)', zIndex: isSelected ? 60 : 10 }}>
-              <div onClick={() => onSelect(v)} role="button" tabIndex={0} className="group cursor-pointer relative" onKeyDown={(e)=>{ if(e.key==='Enter') onSelect(v) }}>
-                <div className="relative flex items-center justify-center">
-                  <div aria-hidden className={`absolute rounded-full ${isSelected ? 'animate-ping' : ''}`} style={{ width: isSelected ? 56 : 0, height: isSelected ? 56 : 0, backgroundColor: statusHex, opacity: isSelected ? 0.18 : 0, transform: 'translate(-50%, -50%)', left: '50%', top: '50%' }} />
-                  <div className="w-4 h-4 rounded-full shadow-[0_0_12px_rgba(19,200,236,0.2)]" style={{ backgroundColor: statusHex }} />
-                </div>
-                  <div className="absolute mt-6 left-1 transform -translate-x-1 hidden group-hover:block bg-surface-dark border border-border-dark px-2 py-1 rounded text-xs w-auto whitespace-nowrap z-[999999] pointer-events-auto">
-                  {v.id} • {v.status}
-                  <div className="text-slate-400 text-[11px] mt-1">Fuel: {v.fuel}% • Speed: {v.speedKph} km/h</div>
+      <MapContainer
+        center={DEFAULT_CENTER}
+        zoom={DEFAULT_ZOOM}
+        className="w-full h-full"
+        style={{ width: '100%', height: '100%' }}
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="&copy; OpenStreetMap contributors"
+        />
+        <FitBoundsOnLoad vehicles={visible} />
+        {markers.map(({ v, icon }) => (
+          <Marker
+            key={v.id}
+            position={[v.lat, v.lng]}
+            icon={icon}
+            eventHandlers={{ click: () => onSelect(v) }}
+          >
+            <Tooltip direction="top" offset={[0, -8]}>
+              <div className="text-xs">
+                {v.id} • {v.status}
+                <div className="text-slate-400 text-[11px] mt-1">
+                  Fuel: {v.fuel}% • Speed: {v.speedKph} km/h
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
+            </Tooltip>
+          </Marker>
+        ))}
+      </MapContainer>
     </main>
   )
 }

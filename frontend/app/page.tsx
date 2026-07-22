@@ -1,7 +1,10 @@
 "use client"
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
+import dynamic from 'next/dynamic'
 import Sidebar from '../components/Sidebar'
-import MapView from '../components/MapView'
+// Leaflet touches `window`/`navigator` at import time, which breaks Next.js's
+// server-side prerender of this "use client" page — load it client-only.
+const MapView = dynamic(() => import('../components/MapView'), { ssr: false })
 import DetailPanel, { VehiclePatchResult } from '../components/DetailPanel'
 import Header from '../components/Header'
 import type { Vehicle, VehicleStatus } from '../types/vehicle'

@@ -83,7 +83,7 @@ git status    # must be clean
 ## Task Index (Top-Level Todo)
 
 - [x] UI-001 — Add `react-leaflet` + Leaflet and render an interactive map with vehicle markers
-- [ ] UI-002 — Replace `MapView.tsx` background-image projection with real Leaflet markers
+- [x] UI-002 — Replace `MapView.tsx` background-image projection with real Leaflet markers
 - [x] BE-001 — Remove `TelemetrySimulationService` dummy-mode path and `USE_LIVE_TELEMETRY` toggle from the backend
 - [x] INFRA-001 — Remove `USE_LIVE_TELEMETRY` from Docker Compose and Helm chart; always run live mode
 - [x] BE-002 — Wire Swagger/OpenAPI generation into `Program.cs` for local dev
@@ -208,9 +208,11 @@ cd frontend && npm install
 
 **Agent:** NEXT
 **Depends on:** UI-001
-**Status:** [ ]
+**Status:** [x]
 
 ---
+
+**Note (required SSR exception, approved by coordinator):** Leaflet touches `window`/`navigator` at import time, which breaks Next.js's server-side prerender of `page.tsx`. The static `import MapView from '../components/MapView'` in `frontend/app/page.tsx` was changed to `next/dynamic(() => import('../components/MapView'), { ssr: false })` — a one-line, minimal exception to the "Do NOT touch page.tsx" rule, scoped only to the import statement; no prop contract or SignalR wiring in `page.tsx` was changed.
 
 **Context:**
 
@@ -250,12 +252,12 @@ cd frontend && npm install
 
 **Sub-task breakdown:**
 
-- [ ] Import `leaflet/dist/leaflet.css` once at the top of `MapView.tsx`
-- [ ] Replace the background-image `<div>`s with `<MapContainer>` (full-height/width via Tailwind `w-full h-full`) + `<TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="© OpenStreetMap contributors">`
-- [ ] Replace the hand-rolled `project()` function and its absolutely-positioned marker `<div>`s with `<Marker position={[v.lat, v.lng]} icon={divIcon}>` per vehicle, keeping the existing status-color hex mapping for the icon's color
-- [ ] Wire marker click → `onSelect(v)`, and keep the existing hover tooltip content (vehicle id, status, fuel, speed) via Leaflet's `<Tooltip>` component
-- [ ] Add a small helper that computes a `LatLngBounds` from `vehicles` and calls `map.fitBounds(...)` (via a child component using `useMap()`) once on initial load so every point starts inside the viewport, satisfying "all points are in the map not the outside"
-- [ ] Preserve the `isSelected` pulsing-ring visual treatment for the selected vehicle's marker (recreate via a second, larger transparent-ish `divIcon` circle behind the marker, or a CSS class on the `divIcon` HTML)
+- [x] Import `leaflet/dist/leaflet.css` once at the top of `MapView.tsx`
+- [x] Replace the background-image `<div>`s with `<MapContainer>` (full-height/width via Tailwind `w-full h-full`) + `<TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="© OpenStreetMap contributors">`
+- [x] Replace the hand-rolled `project()` function and its absolutely-positioned marker `<div>`s with `<Marker position={[v.lat, v.lng]} icon={divIcon}>` per vehicle, keeping the existing status-color hex mapping for the icon's color
+- [x] Wire marker click → `onSelect(v)`, and keep the existing hover tooltip content (vehicle id, status, fuel, speed) via Leaflet's `<Tooltip>` component
+- [x] Add a small helper that computes a `LatLngBounds` from `vehicles` and calls `map.fitBounds(...)` (via a child component using `useMap()`) once on initial load so every point starts inside the viewport, satisfying "all points are in the map not the outside"
+- [x] Preserve the `isSelected` pulsing-ring visual treatment for the selected vehicle's marker (recreate via a second, larger transparent-ish `divIcon` circle behind the marker, or a CSS class on the `divIcon` HTML)
 
 ---
 
