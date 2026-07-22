@@ -46,9 +46,56 @@ REQUEST_TIMEOUT_SECONDS = float(os.environ.get("REQUEST_TIMEOUT_SECONDS", "5"))
 METADATA_URL = f"{BACKEND_URL}/api/vehicles/metadata"
 INGEST_URL = f"{BACKEND_URL}/api/telemetry/ingest"
 
-# San Francisco bounding box (docs/requirements/REQUIREMENTS.md section 5.1)
+# San Francisco bounding box (docs/requirements/REQUIREMENTS.md section 5.1) — kept only
+# as a defense-in-depth clamp() bound, never as a sampling range (see SF_LAND_WAYPOINTS below).
 LAT_MIN, LAT_MAX = 37.70, 37.81
 LNG_MIN, LNG_MAX = -122.52, -122.35
+
+# Curated real, confirmed-on-land SF waypoints spanning the documented bbox — avoids
+# random.uniform-across-bbox sampling landing vehicles in SF Bay/the Pacific Ocean.
+# Positions are only ever chosen from (or interpolated between) this list.
+SF_LAND_WAYPOINTS: list[tuple[float, float]] = [
+    (37.7749, -122.4194),  # Market St / downtown
+    (37.7599, -122.4148),  # Mission District (24th St)
+    (37.7935, -122.4399),  # Pacific Heights
+    (37.7910, -122.4010),  # Financial District
+    (37.7599, -122.4869),  # Sunset District (Irving St)
+    (37.7806, -122.4644),  # Richmond District (Clement St)
+    (37.7783, -122.4390),  # Hayes Valley
+    (37.7609, -122.4350),  # Noe Valley
+    (37.7609, -122.4351),  # Castro District
+    (37.7692, -122.4481),  # Haight-Ashbury
+    (37.8008, -122.4100),  # North Beach
+    (37.7827, -122.4090),  # SoMa (5th & Mission)
+    (37.7695, -122.3928),  # Dogpatch
+    (37.7285, -122.4530),  # Ingleside
+    (37.7419, -122.4700),  # Balboa Terrace
+    (37.7180, -122.4438),  # Excelsior
+    (37.7423, -122.3823),  # Bayview (inland, not waterfront)
+    (37.7355, -122.4188),  # Bernal Heights
+    (37.7500, -122.4300),  # Glen Park
+    (37.7838, -122.4270),  # Western Addition
+    (37.7963, -122.4302),  # Russian Hill
+    (37.8005, -122.4180),  # Telegraph Hill (inland side)
+    (37.7614, -122.4835),  # Parkside
+    (37.7444, -122.4864),  # Lakeshore (inland of the lake)
+    (37.7869, -122.4324),  # Nob Hill
+    (37.7550, -122.4470),  # West Portal
+    (37.7686, -122.4300),  # Duboce Triangle
+    (37.7280, -122.3823),  # Silver Terrace / Portola (inland)
+    (37.7970, -122.3985),  # Embarcadero (inland side, not the pier edge)
+    (37.7860, -122.4550),  # Anza Vista
+    (37.7515, -122.4160),  # Mission Terrace
+    (37.7350, -122.4550),  # Miraloma Park
+    (37.7719, -122.4090),  # Rincon Hill
+    (37.7204, -122.4468),  # Oceanview
+    (37.7645, -122.4187),  # Mission Dolores
+]
+
+
+def random_land_point() -> tuple[float, float]:
+    return random.choice(SF_LAND_WAYPOINTS)
+
 
 # Alternate by roster index — stable for a vehicle's lifetime (never changed tick-to-tick).
 MODELS = ("NV Cargo", "Apex Hauler")
@@ -79,6 +126,8 @@ class VehicleState:
     model: str
     latitude: float
     longitude: float
+    dest_lat: float
+    dest_lng: float
     fuel_percent: float
     speed_kph: float
     engine_health: int
@@ -88,12 +137,18 @@ class VehicleState:
 
 def make_initial_state(vehicle_id: str, driver_name: str, index: int) -> VehicleState:
     model = MODELS[index % len(MODELS)]
+    start_lat, start_lng = random_land_point()
+    dest_lat, dest_lng = random_land_point()
+    while dest_lat == start_lat and dest_lng == start_lng:
+        dest_lat, dest_lng = random_land_point()
     return VehicleState(
         vehicle_id=vehicle_id,
         driver_name=driver_name,
         model=model,
-        latitude=random.uniform(LAT_MIN, LAT_MAX),
-        longitude=random.uniform(LNG_MIN, LNG_MAX),
+        latitude=start_lat,
+        longitude=start_lng,
+        dest_lat=dest_lat,
+        dest_lng=dest_lng,
         fuel_percent=round(random.uniform(45.0, 100.0), 1),
         speed_kph=round(random.uniform(0.0, 60.0), 1),
         engine_health=random.randint(70, 100),
@@ -127,9 +182,25 @@ def evolve_state(state: VehicleState) -> None:
     if random.random() < 0.02:
         state.cargo_load = random.randint(0, 8000)
 
-    # Position: small bounded step, clamped to the SF bbox.
-    state.latitude = clamp(state.latitude + random.uniform(-0.003, 0.003), LAT_MIN, LAT_MAX)
-    state.longitude = clamp(state.longitude + random.uniform(-0.003, 0.003), LNG_MIN, LNG_MAX)
+    # Position: waypoint-to-waypoint motion — step toward the current destination each
+    # tick; on arrival, pick a new random on-land destination. clamp() stays as a
+    # defense-in-depth safety net even though this stepping should never leave the bbox.
+    if (
+        abs(state.latitude - state.dest_lat) < 0.0005
+        and abs(state.longitude - state.dest_lng) < 0.0005
+    ):
+        state.dest_lat, state.dest_lng = random_land_point()
+
+    step = 0.0015
+    d_lat = state.dest_lat - state.latitude
+    d_lng = state.dest_lng - state.longitude
+    dist = (d_lat ** 2 + d_lng ** 2) ** 0.5
+    if dist > 0:
+        state.latitude += (d_lat / dist) * min(step, dist)
+        state.longitude += (d_lng / dist) * min(step, dist)
+
+    state.latitude = clamp(state.latitude, LAT_MIN, LAT_MAX)
+    state.longitude = clamp(state.longitude, LNG_MIN, LNG_MAX)
 
 
 def build_payload(state: VehicleState) -> dict:
