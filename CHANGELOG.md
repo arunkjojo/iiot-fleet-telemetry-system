@@ -7,6 +7,36 @@ Version is bumped once per sprint at sprint-end by the ARCH agent.
 
 ---
 
+## v0.8.0 — 2026-07-22
+
+### Add
+
+- **Interactive Leaflet map**: `frontend/components/MapView.tsx` now renders vehicles on a
+  real `react-leaflet` map (OpenStreetMap tiles) at their true lat/lng, replacing the prior
+  static background-image projection. Markers use custom status-color `divIcon`s; the map
+  fits its initial view to the current vehicle bounding box.
+- **Swagger UI**: the backend now serves interactive OpenAPI docs at `/swagger` in local dev,
+  the Docker Compose stack, and Helm-deployed pods (`Swashbuckle.AspNetCore`, ungated by
+  `ASPNETCORE_ENVIRONMENT`).
+- **Data-flow diagram**: `docs/APPLICATION_OVERVIEW.md` gained a Mermaid flowchart covering
+  the emitter → ingest → persistence/broadcast → SignalR → frontend write path, and the
+  separate REST read path.
+
+### Update
+
+- **Live-only backend**: removed `TelemetrySimulationService` and the `USE_LIVE_TELEMETRY`
+  toggle entirely — the backend now always sources vehicle state from live emitter ingestion.
+  Compose/Helm/docs updated to match.
+- `docs/requirements/REQUIREMENTS.md` F-26/F-27/F-32/§5.1/§9 updated to describe the
+  live-only pipeline; doc version bumped 0.1 → 0.2.
+
+### Fix
+
+- `frontend/app/page.tsx` wraps the `MapView` import in `next/dynamic({ ssr: false })` —
+  Leaflet touches `window` at import time, which previously broke `next build`'s prerender.
+
+---
+
 ## v0.7.1 — 2026-07-17
 
 ### Update
