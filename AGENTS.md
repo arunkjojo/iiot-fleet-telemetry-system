@@ -86,8 +86,8 @@
 | Attribute | Value |
 |-----------|-------|
 | **Read scope** | All files in the repository |
-| **Write scope** | `containers/**` (Dockerfiles + `docker-compose.yml`), `.env*` files, `emitter/**`, `helm/**` |
-| **Prohibited writes** | Application source files under `frontend/src/` or `backend/` (non-config) |
+| **Write scope** | `containers/**` (Dockerfiles + `docker-compose.yml`), `.env*` files, `helm/**` |
+| **Prohibited writes** | Application source files under `frontend/src/` or `backend/` (non-config); `emitter/**` (owned by EMIT — INFRA still owns `containers/emitter/Dockerfile` and the emitter's env wiring in Compose/Helm, just not `emitter/*.py`) |
 | **Responsibilities** | Maintain the Docker Compose stack (`containers/docker-compose.yml`), the per-service Dockerfiles under `containers/`, environment variable management, health checks, and container networking. No GitHub Actions CI/CD — this project doesn't run one. |
 
 **Key conventions:**
@@ -95,6 +95,24 @@
 - Network name: `iiot-fleet-net`
 - Health checks: backend at `/`, frontend at `/` — 30s interval, 3 retries
 - Environment: `FRONTEND_ORIGIN`, `ADDITIONAL_FRONTEND_ORIGINS` (backend CORS), `NEXT_PUBLIC_API_URL` (frontend)
+
+---
+
+### EMIT — IIoT Emitter Engineer
+
+| Attribute | Value |
+|-----------|-------|
+| **Read scope** | `emitter/**`, `AGENTS.md`, `docs/requirements/REQUIREMENTS.md`, active sprint file |
+| **Write scope** | `emitter/**` only (`emitter.py`, `requirements.txt`, any new modules under `emitter/`) |
+| **Prohibited writes** | `backend/**`, `frontend/**`, `containers/**`, `helm/**`, `docs/**` |
+| **Responsibilities** | Simulate a realistic IIoT vehicle fleet — land-constrained geo-positions, plausible waypoint-to-waypoint motion, and correlated telemetry evolution. Never emits for vehicle IDs not sourced from `GET /api/vehicles/metadata`. |
+| **Must read before touching code** | `.claude/skills/iiot-emiter/SKILL.md` in full |
+
+**Key conventions:**
+- Position sampling MUST be land-constrained (curated waypoint list or road-graph snap) — never raw `random.uniform` across the full lat/lng bounding box, since the box includes water
+- Payload keys are camelCase, matching `TelemetryIngestRequest` exactly
+- Single shared `aiohttp.ClientSession` + `TCPConnector`/`Semaphore(MAX_CONCURRENCY)` — never one connection per vehicle
+- One failed vehicle tick must never crash the process
 
 ---
 
@@ -263,6 +281,7 @@ docker compose -f containers/docker-compose.yml up --build
 | `postgre-sql` | `.claude/skills/postgre-sql/SKILL.md` | PostgreSQL schema conventions, migrations |
 | `devops` | `.claude/skills/devops/SKILL.md` | Docker, GitHub Actions, env var management |
 | `caveman` | `.claude/skills/caveman/SKILL.md` | Token-compression communication mode |
+| `iiot-emiter` | `.claude/skills/iiot-emiter/SKILL.md` | Land-constrained vehicle position simulation, route/telemetry realism |
 
 ## Agents (`.claude/agents/`)
 
@@ -274,6 +293,7 @@ docker compose -f containers/docker-compose.yml up --build
 | `team-lead.md` | LEAD | PR review, agent coordination, conventions enforcement |
 | `devops-architech.md` | INFRA | Docker, CI/CD, infrastructure |
 | `quality-analyst.md` | QA | Testing, type-check, ESLint, acceptance criteria |
+| `iiot-emiter.md` | EMIT | Python emitter — realistic vehicle telemetry + geo-position simulation |
 | `analyst.md` | ANALYST | Performance analysis, telemetry metrics |
 | `debugger.md` | DEBUG | Root-cause analysis, error tracing |
 
@@ -297,7 +317,9 @@ docker compose -f containers/docker-compose.yml up --build
 
 ## Current Sprint
 
-**Active:** Sprint 08 — `docs/sprints/sprint-08.md`. Goal: replace the dashboard's static-background-image map with a real interactive Leaflet map (`react-leaflet`, since Leafmap itself is a Python-only package) rendering vehicles at true geo positions; remove dummy mode (`TelemetrySimulationService`, `USE_LIVE_TELEMETRY`) everywhere so the backend always runs live emitter-fed mode; wire real Swagger UI into local/Docker/Helm; add a Mermaid data-flow diagram to `docs/APPLICATION_OVERVIEW.md`. 9 tasks, not yet started.
+**Active:** Sprint 09 — `docs/sprints/sprint-09.md`. Goal: fix two bugs surfaced by Sprint 08's Leaflet map — the emitter's naive bounding-box `random.uniform` position sampling puts vehicles in San Francisco Bay/ocean instead of on land, and unclustered per-vehicle Leaflet markers lag the dashboard at fleet scale. Introduces the new EMIT agent/skill (`.claude/agents/iiot-emiter.md`, `.claude/skills/iiot-emiter/SKILL.md`) to own realistic, land-constrained fleet simulation going forward. 5 tasks (DEBUG-001, EMIT-001, UI-003, QA-002, LEAD-001), not yet started.
+
+**Previous:** Sprint 08 — `docs/sprints/archive/sprint-08.md`. Replaced the static-background-image map with a real interactive Leaflet map (`react-leaflet`); removed dummy mode (`TelemetrySimulationService`, `USE_LIVE_TELEMETRY`) everywhere so the backend always runs live emitter-fed mode; wired real Swagger UI into local/Docker/Helm; added a Mermaid data-flow diagram to `docs/APPLICATION_OVERVIEW.md`. All 9 tasks + QA `[x]`; team-lead review passed with no compliance blockers. Sprint-End Checklist (version bump/CHANGELOG/PR) not yet run before Sprint 09 began — carry forward.
 
 **Still open (carried over, not in Sprint 07's scope):** missing frontend `lint`/`type-check` npm scripts + ESLint config; full-scale `VEHICLE_COUNT=10000` NF-01/NF-03 validation; the `ILiveTelemetryStore`/`display_number` cold-start hydration gap found during Sprint 04's `BE-009`; this dev machine's installed .NET runtimes (top out at 8.0.23) don't match what the built backend binary requests (8.0.28), which blocked QA-007's live-mode runtime smoke test in Sprint 07 (build itself is unaffected). The standalone CI-fix branch `claude/fix-docker-image-ci-workflow` is now moot — Sprint 07's infra addendum removed the GitHub Actions workflow entirely. See `docs/sprints/BACKLOG.md` for details.
 
