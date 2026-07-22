@@ -297,7 +297,7 @@ docker compose -f containers/docker-compose.yml up --build
 
 ## Current Sprint
 
-**Active:** None active.
+**Active:** Sprint 08 — `docs/sprints/sprint-08.md`. Goal: replace the dashboard's static-background-image map with a real interactive Leaflet map (`react-leaflet`, since Leafmap itself is a Python-only package) rendering vehicles at true geo positions; remove dummy mode (`TelemetrySimulationService`, `USE_LIVE_TELEMETRY`) everywhere so the backend always runs live emitter-fed mode; wire real Swagger UI into local/Docker/Helm; add a Mermaid data-flow diagram to `docs/APPLICATION_OVERVIEW.md`. 9 tasks, not yet started.
 
 **Still open (carried over, not in Sprint 07's scope):** missing frontend `lint`/`type-check` npm scripts + ESLint config; full-scale `VEHICLE_COUNT=10000` NF-01/NF-03 validation; the `ILiveTelemetryStore`/`display_number` cold-start hydration gap found during Sprint 04's `BE-009`; this dev machine's installed .NET runtimes (top out at 8.0.23) don't match what the built backend binary requests (8.0.28), which blocked QA-007's live-mode runtime smoke test in Sprint 07 (build itself is unaffected). The standalone CI-fix branch `claude/fix-docker-image-ci-workflow` is now moot — Sprint 07's infra addendum removed the GitHub Actions workflow entirely. See `docs/sprints/BACKLOG.md` for details.
 
