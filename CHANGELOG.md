@@ -7,6 +7,20 @@ Version is bumped once per sprint at sprint-end by the ARCH agent.
 
 ---
 
+## v0.8.2 — 2026-07-22
+
+### Fix
+
+- **Worldwide fleet distribution** (`IIOT-S09-EMIT-002`): `emitter/emitter.py` replaced the
+  San-Francisco-only waypoint list with ~35 real-city land anchors spanning every inhabited
+  continent (`WORLD_LAND_ANCHORS`). Each vehicle is assigned one fixed home anchor for its
+  lifetime and roams within ~6-7km of it (`local_destination`, longitude jitter scaled by
+  `1/cos(latitude)`), so the fleet spreads across the globe while never generating a
+  straight-line "drive" across open ocean between two continents. `docs/requirements/REQUIREMENTS.md`
+  §5.1/§10 updated to describe worldwide GPS ranges instead of the SF bbox.
+
+---
+
 ## v0.8.1 — 2026-07-22
 
 ### Fix
