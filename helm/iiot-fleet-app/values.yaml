@@ -29,7 +29,6 @@ backend:
     port: 8080
   aspnetEnvironment: "Production"
   additionalFrontendOrigins: "http://localhost:3000"
-  useLiveTelemetry: "true"
   resources:
     requests:
       cpu: 250m

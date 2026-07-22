@@ -32,7 +32,6 @@ services:
       - FRONTEND_ORIGIN=http://frontend:3000
       - ADDITIONAL_FRONTEND_ORIGINS=http://localhost:3000
       - ConnectionStrings__Fleet=Host=db;Port=5432;Database=fleet_telemetry;Username=postgres;Password=Admin123.
-      - USE_LIVE_TELEMETRY=true
     depends_on:
       db:
         condition: service_healthy

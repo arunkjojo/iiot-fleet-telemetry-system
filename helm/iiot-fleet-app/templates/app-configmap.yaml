@@ -11,5 +11,4 @@ data: # a Secret, a ConfigMap's data: values are plain text — no base64 encodi
   ASPNETCORE_ENVIRONMENT: {{ .Values.backend.aspnetEnvironment | quote }}
   FRONTEND_ORIGIN: "http://{{ include "iiot-fleet-app.fullname" . }}-frontend:{{ .Values.frontend.service.port }}"
   ADDITIONAL_FRONTEND_ORIGINS: {{ .Values.backend.additionalFrontendOrigins | quote }}
-  USE_LIVE_TELEMETRY: {{ .Values.backend.useLiveTelemetry | quote }}
   NEXT_PUBLIC_API_URL: "http://{{ include "iiot-fleet-app.fullname" . }}-backend:{{ .Values.backend.service.port }}"

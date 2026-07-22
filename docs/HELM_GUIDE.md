@@ -100,7 +100,6 @@ Override any of these with `--set key=value` (dot-path, e.g. `--set backend.repl
 | `backend.service.port` | `8080` | Backend ClusterIP Service port, and the container's Kestrel port |
 | `backend.aspnetEnvironment` | `"Production"` | `ASPNETCORE_ENVIRONMENT`, via the shared ConfigMap |
 | `backend.additionalFrontendOrigins` | `"http://localhost:3000"` | `ADDITIONAL_FRONTEND_ORIGINS` CORS allow-list entry, via the shared ConfigMap |
-| `backend.useLiveTelemetry` | `"true"` | `USE_LIVE_TELEMETRY`, via the shared ConfigMap — `"false"` falls back to the in-memory dummy simulator |
 | `backend.resources` | `requests: 250m/256Mi`, `limits: 1/512Mi` | Backend container resource requests/limits |
 | `frontend.image.repository` | `iiot-fleet-frontend` | Image built from `containers/frontend/Dockerfile` (context `frontend/`) |
 | `frontend.image.tag` | `latest` | Image tag |

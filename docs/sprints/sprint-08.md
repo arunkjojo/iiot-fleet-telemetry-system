@@ -85,7 +85,7 @@ git status    # must be clean
 - [x] UI-001 — Add `react-leaflet` + Leaflet and render an interactive map with vehicle markers
 - [ ] UI-002 — Replace `MapView.tsx` background-image projection with real Leaflet markers
 - [x] BE-001 — Remove `TelemetrySimulationService` dummy-mode path and `USE_LIVE_TELEMETRY` toggle from the backend
-- [ ] INFRA-001 — Remove `USE_LIVE_TELEMETRY` from Docker Compose and Helm chart; always run live mode
+- [x] INFRA-001 — Remove `USE_LIVE_TELEMETRY` from Docker Compose and Helm chart; always run live mode
 - [ ] BE-002 — Wire Swagger/OpenAPI generation into `Program.cs` for local dev
 - [ ] INFRA-002 — Expose Swagger UI through the containerized Docker stack
 - [ ] INFRA-003 — Expose Swagger UI through the Helm chart
@@ -405,7 +405,7 @@ git checkout -- backend/Services/TelemetrySimulationService.cs
 
 ---
 
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -450,11 +450,11 @@ git checkout -- backend/Services/TelemetrySimulationService.cs
 
 **Sub-task breakdown:**
 
-- [ ] Remove `USE_LIVE_TELEMETRY=true` from `containers/docker-compose.yml`'s `backend` service environment block
-- [ ] Remove the `USE_LIVE_TELEMETRY` key from `helm/iiot-fleet-app/templates/app-configmap.yaml`
-- [ ] Remove `useLiveTelemetry` from `helm/iiot-fleet-app/values.yaml`
-- [ ] Grep `docs/HELM_GUIDE.md` and `docs/DOCKER_README.md` for `USE_LIVE_TELEMETRY` and remove/update stale references
-- [ ] Confirm `docker compose -f containers/docker-compose.yml config` still parses cleanly
+- [x] Remove `USE_LIVE_TELEMETRY=true` from `containers/docker-compose.yml`'s `backend` service environment block
+- [x] Remove the `USE_LIVE_TELEMETRY` key from `helm/iiot-fleet-app/templates/app-configmap.yaml`
+- [x] Remove `useLiveTelemetry` from `helm/iiot-fleet-app/values.yaml`
+- [x] Grep `docs/HELM_GUIDE.md` and `docs/DOCKER_README.md` for `USE_LIVE_TELEMETRY` and remove/update stale references
+- [x] Confirm `docker compose -f containers/docker-compose.yml config` still parses cleanly
 
 ---
 
