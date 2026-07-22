@@ -32,11 +32,11 @@ Understand the below modification and bug fix and instruction, if any clarificat
 
 ## Context
 
-Sprint 08 replaced the dashboard's static background-image map with a real interactive Leaflet map (`react-leaflet`) rendering vehicles at their true `lat`/`lng`. That surfaced two pre-existing problems that the old background-image map had been visually masking: first, `emitter/emitter.py`'s `make_initial_state`/`evolve_state` sample and drift vehicle positions via `random.uniform(LAT_MIN, LAT_MAX)`/`random.uniform(LNG_MIN, LNG_MAX)` across the raw San Francisco bounding box (`docs/requirements/REQUIREMENTS.md` §5.1) — since that bounding box is a rectangle and San Francisco's coastline is not, a large fraction of vehicles land in the Bay/Pacific Ocean/other water instead of on real streets, which is now plainly visible as markers sitting over water on the real OpenStreetMap basemap. Second, `frontend/components/MapView.tsx` renders one Leaflet `<Marker>` DOM node per vehicle with no clustering — screenshots from the user show ~7,700+ individual markers rendered simultaneously, which is far past what unclustered Leaflet markers can sustain at 60 FPS (NF-01) and is the direct cause of the reported lag. This sprint introduces the new EMIT agent/skill (`.claude/agents/iiot-emiter.md`, `.claude/skills/iiot-emiter/SKILL.md`, both authored just before this sprint) to own realistic, land-constrained fleet simulation, and pairs it with a frontend marker-clustering fix; DEBUG confirms both root causes first so EMIT/NEXT aren't guessing, and QA adds a real land-position spot-check instead of just an HTTP-200 check.
+Sprint 08 replaced the dashboard's static background-image map with a real interactive Leaflet map (`react-leaflet`) rendering vehicles at their true `lat`/`lng`. That surfaced two pre-existing problems that the old background-image map had been visually masking: first, `emitter/emitter.py`'s `make_initial_state`/`evolve_state` sample and drift vehicle positions via `random.uniform(LAT_MIN, LAT_MAX)`/`random.uniform(LNG_MIN, LNG_MAX)` across the raw San Francisco bounding box (`docs/requirements/REQUIREMENTS.md` §5.1) — since that bounding box is a rectangle and San Francisco's coastline is not, a large fraction of vehicles land in the Bay/Pacific Ocean/other water instead of on real streets, which is now plainly visible as markers sitting over water on the real OpenStreetMap basemap. Second, `frontend/components/MapView.tsx` renders one Leaflet `<Marker>` DOM node per vehicle with no clustering — screenshots from the user show ~7,700+ individual markers rendered simultaneously, which is far past what unclustered Leaflet markers can sustain at 60 FPS (NF-01) and is the direct cause of the reported lag. This sprint introduces the new EMIT agent/skill (`.claude/agents/iiot-emitter.md`, `.claude/skills/iiot-emitter/SKILL.md`, both authored just before this sprint) to own realistic, land-constrained fleet simulation, and pairs it with a frontend marker-clustering fix; DEBUG confirms both root causes first so EMIT/NEXT aren't guessing, and QA adds a real land-position spot-check instead of just an HTTP-200 check.
 
 **Related documents:**
 - `docs/requirements/REQUIREMENTS.md` — F-17/F-18/F-19 (map), §5.1 (SF bbox), §9 (emitter env vars), NF-01 (60 FPS @ 10,000+ vehicles)
-- `.claude/agents/iiot-emiter.md`, `.claude/skills/iiot-emiter/SKILL.md` — new EMIT agent/skill this sprint's EMIT task is scoped against
+- `.claude/agents/iiot-emitter.md`, `.claude/skills/iiot-emitter/SKILL.md` — new EMIT agent/skill this sprint's EMIT task is scoped against
 - `docs/sprints/archive/sprint-08.md` — prior sprint that introduced the Leaflet map and flagged the marker-clustering follow-up (Sprint-End Checklist item)
 
 ---
@@ -67,7 +67,7 @@ git status    # must be clean
 
 **Docs:**
 - [ ] Root `AGENTS.md` read in full (including the new EMIT role section)
-- [ ] `.claude/agents/iiot-emiter.md` and `.claude/skills/iiot-emiter/SKILL.md` read in full
+- [ ] `.claude/agents/iiot-emitter.md` and `.claude/skills/iiot-emitter/SKILL.md` read in full
 - [ ] `frontend/AGENTS.md` read in full (if frontend touched)
 - [ ] `docs/requirements/REQUIREMENTS.md` read in full
 - [ ] This sprint file read in full
@@ -120,7 +120,7 @@ EMIT-001                        UI-003
 
 **Debug Report (2026-07-22):**
 
-**Section 1 — Off-land markers.** Root cause: `emitter/emitter.py` lines 95-96 (`make_initial_state`) and 131-132 (`evolve_state`) sample/drift positions via `random.uniform(LAT_MIN, LAT_MAX)`/`random.uniform(LNG_MIN, LNG_MAX)` across the raw SF bbox (`LAT_MIN, LAT_MAX = 37.70, 37.81` / `LNG_MIN, LNG_MAX = -122.52, -122.35`, lines 50-51) with no land constraint; `clamp()` only prevents leaving the rectangle, not entering water within it. Fix: EMIT-001 replaces this with curated on-land waypoints + waypoint-to-waypoint motion per `.claude/skills/iiot-emiter/SKILL.md`.
+**Section 1 — Off-land markers.** Root cause: `emitter/emitter.py` lines 95-96 (`make_initial_state`) and 131-132 (`evolve_state`) sample/drift positions via `random.uniform(LAT_MIN, LAT_MAX)`/`random.uniform(LNG_MIN, LNG_MAX)` across the raw SF bbox (`LAT_MIN, LAT_MAX = 37.70, 37.81` / `LNG_MIN, LNG_MAX = -122.52, -122.35`, lines 50-51) with no land constraint; `clamp()` only prevents leaving the rectangle, not entering water within it. Fix: EMIT-001 replaces this with curated on-land waypoints + waypoint-to-waypoint motion per `.claude/skills/iiot-emitter/SKILL.md`.
 
 **Section 2 — Map lag.** Root cause: `frontend/components/MapView.tsx` lines 78-86/101-117 render one Leaflet `<Marker>` DOM node per vehicle with no clustering (the `visible` filter at lines 71-74 is dead/commented-out code, so all vehicles render). At ~7,700+ simultaneous markers this cannot sustain NF-01's 60 FPS bar. Already flagged as a deferred follow-up in Sprint 08's UI-002 implementation note #4. Fix: UI-003 adds a clustering layer.
 
@@ -215,14 +215,14 @@ N/A — no writes performed.
 
 **Context:**
 
-Per DEBUG-001's diagnosis, `emitter/emitter.py`'s `make_initial_state` (initial position) and `evolve_state` (per-tick position drift) both sample/clamp positions via raw `random.uniform`/`clamp` across the full SF bounding box (`LAT_MIN`/`LAT_MAX`/`LNG_MIN`/`LNG_MAX`), which includes San Francisco Bay and ocean water. Per `.claude/skills/iiot-emiter/SKILL.md`'s land-constrained position pattern, this task replaces raw bbox sampling with a curated list of real, on-land SF waypoints, and replaces the pure random-walk position drift with waypoint-to-waypoint destination-seeking motion so vehicles visibly travel along plausible routes instead of jittering in place near a random point (some of which are in water).
+Per DEBUG-001's diagnosis, `emitter/emitter.py`'s `make_initial_state` (initial position) and `evolve_state` (per-tick position drift) both sample/clamp positions via raw `random.uniform`/`clamp` across the full SF bounding box (`LAT_MIN`/`LAT_MAX`/`LNG_MIN`/`LNG_MAX`), which includes San Francisco Bay and ocean water. Per `.claude/skills/iiot-emitter/SKILL.md`'s land-constrained position pattern, this task replaces raw bbox sampling with a curated list of real, on-land SF waypoints, and replaces the pure random-walk position drift with waypoint-to-waypoint destination-seeking motion so vehicles visibly travel along plausible routes instead of jittering in place near a random point (some of which are in water).
 
 ---
 
 **Files to read before starting:**
 
-- `.claude/agents/iiot-emiter.md` — EMIT agent's role, constraints, write scope
-- `.claude/skills/iiot-emiter/SKILL.md` — land-constrained position pattern and waypoint-to-waypoint motion pattern (code examples to adapt)
+- `.claude/agents/iiot-emitter.md` — EMIT agent's role, constraints, write scope
+- `.claude/skills/iiot-emitter/SKILL.md` — land-constrained position pattern and waypoint-to-waypoint motion pattern (code examples to adapt)
 - `emitter/emitter.py` — full current file, especially `VehicleState`, `make_initial_state`, `evolve_state`, `build_payload`
 - `docs/requirements/REQUIREMENTS.md` §5.1 — SF bbox coordinates and vehicle data model (`latitude`/`longitude` fields)
 
@@ -262,7 +262,7 @@ Per DEBUG-001's diagnosis, `emitter/emitter.py`'s `make_initial_state` (initial 
 
 **Implementation notes:**
 
-1. Follow `.claude/skills/iiot-emiter/SKILL.md`'s exact pattern for `maybe_pick_new_destination`/`step_toward_destination` — arrival threshold ~0.0005 degrees (~50m), step size ~0.0015 degrees per tick (tune only if ticks look too fast/slow, don't over-engineer).
+1. Follow `.claude/skills/iiot-emitter/SKILL.md`'s exact pattern for `maybe_pick_new_destination`/`step_toward_destination` — arrival threshold ~0.0005 degrees (~50m), step size ~0.0015 degrees per tick (tune only if ticks look too fast/slow, don't over-engineer).
 2. The existing `TICK_INTERVAL_SECONDS` (default 3s) and other telemetry evolution (fuel/speed/engine health/temp/cargo) in `evolve_state` are unrelated to this task — do not touch them.
 3. Keep the waypoint list reasonably sized (30–60 points is enough for 10,000 vehicles to look distributed, not tiny/repetitive) — don't try to build a full road-graph router for this task; that's explicitly called out as an optional upgrade path in the skill file, not required here.
 4. `clamp()` can stay as a safety net (defense in depth) even though waypoint-constrained stepping should never leave the bbox in practice.

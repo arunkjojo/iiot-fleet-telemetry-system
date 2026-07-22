@@ -15,7 +15,7 @@ Version is bumped once per sprint at sprint-end by the ARCH agent.
   `random.uniform` position sampling (which regularly placed vehicles in San Francisco
   Bay/ocean water) with a curated 35-point on-land waypoint list and waypoint-to-waypoint
   destination-seeking motion. Owned going forward by the new EMIT agent/skill
-  (`.claude/agents/iiot-emiter.md`, `.claude/skills/iiot-emiter/SKILL.md`).
+  (`.claude/agents/iiot-emitter.md`, `.claude/skills/iiot-emitter/SKILL.md`).
 - **Marker clustering**: `frontend/components/MapView.tsx` wraps vehicle markers in
   `@changey/react-leaflet-markercluster`'s `MarkerClusterGroup`, addressing dashboard lag
   at full fleet scale (previously one raw Leaflet `<Marker>` DOM node per vehicle).

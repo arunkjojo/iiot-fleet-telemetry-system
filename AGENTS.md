@@ -106,7 +106,7 @@
 | **Write scope** | `emitter/**` only (`emitter.py`, `requirements.txt`, any new modules under `emitter/`) |
 | **Prohibited writes** | `backend/**`, `frontend/**`, `containers/**`, `helm/**`, `docs/**` |
 | **Responsibilities** | Simulate a realistic IIoT vehicle fleet — land-constrained geo-positions, plausible waypoint-to-waypoint motion, and correlated telemetry evolution. Never emits for vehicle IDs not sourced from `GET /api/vehicles/metadata`. |
-| **Must read before touching code** | `.claude/skills/iiot-emiter/SKILL.md` in full |
+| **Must read before touching code** | `.claude/skills/iiot-emitter/SKILL.md` in full |
 
 **Key conventions:**
 - Position sampling MUST be land-constrained (curated waypoint list or road-graph snap) — never raw `random.uniform` across the full lat/lng bounding box, since the box includes water
@@ -281,7 +281,7 @@ docker compose -f containers/docker-compose.yml up --build
 | `postgre-sql` | `.claude/skills/postgre-sql/SKILL.md` | PostgreSQL schema conventions, migrations |
 | `devops` | `.claude/skills/devops/SKILL.md` | Docker, GitHub Actions, env var management |
 | `caveman` | `.claude/skills/caveman/SKILL.md` | Token-compression communication mode |
-| `iiot-emiter` | `.claude/skills/iiot-emiter/SKILL.md` | Land-constrained vehicle position simulation, route/telemetry realism |
+| `iiot-emitter` | `.claude/skills/iiot-emitter/SKILL.md` | Land-constrained vehicle position simulation, route/telemetry realism |
 
 ## Agents (`.claude/agents/`)
 
@@ -293,7 +293,7 @@ docker compose -f containers/docker-compose.yml up --build
 | `team-lead.md` | LEAD | PR review, agent coordination, conventions enforcement |
 | `devops-architech.md` | INFRA | Docker, CI/CD, infrastructure |
 | `quality-analyst.md` | QA | Testing, type-check, ESLint, acceptance criteria |
-| `iiot-emiter.md` | EMIT | Python emitter — realistic vehicle telemetry + geo-position simulation |
+| `iiot-emitter.md` | EMIT | Python emitter — realistic vehicle telemetry + geo-position simulation |
 | `analyst.md` | ANALYST | Performance analysis, telemetry metrics |
 | `debugger.md` | DEBUG | Root-cause analysis, error tracing |
 
@@ -319,7 +319,7 @@ docker compose -f containers/docker-compose.yml up --build
 
 **Active:** None active.
 
-**Previous:** Sprint 09 — `docs/sprints/archive/sprint-09.md`. Fixed two bugs surfaced by Sprint 08's Leaflet map: the emitter's naive bounding-box `random.uniform` position sampling put vehicles in San Francisco Bay/ocean instead of on land (fixed with a curated 35-point on-land waypoint list + waypoint-to-waypoint motion, `emitter/emitter.py`), and unclustered per-vehicle Leaflet markers lagged the dashboard at fleet scale (fixed with `@changey/react-leaflet-markercluster`, `frontend/components/MapView.tsx`). Introduced the new EMIT agent/skill (`.claude/agents/iiot-emiter.md`, `.claude/skills/iiot-emiter/SKILL.md`) to own realistic, land-constrained fleet simulation going forward. All 5 tasks (DEBUG-001, EMIT-001, UI-003, QA-002, LEAD-001) `[x]`; team-lead GO verdict, one non-blocking follow-up flagged (stale dead-code filter/comment in `MapView.tsx` lines 74/77, carried to `docs/sprints/BACKLOG.md`). `v0.8.1`, merged to `main`.
+**Previous:** Sprint 09 — `docs/sprints/archive/sprint-09.md`. Fixed two bugs surfaced by Sprint 08's Leaflet map: the emitter's naive bounding-box `random.uniform` position sampling put vehicles in San Francisco Bay/ocean instead of on land (fixed with a curated 35-point on-land waypoint list + waypoint-to-waypoint motion, `emitter/emitter.py`), and unclustered per-vehicle Leaflet markers lagged the dashboard at fleet scale (fixed with `@changey/react-leaflet-markercluster`, `frontend/components/MapView.tsx`). Introduced the new EMIT agent/skill (`.claude/agents/iiot-emitter.md`, `.claude/skills/iiot-emitter/SKILL.md`) to own realistic, land-constrained fleet simulation going forward. All 5 tasks (DEBUG-001, EMIT-001, UI-003, QA-002, LEAD-001) `[x]`; team-lead GO verdict, one non-blocking follow-up flagged (stale dead-code filter/comment in `MapView.tsx` lines 74/77, carried to `docs/sprints/BACKLOG.md`). `v0.8.1`, merged to `main`.
 
 **Previous:** Sprint 08 — `docs/sprints/archive/sprint-08.md`. Replaced the static-background-image map with a real interactive Leaflet map (`react-leaflet`); removed dummy mode (`TelemetrySimulationService`, `USE_LIVE_TELEMETRY`) everywhere so the backend always runs live emitter-fed mode; wired real Swagger UI into local/Docker/Helm; added a Mermaid data-flow diagram to `docs/APPLICATION_OVERVIEW.md`. All 9 tasks + QA `[x]`; team-lead review passed with no compliance blockers. `v0.8.0`, merged to `main`.
 

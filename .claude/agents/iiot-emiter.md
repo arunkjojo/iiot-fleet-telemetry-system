@@ -1,5 +1,5 @@
 ---
-name: iiot-emiter
+name: iiot-emitter
 description: Python IIoT emitter agent (EMIT) for the IIoT Fleet Telemetry System. Use for tasks involving emitter/emitter.py — realistic vehicle telemetry generation, geo-position simulation constrained to real land/road networks, tick loops, and the emitter's HTTP ingest client. Owns emitter/** only.
 ---
 

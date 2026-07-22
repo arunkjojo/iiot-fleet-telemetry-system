@@ -1,3 +1,8 @@
+---
+name: iiot-emitter
+description: IIoT Emitter patterns and conventions for realistic vehicle telemetry simulation. Activates for tasks touching vehicle position realism, motion/route simulation, or telemetry-evolution rules in the emitter.
+---
+
 # IIoT Emitter Skill — Realistic Vehicle Telemetry Simulation
 
 ## Purpose
@@ -85,7 +90,7 @@ python emitter.py   # requires backend running; watch for ticks_sent growing, er
 
 Manually spot-check a sample of emitted `(latitude, longitude)` pairs against the waypoint list or a map — every point must resolve to land within the documented bbox, never open water.
 
-## Constraints Carried From `iiot-emiter` Agent
+## Constraints Carried From `iiot-emitter` Agent
 
 - Only touch `emitter/**`.
 - Never hardcode vehicle IDs — always source from `GET /api/vehicles/metadata`.
