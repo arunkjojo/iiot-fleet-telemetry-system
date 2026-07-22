@@ -1,7 +1,7 @@
 # IIoT Fleet Telemetry System — Requirements
 
-**Version:** 0.1  
-**Date:** 2026-06-29  
+**Version:** 0.2  
+**Date:** 2026-07-22  
 **Owner:** ARCH
 
 ---
@@ -68,13 +68,13 @@ The IIoT Fleet Telemetry System is a real-time industrial asset monitoring platf
 | F-23 | The backend MUST expose a Swagger UI at `/swagger` documenting all endpoints |
 | F-24 | The backend MUST stream `VehicleUpdate[]` batches via SignalR to all connected clients |
 | F-25 | `POST /api/telemetry/ingest` MUST accept a single vehicle's telemetry reading, compute its status server-side, and return `202 Accepted` |
-| F-26 | The backend MUST support a `USE_LIVE_TELEMETRY` toggle; when `true`, vehicle state MUST be sourced from live ingestion instead of the in-memory dummy simulation; default `false` |
+| F-26 | The backend MUST always source vehicle state from live ingestion; there is no dummy/simulation mode and no toggle to select a data source |
 | F-27 | The Python IIoT emitter MUST only emit telemetry for vehicle IDs that already exist in the `vehicles` table, obtained via `GET /api/vehicles/metadata` |
 | F-28 | `GET /api/health/signalr` MUST return the current `/fleethub` connection tracking state (at minimum: active connection count) as `200 OK` JSON |
 | F-29 | *(Removed in Sprint 07 — the client-side "inactive vehicle" concept and its backing rules were removed entirely; see `F-35`.)* |
 | F-30 | The backend MUST run a background retention/cleanup policy that deletes `telemetry_snapshots` rows older than a configurable retention window, without introducing new database tables |
 | F-31 | `PATCH /api/vehicles/{id}` MUST accept an optional `driverName` and/or `displayNumber` and update only those fields; the `id` path parameter (primary key, FK target, and the exact string the Python emitter sources from `GET /api/vehicles/metadata`) MUST NEVER be renamed or accepted as a mutable field |
-| F-32 | Dummy-mode vehicle IDs (`TelemetrySimulationService.MakeId()`) MUST use the same `VEH-NNNNN` (zero-padded 5-digit) format as live mode, not randomly-generated strings. This targets `TelemetrySimulationService.MakeId()` only — changing the ID format string does NOT violate that file's "in-memory only, no DB/HTTP calls" rule, since no dependency is added and no I/O is introduced, only the generated string's shape changes |
+| F-32 | Live-mode vehicle IDs MUST use the `VEH-NNNNN` (zero-padded 5-digit) format, not randomly-generated strings |
 | F-35 | The sidebar MUST always list every vehicle matching the current search/status filter — no inactivity-based hiding and no top-N display cap (Sprint 07 removed the prior 24h-activity-filter and top-10-cap requirements this supersedes) |
 
 ---
@@ -173,7 +173,7 @@ speedKph      : double    — kilometers per hour
 engineHealth  : int       — 0 to 100
 temp          : int       — degrees Celsius
 cargoLoad     : int       — kilograms
-lastSeenAtUtc : DateTime  — UTC timestamp of last telemetry activity; live mode: last ingest time, dummy mode: always current server time
+lastSeenAtUtc : DateTime  — UTC timestamp of last telemetry activity; always the last live ingest time
 ```
 
 ### 5.2 VehicleUpdate (SignalR broadcast payload)
@@ -313,7 +313,6 @@ CREATE INDEX idx_logs_vehicle_time ON vehicle_logs(vehicle_id, logged_at DESC);
 | `ADDITIONAL_FRONTEND_ORIGINS` | Backend | Comma-separated additional CORS origins |
 | `ConnectionStrings__Fleet` | Backend | PostgreSQL connection string |
 | `ASPNETCORE_ENVIRONMENT` | Backend | `Development` or `Production` |
-| `USE_LIVE_TELEMETRY` | Backend | Toggles live ingestion vs. dummy simulation as the vehicle data source; default `false` |
 | `BACKEND_URL` | emitter | Base URL of the backend API the emitter posts telemetry to (e.g. `http://backend:8080`) |
 | `VEHICLE_COUNT` | emitter | Number of vehicles the emitter simulates, sliced from the fetched roster; default `10000` |
 | `TICK_INTERVAL_SECONDS` | emitter | Seconds between telemetry ticks per simulated vehicle; default `3` |
