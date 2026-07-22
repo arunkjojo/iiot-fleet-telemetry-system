@@ -81,7 +81,7 @@ git status    # must be clean
 ## Task Index (Top-Level Todo)
 
 - [x] DEBUG-001 — Confirm root cause of off-land markers and map lag
-- [ ] EMIT-001 — Land-constrain emitter vehicle positions with waypoint-to-waypoint motion
+- [x] EMIT-001 — Land-constrain emitter vehicle positions with waypoint-to-waypoint motion
 - [ ] UI-003 — Add marker clustering to `MapView.tsx`
 - [ ] QA-002 — Verify land-constrained positions and map performance
 - [ ] LEAD-001 — Convention-compliance review and sprint readiness verdict
@@ -209,7 +209,7 @@ N/A — no writes performed.
 
 **Agent:** EMIT
 **Depends on:** DEBUG-001
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -251,12 +251,12 @@ Per DEBUG-001's diagnosis, `emitter/emitter.py`'s `make_initial_state` (initial 
 
 **Sub-task breakdown:**
 
-- [ ] Build a curated list of at least 30 real, confirmed-on-land SF waypoint coordinates spanning the documented bbox (downtown, Mission, Sunset, Richmond, SoMa, North Beach, etc. — avoid anything near the waterfront/bay edge)
-- [ ] Add `dest_lat`/`dest_lng` fields to `VehicleState`, initialized to a second random waypoint distinct from the starting position
-- [ ] Replace `make_initial_state`'s `random.uniform(LAT_MIN, LAT_MAX)`/`random.uniform(LNG_MIN, LNG_MAX)` with a random choice from the waypoint list
-- [ ] Replace `evolve_state`'s position-drift block (the `clamp(state.latitude + random.uniform(-0.003, 0.003), ...)` lines) with: check-arrival-and-pick-new-destination, then step-toward-destination, per the skill file's pattern
-- [ ] Confirm `build_payload` still emits `latitude`/`longitude` unchanged in shape (no contract change)
-- [ ] Run the verification command and manually spot-check a sample of positions
+- [x] Build a curated list of at least 30 real, confirmed-on-land SF waypoint coordinates spanning the documented bbox (downtown, Mission, Sunset, Richmond, SoMa, North Beach, etc. — avoid anything near the waterfront/bay edge)
+- [x] Add `dest_lat`/`dest_lng` fields to `VehicleState`, initialized to a second random waypoint distinct from the starting position
+- [x] Replace `make_initial_state`'s `random.uniform(LAT_MIN, LAT_MAX)`/`random.uniform(LNG_MIN, LNG_MAX)` with a random choice from the waypoint list
+- [x] Replace `evolve_state`'s position-drift block (the `clamp(state.latitude + random.uniform(-0.003, 0.003), ...)` lines) with: check-arrival-and-pick-new-destination, then step-toward-destination, per the skill file's pattern
+- [x] Confirm `build_payload` still emits `latitude`/`longitude` unchanged in shape (no contract change)
+- [x] Run the verification command and manually spot-check a sample of positions
 
 ---
 
