@@ -7,6 +7,22 @@ Version is bumped once per sprint at sprint-end by the ARCH agent.
 
 ---
 
+## v0.8.1 — 2026-07-22
+
+### Fix
+
+- **Land-constrained emitter positions**: `emitter/emitter.py` replaced raw bounding-box
+  `random.uniform` position sampling (which regularly placed vehicles in San Francisco
+  Bay/ocean water) with a curated 35-point on-land waypoint list and waypoint-to-waypoint
+  destination-seeking motion. Owned going forward by the new EMIT agent/skill
+  (`.claude/agents/iiot-emiter.md`, `.claude/skills/iiot-emiter/SKILL.md`).
+- **Marker clustering**: `frontend/components/MapView.tsx` wraps vehicle markers in
+  `@changey/react-leaflet-markercluster`'s `MarkerClusterGroup`, addressing dashboard lag
+  at full fleet scale (previously one raw Leaflet `<Marker>` DOM node per vehicle).
+- Root `.gitignore` now excludes `__pycache__/`/`*.pyc`.
+
+---
+
 ## v0.8.0 — 2026-07-22
 
 ### Add
