@@ -64,7 +64,7 @@ Once the stack is healthy, these URLs become available:
 |---|---|---|
 | Frontend dashboard | http://localhost:3000 | Live-updating vehicle dashboard |
 | Backend API | http://localhost:8080 | REST endpoints under `/api/**` |
-| Swagger UI | http://localhost:8080/swagger | Interactive API docs |
+| Swagger UI | http://localhost:8080/swagger | Interactive API docs (verified reachable end-to-end through the full `docker compose up --build` stack, Sprint 08 INFRA-002 — see note below) |
 | SignalR hub | http://localhost:8080/fleethub | WebSocket endpoint, MessagePack protocol |
 | PostgreSQL | localhost:5432 | `fleet_telemetry` database, user `postgres` |
 
@@ -116,6 +116,25 @@ names like `db`, `backend`, and `frontend` resolvable between containers — see
 - **Healthcheck:** the `aspnet:8.0` runtime image ships neither `curl` nor `wget`, so the
   healthcheck uses bash's built-in `/dev/tcp` to confirm Kestrel is accepting connections on
   8080 (`bash -c 'exec 3<>/dev/tcp/localhost/8080'`).
+- **Swagger UI (Sprint 08 INFRA-002):** verified reachable at `http://localhost:8080/swagger`
+  against a full `docker compose -f containers/docker-compose.yml up --build -d` rebuild — no
+  Dockerfile changes were needed. `containers/backend/Dockerfile` has no `PublishTrimmed` /
+  `PublishAot` flags, so `dotnet publish` ships the `Swashbuckle.AspNetCore.*` assemblies
+  unchanged, and `/swagger/v1/swagger.json` + `/swagger/index.html` both return real content via
+  a `GET` request:
+  ```bash
+  curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/swagger/index.html
+  # 200
+  ```
+  **Known nuance:** `curl -sI http://localhost:8080/swagger/index.html` (a `HEAD` request)
+  returns `404`, not `200` — this is expected `Swashbuckle.AspNetCore` `SwaggerUIMiddleware`
+  behavior, which only serves `GET` requests for its static assets; it is not a Docker/publish
+  regression, and real usage (a browser opening `/swagger`, or `curl -s`/`curl -sL` without `-I`)
+  gets the page normally. When scripting a reachability check against this stack, use a `GET`
+  (`curl -s -o /dev/null -w "%{http_code}"`), not `curl -I`.
+  Swagger UI works identically regardless of `ASPNETCORE_ENVIRONMENT` (`Production` in this
+  Compose file) since `app.UseSwagger()`/`app.UseSwaggerUI()` in `backend/Program.cs` are not
+  gated behind `IsDevelopment()`.
 
 ### `frontend` — Next.js 15 (App Router)
 

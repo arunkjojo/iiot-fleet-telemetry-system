@@ -87,7 +87,7 @@ git status    # must be clean
 - [x] BE-001 — Remove `TelemetrySimulationService` dummy-mode path and `USE_LIVE_TELEMETRY` toggle from the backend
 - [x] INFRA-001 — Remove `USE_LIVE_TELEMETRY` from Docker Compose and Helm chart; always run live mode
 - [x] BE-002 — Wire Swagger/OpenAPI generation into `Program.cs` for local dev
-- [ ] INFRA-002 — Expose Swagger UI through the containerized Docker stack
+- [x] INFRA-002 — Expose Swagger UI through the containerized Docker stack
 - [x] INFRA-003 — Expose Swagger UI through the Helm chart
 - [x] ARCH-001 — Add a data-flow Mermaid diagram to `docs/APPLICATION_OVERVIEW.md`
 - [ ] QA-001 — Verify map, live-only mode, and Swagger across local/Docker/Helm
@@ -594,7 +594,7 @@ git checkout -- backend/Program.cs backend/*.csproj
 
 **Agent:** INFRA
 **Depends on:** BE-002
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -634,11 +634,11 @@ The backend now serves `/swagger` unconditionally (BE-002). `containers/docker-c
 
 **Sub-task breakdown:**
 
-- [ ] Confirm `containers/docker-compose.yml`'s `backend` service exposes port 8080 to the host
-- [ ] `docker compose -f containers/docker-compose.yml up --build -d`
-- [ ] `curl -sI http://localhost:8080/swagger/index.html` and confirm HTTP 200
-- [ ] Update `docs/DOCKER_README.md` with the confirmed Swagger URL and behavior
-- [ ] `docker compose -f containers/docker-compose.yml down`
+- [x] Confirm `containers/docker-compose.yml`'s `backend` service exposes port 8080 to the host — already `"8080:8080"`, no change needed
+- [x] `docker compose -f containers/docker-compose.yml up --build -d`
+- [x] `curl -sI http://localhost:8080/swagger/index.html` — returned `404` (see note below); `curl -s -o /dev/null -w "%{http_code}"` (GET) confirmed real `200`; both `/swagger/index.html` and `/swagger/v1/swagger.json` serve correct content. Root cause: Swashbuckle's `SwaggerUIMiddleware` only handles `GET`, not `HEAD` — 404 on `-I` is expected framework behavior, not a Docker/publish defect (confirmed no `PublishTrimmed`/`PublishAot` in `containers/backend/Dockerfile`; `Swashbuckle.AspNetCore.*` DLLs present in the published image)
+- [x] Update `docs/DOCKER_README.md` with the confirmed Swagger URL and behavior (including the GET-vs-HEAD nuance)
+- [x] `docker compose -f containers/docker-compose.yml down`
 
 ---
 
