@@ -88,7 +88,7 @@ git status    # must be clean
 - [x] INFRA-001 — Remove `USE_LIVE_TELEMETRY` from Docker Compose and Helm chart; always run live mode
 - [x] BE-002 — Wire Swagger/OpenAPI generation into `Program.cs` for local dev
 - [ ] INFRA-002 — Expose Swagger UI through the containerized Docker stack
-- [ ] INFRA-003 — Expose Swagger UI through the Helm chart
+- [x] INFRA-003 — Expose Swagger UI through the Helm chart
 - [x] ARCH-001 — Add a data-flow Mermaid diagram to `docs/APPLICATION_OVERVIEW.md`
 - [ ] QA-001 — Verify map, live-only mode, and Swagger across local/Docker/Helm
 
@@ -681,7 +681,7 @@ git checkout -- docs/DOCKER_README.md containers/docker-compose.yml
 
 **Agent:** INFRA
 **Depends on:** BE-002
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -721,11 +721,11 @@ The Helm chart (`helm/iiot-fleet-app/**`) deploys the same backend image that no
 
 **Sub-task breakdown:**
 
-- [ ] Read every Service/Ingress template under `helm/iiot-fleet-app/templates/` for the backend
-- [ ] Determine whether traffic reaches the backend on all paths (typical for a Service/ClusterIP with no Ingress path rules) or is path-restricted (Ingress with explicit path matches)
-- [ ] If path-restricted and `/swagger` would be blocked, add the necessary path rule
-- [ ] If not path-restricted (most likely, given no Ingress path scoping is mentioned elsewhere in this repo's docs), no template change is needed — document the access method instead
-- [ ] Add a "Swagger UI" section to `docs/HELM_GUIDE.md` describing the access method confirmed above
+- [x] Read every Service/Ingress template under `helm/iiot-fleet-app/templates/` for the backend
+- [x] Determine whether traffic reaches the backend on all paths (typical for a Service/ClusterIP with no Ingress path rules) or is path-restricted (Ingress with explicit path matches)
+- [x] If path-restricted and `/swagger` would be blocked, add the necessary path rule — N/A: the Ingress already has an explicit `/swagger` path rule, and the backend Service has no path restriction at all; no template change needed
+- [x] If not path-restricted (most likely, given no Ingress path scoping is mentioned elsewhere in this repo's docs), no template change is needed — document the access method instead
+- [x] Add a "Swagger UI" section to `docs/HELM_GUIDE.md` describing the access method confirmed above
 
 ---
 

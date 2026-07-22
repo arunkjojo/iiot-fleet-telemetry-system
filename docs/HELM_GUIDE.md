@@ -167,6 +167,28 @@ point DNS (or `/etc/hosts` for local testing) at your ingress controller's exter
 frontend is reachable at `http://fleet.example.local/` and the backend API at
 `http://fleet.example.local/api`, `/swagger`, `/fleethub`.
 
+### Swagger UI
+
+The backend serves `/swagger` unconditionally (it is not gated by `ASPNETCORE_ENVIRONMENT`), and
+neither the backend's ClusterIP Service (`templates/backend/service.yaml`) nor the optional
+Ingress (`templates/ingress.yaml`, which already includes an explicit `/swagger` path rule
+alongside `/api` and `/fleethub`) restrict which paths reach the pod — so no chart changes are
+required to reach it. Confirmed access methods:
+
+```bash
+# Default (no Ingress enabled) — port-forward straight to the backend Service:
+kubectl port-forward svc/iiot-fleet-app-backend 8080:8080
+# → http://localhost:8080/swagger
+```
+
+```bash
+# With Ingress enabled (--set ingress.enabled=true --set ingress.host=fleet.example.local):
+# → http://fleet.example.local/swagger
+```
+
+Replace `iiot-fleet-app` with your actual `helm install`/`helm upgrade` release name if you didn't
+use the default (the Service name is `<release-name>-backend`, per `iiot-fleet-app.fullname`).
+
 ### Worked example: kind end-to-end
 
 ```bash
