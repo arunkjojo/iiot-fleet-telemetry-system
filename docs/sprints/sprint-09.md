@@ -84,7 +84,7 @@ git status    # must be clean
 - [x] EMIT-001 — Land-constrain emitter vehicle positions with waypoint-to-waypoint motion
 - [x] UI-003 — Add marker clustering to `MapView.tsx`
 - [x] QA-002 — Verify land-constrained positions and map performance
-- [ ] LEAD-001 — Convention-compliance review and sprint readiness verdict
+- [x] LEAD-001 — Convention-compliance review and sprint readiness verdict
 
 ---
 
@@ -520,7 +520,7 @@ N/A — this task performs no writes.
 
 **Agent:** LEAD
 **Depends on:** QA-002
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -558,12 +558,12 @@ All feature/fix tasks and QA verification are complete. LEAD performs the final 
 
 **Sub-task breakdown:**
 
-- [ ] Confirm every commit on the branch follows `IIOT-S09-{TASK-ID}: <summary>` format
-- [ ] Confirm EMIT-001's commit only touched `emitter/**` (plus its own sprint-checkbox tick)
-- [ ] Confirm UI-003's commit only touched `frontend/**` (plus its own sprint-checkbox tick), and specifically did not touch `frontend/app/page.tsx`
-- [ ] Confirm QA-002's commit only touched the sprint file
-- [ ] Confirm all 5 Task Index entries and per-task Status fields read `[x]`
-- [ ] Give a clear go/no-go verdict for the Sprint-End Checklist
+- [x] Confirm every commit on the branch follows `IIOT-S09-{TASK-ID}: <summary>` format
+- [x] Confirm EMIT-001's commit only touched `emitter/**` (plus its own sprint-checkbox tick)
+- [x] Confirm UI-003's commit only touched `frontend/**` (plus its own sprint-checkbox tick), and specifically did not touch `frontend/app/page.tsx`
+- [x] Confirm QA-002's commit only touched the sprint file
+- [x] Confirm all 5 Task Index entries and per-task Status fields read `[x]`
+- [x] Give a clear go/no-go verdict for the Sprint-End Checklist — **GO**, one non-blocking follow-up flagged: `frontend/components/MapView.tsx` lines 74/77 still carry a dead commented-out filter + stale docstring (pre-existing, out of UI-003's clustering-only scope; carry to a future sprint)
 
 ---
 
