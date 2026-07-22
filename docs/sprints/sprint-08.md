@@ -86,7 +86,7 @@ git status    # must be clean
 - [ ] UI-002 — Replace `MapView.tsx` background-image projection with real Leaflet markers
 - [x] BE-001 — Remove `TelemetrySimulationService` dummy-mode path and `USE_LIVE_TELEMETRY` toggle from the backend
 - [x] INFRA-001 — Remove `USE_LIVE_TELEMETRY` from Docker Compose and Helm chart; always run live mode
-- [ ] BE-002 — Wire Swagger/OpenAPI generation into `Program.cs` for local dev
+- [x] BE-002 — Wire Swagger/OpenAPI generation into `Program.cs` for local dev
 - [ ] INFRA-002 — Expose Swagger UI through the containerized Docker stack
 - [ ] INFRA-003 — Expose Swagger UI through the Helm chart
 - [x] ARCH-001 — Add a data-flow Mermaid diagram to `docs/APPLICATION_OVERVIEW.md`
@@ -499,7 +499,7 @@ git checkout -- containers/docker-compose.yml helm/iiot-fleet-app/templates/app-
 
 **Agent:** ASP.NET
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -540,12 +540,12 @@ git checkout -- containers/docker-compose.yml helm/iiot-fleet-app/templates/app-
 
 **Sub-task breakdown:**
 
-- [ ] Add `Swashbuckle.AspNetCore` package reference to the backend `.csproj`
-- [ ] `dotnet restore`
-- [ ] In `Program.cs`, add `builder.Services.AddEndpointsApiExplorer()` and `builder.Services.AddSwaggerGen(c => c.SwaggerDoc("v1", new() { Title = "IIoT Fleet Telemetry API", Version = "v1" }))` before `builder.Build()`
-- [ ] After `var app = builder.Build();`, add `app.UseSwagger(); app.UseSwaggerUI();` — do not gate behind `if (app.Environment.IsDevelopment())` since the user wants it available in containerized/Helm environments too (not just local dev)
-- [ ] `dotnet build` and confirm zero errors
-- [ ] Run `dotnet run` locally and confirm `http://localhost:8080/swagger` returns the Swagger UI HTML page
+- [x] Add `Swashbuckle.AspNetCore` package reference to the backend `.csproj`
+- [x] `dotnet restore`
+- [x] In `Program.cs`, add `builder.Services.AddEndpointsApiExplorer()` and `builder.Services.AddSwaggerGen(c => c.SwaggerDoc("v1", new() { Title = "IIoT Fleet Telemetry API", Version = "v1" }))` before `builder.Build()`
+- [x] After `var app = builder.Build();`, add `app.UseSwagger(); app.UseSwaggerUI();` — do not gate behind `if (app.Environment.IsDevelopment())` since the user wants it available in containerized/Helm environments too (not just local dev)
+- [x] `dotnet build` and confirm zero errors
+- [x] Run `dotnet run` locally and confirm `http://localhost:8080/swagger` returns the Swagger UI HTML page — BLOCKED by known pre-existing .NET runtime mismatch (8.0.23 installed vs 8.0.28 requested, per Pre-Flight Checklist/BACKLOG.md); `dotnet build` used as primary gate per task instructions instead
 
 ---
 

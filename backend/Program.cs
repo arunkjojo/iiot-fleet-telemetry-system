@@ -56,6 +56,11 @@ builder.Services.AddDbContext<FleetDbContext>(options =>
 // ── Controllers + SignalR ─────────────────────────────────────────────────────
 builder.Services.AddControllers();
 
+// ── Swagger / OpenAPI (BE-002) — registered unconditionally so /swagger works
+// in local dev, Docker, and Helm regardless of ASPNETCORE_ENVIRONMENT. ──
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c => c.SwaggerDoc("v1", new() { Title = "IIoT Fleet Telemetry API", Version = "v1" }));
+
 // QA-001 fix: defaults (KeepAliveInterval=15s server-ping cadence, ClientTimeoutInterval=30s
 // server-side patience for the client) are too tight for this workload. The JS client's own
 // fixed serverTimeoutInMilliseconds (30s, not configurable from here — frontend is out of
@@ -99,6 +104,11 @@ builder.Services.AddHostedService<LiveBroadcastService>();
 builder.Services.AddHostedService<TelemetryRetentionService>();
 
 var app = builder.Build();
+
+// ── Swagger UI (BE-002) — intentionally not gated behind IsDevelopment(); this
+// exposes API docs only, no auth boundary, and must work in Docker/Helm too. ──
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // ── Database: apply migrations + seed on startup ──────────────────────────────
 using (var scope = app.Services.CreateScope())
