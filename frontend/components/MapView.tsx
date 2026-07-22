@@ -1,8 +1,12 @@
 "use client"
 import React, { useEffect, useMemo, useRef } from 'react'
 import 'leaflet/dist/leaflet.css'
+import 'leaflet.markercluster/dist/MarkerCluster.css'
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 import L from 'leaflet'
 import { MapContainer, TileLayer, Marker, Tooltip, useMap } from 'react-leaflet'
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+import MarkerClusterGroup from '@changey/react-leaflet-markercluster'
 import { Vehicle } from '../types/vehicle'
 
 type Props = {
@@ -98,23 +102,26 @@ function MapView({ vehicles, onSelect, selectedId }: Props) {
           attribution="&copy; OpenStreetMap contributors"
         />
         <FitBoundsOnLoad vehicles={visible} />
-        {markers.map(({ v, icon }) => (
-          <Marker
-            key={v.id}
-            position={[v.lat, v.lng]}
-            icon={icon}
-            eventHandlers={{ click: () => onSelect(v) }}
-          >
-            <Tooltip direction="top" offset={[0, -8]}>
-              <div className="text-xs">
-                {v.id} • {v.status}
-                <div className="text-slate-400 text-[11px] mt-1">
-                  Fuel: {v.fuel}% • Speed: {v.speedKph} km/h
+        <MarkerClusterGroup chunkedLoading disableClusteringAtZoom={17}>
+          {markers.map(({ v, icon }) => (
+            <Marker
+              key={v.id}
+              position={[v.lat, v.lng]}
+              icon={icon}
+              eventHandlers={{ click: () => onSelect(v) }}
+            >
+              <Tooltip direction="top" offset={[0, -8]}>
+                <div className="text-xs">
+                  {v.id} • {v.status}
+                  <div className="text-slate-400 text-[11px] mt-1">
+                    Fuel: {v.fuel}% • Speed: {v.speedKph} km/h
+                  </div>
                 </div>
-              </div>
-            </Tooltip>
-          </Marker>
-        ))}
+              </Tooltip>
+            </Marker>
+          ))}
+        </MarkerClusterGroup>
+
       </MapContainer>
     </main>
   )
