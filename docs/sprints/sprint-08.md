@@ -82,7 +82,7 @@ git status    # must be clean
 
 ## Task Index (Top-Level Todo)
 
-- [ ] UI-001 — Add `react-leaflet` + Leaflet and render an interactive map with vehicle markers
+- [x] UI-001 — Add `react-leaflet` + Leaflet and render an interactive map with vehicle markers
 - [ ] UI-002 — Replace `MapView.tsx` background-image projection with real Leaflet markers
 - [ ] BE-001 — Remove `TelemetrySimulationService` dummy-mode path and `USE_LIVE_TELEMETRY` toggle from the backend
 - [ ] INFRA-001 — Remove `USE_LIVE_TELEMETRY` from Docker Compose and Helm chart; always run live mode
@@ -122,7 +122,7 @@ UI-002                    INFRA-001 (needs BE-001)
 
 **Agent:** NEXT
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -162,10 +162,10 @@ UI-002                    INFRA-001 (needs BE-001)
 
 **Sub-task breakdown:**
 
-- [ ] Add `"leaflet": "^1.9.4"` and `"react-leaflet": "^4.2.1"` to `dependencies` (v4.x targets React 18, matching this project's `react": "^18.2.0"`)
-- [ ] Add `"@types/leaflet": "^1.9.8"` to `devDependencies`
-- [ ] Run `npm install` inside `frontend/` and confirm it completes without peer-dependency errors
-- [ ] Confirm Leaflet's CSS (`leaflet/dist/leaflet.css`) is importable — this will be wired into `MapView.tsx` in UI-002
+- [x] Add `"leaflet": "^1.9.4"` and `"react-leaflet": "^4.2.1"` to `dependencies` (v4.x targets React 18, matching this project's `react": "^18.2.0"`)
+- [x] Add `"@types/leaflet": "^1.9.8"` to `devDependencies`
+- [x] Run `npm install` inside `frontend/` and confirm it completes without peer-dependency errors
+- [x] Confirm Leaflet's CSS (`leaflet/dist/leaflet.css`) is importable — this will be wired into `MapView.tsx` in UI-002
 
 ---
 
