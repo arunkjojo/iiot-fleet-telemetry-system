@@ -166,8 +166,8 @@ driverName    : string    — driver full name (operator-editable via `PATCH /ap
 displayNumber : string    — operator-editable "fleet number" (e.g. "FL-00001"), distinct from `id`
 model         : string    — "NV Cargo" | "Apex Hauler"
 status        : string    — "active" | "warning" | "danger" | "offline"
-latitude      : double    — GPS latitude (San Francisco bbox: 37.70–37.81)
-longitude     : double    — GPS longitude (San Francisco bbox: -122.52 to -122.35)
+latitude      : double    — GPS latitude, worldwide (valid range -85 to 85; emitter roams within ~6-7km of one of ~35 real-city land anchors spanning every inhabited continent, see `emitter/emitter.py`'s `WORLD_LAND_ANCHORS`)
+longitude     : double    — GPS longitude, worldwide (valid range -180 to 180; same land-anchor constraint as latitude)
 fuelPercent   : double    — 0.0 to 100.0
 speedKph      : double    — kilometers per hour
 engineHealth  : int       — 0 to 100
@@ -332,4 +332,4 @@ CREATE INDEX idx_logs_vehicle_time ON vehicle_logs(vehicle_id, logged_at DESC);
 - Mobile application
 - WebGL/GPU-accelerated map rendering (Mapbox/Deck.gl)
 - Horizontal scaling / load balancing
-- Real GPS data (current implementation uses synthetic SF corridor simulation)
+- Real GPS data (current implementation uses synthetic worldwide land-anchor simulation, roaming near real city centers rather than tracking actual vehicles)
