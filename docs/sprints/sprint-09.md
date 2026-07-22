@@ -82,7 +82,7 @@ git status    # must be clean
 
 - [x] DEBUG-001 — Confirm root cause of off-land markers and map lag
 - [x] EMIT-001 — Land-constrain emitter vehicle positions with waypoint-to-waypoint motion
-- [ ] UI-003 — Add marker clustering to `MapView.tsx`
+- [x] UI-003 — Add marker clustering to `MapView.tsx`
 - [ ] QA-002 — Verify land-constrained positions and map performance
 - [ ] LEAD-001 — Convention-compliance review and sprint readiness verdict
 
@@ -307,7 +307,13 @@ git rm -f emitter/waypoints.py 2>/dev/null || true
 
 **Agent:** NEXT
 **Depends on:** DEBUG-001
-**Status:** [ ]
+**Status:** [x]
+
+---
+
+**Implementation Report (2026-07-22):**
+
+Chose `@changey/react-leaflet-markercluster@4.0.0-rc1` + `leaflet.markercluster@^1.5.3` (+ `@types/leaflet.markercluster`). Checked `react-leaflet-cluster` first per the sub-task instruction — its published `peerDependencies` declare `react-leaflet: ^5.0.0`, `react`/`react-dom: ^19.0.0`, incompatible with this repo's pinned `react-leaflet@4.2.1`/React 18. `@changey/react-leaflet-markercluster` declares `peerDependencies: { leaflet: ^1.8.0, react-leaflet: ^4.0.0 }`, an exact match, so no custom wrapper was needed. No published `@types` package exists for it, so added a local `frontend/types/react-leaflet-markercluster.d.ts` declaration (module + CSS side-effect imports) rather than using `any`. Wrapped the existing `markers.map(...)` `<Marker>` list in `<MarkerClusterGroup chunkedLoading disableClusteringAtZoom={17}>` — every marker's status-color `divIcon`, `onSelect` click handler, and `Tooltip` content are unchanged. `FitBoundsOnLoad` still receives the raw `visible` vehicle array (not touched) so it continues to compute bounds from individual lat/lng, unaffected by clustering. `frontend/app/page.tsx` was not touched. `npx tsc --noEmit`: zero errors. `npx next build`: succeeds, no SSR/`window is not defined` error. Honest assessment: clustering is a strong mitigation (it caps live DOM nodes at any given zoom to the visible cluster count, not 7,700+ raw markers) but is a partial mitigation of NF-01 taken alone — at full 10,000-vehicle scale with `chunkedLoading` it should keep initial paint from blocking the main thread, but sustained 60 FPS during rapid pan/zoom at maximum zoom (where clusters expand to many individual markers) still depends on how many vehicles land in a single small area; if QA-002 finds it insufficient at full scale, canvas-based rendering (`preferCanvas` on `L.map` / `Leaflet.Canvas` renderer) would be the next escalation, not attempted here per the task's scope note.
 
 ---
 
@@ -349,12 +355,12 @@ Per DEBUG-001's diagnosis, `frontend/components/MapView.tsx` renders one Leaflet
 
 **Sub-task breakdown:**
 
-- [ ] Choose and add a clustering package compatible with `react-leaflet@4.2.1` (verify peer-dependency compatibility before installing)
-- [ ] Wrap the existing marker-rendering loop in the clustering component, preserving each `<Marker>`'s `onSelect`/`Tooltip`/status-color `divIcon` exactly as today
-- [ ] Confirm the selected vehicle (`selectedId`) and its pulsing-ring treatment still render correctly when its cluster is expanded/zoomed into
-- [ ] Confirm `FitBoundsOnLoad` still works correctly alongside clustering (bounds should still be computed from raw vehicle positions, not cluster centroids)
-- [ ] `cd frontend && npx tsc --noEmit` passes with zero errors
-- [ ] `cd frontend && npx next build` succeeds (regression check for the Sprint 08 SSR fix — clustering library must not reintroduce a `window is not defined` build error)
+- [x] Choose and add a clustering package compatible with `react-leaflet@4.2.1` (verify peer-dependency compatibility before installing)
+- [x] Wrap the existing marker-rendering loop in the clustering component, preserving each `<Marker>`'s `onSelect`/`Tooltip`/status-color `divIcon` exactly as today
+- [x] Confirm the selected vehicle (`selectedId`) and its pulsing-ring treatment still render correctly when its cluster is expanded/zoomed into
+- [x] Confirm `FitBoundsOnLoad` still works correctly alongside clustering (bounds should still be computed from raw vehicle positions, not cluster centroids)
+- [x] `cd frontend && npx tsc --noEmit` passes with zero errors
+- [x] `cd frontend && npx next build` succeeds (regression check for the Sprint 08 SSR fix — clustering library must not reintroduce a `window is not defined` build error)
 
 ---
 
