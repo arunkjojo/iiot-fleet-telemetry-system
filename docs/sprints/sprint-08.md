@@ -84,7 +84,7 @@ git status    # must be clean
 
 - [x] UI-001 — Add `react-leaflet` + Leaflet and render an interactive map with vehicle markers
 - [ ] UI-002 — Replace `MapView.tsx` background-image projection with real Leaflet markers
-- [ ] BE-001 — Remove `TelemetrySimulationService` dummy-mode path and `USE_LIVE_TELEMETRY` toggle from the backend
+- [x] BE-001 — Remove `TelemetrySimulationService` dummy-mode path and `USE_LIVE_TELEMETRY` toggle from the backend
 - [ ] INFRA-001 — Remove `USE_LIVE_TELEMETRY` from Docker Compose and Helm chart; always run live mode
 - [ ] BE-002 — Wire Swagger/OpenAPI generation into `Program.cs` for local dev
 - [ ] INFRA-002 — Expose Swagger UI through the containerized Docker stack
@@ -308,7 +308,7 @@ git checkout -- frontend/components/MapView.tsx
 
 **Agent:** ASP.NET
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
 
 ---
 
@@ -352,11 +352,11 @@ git checkout -- frontend/components/MapView.tsx
 
 **Sub-task breakdown:**
 
-- [ ] Delete `backend/Services/TelemetrySimulationService.cs`
-- [ ] In `backend/Program.cs`, remove the `builder.Configuration.GetValue<bool>("USE_LIVE_TELEMETRY", false)` line and the surrounding `if (!useLiveTelemetry) {...} else {...}` block; keep only what the `else` branch registered, unconditionally
-- [ ] Remove `"USE_LIVE_TELEMETRY": false` from `backend/appsettings.json`
-- [ ] Search the backend for any other reference to `TelemetrySimulationService` or `USE_LIVE_TELEMETRY` (controllers, other services, tests) and remove/update them
-- [ ] `dotnet build` and confirm zero errors
+- [x] Delete `backend/Services/TelemetrySimulationService.cs`
+- [x] In `backend/Program.cs`, remove the `builder.Configuration.GetValue<bool>("USE_LIVE_TELEMETRY", false)` line and the surrounding `if (!useLiveTelemetry) {...} else {...}` block; keep only what the `else` branch registered, unconditionally
+- [x] Remove `"USE_LIVE_TELEMETRY": false` from `backend/appsettings.json`
+- [x] Search the backend for any other reference to `TelemetrySimulationService` or `USE_LIVE_TELEMETRY` (controllers, other services, tests) and remove/update them
+- [x] `dotnet build` and confirm zero errors
 
 ---
 

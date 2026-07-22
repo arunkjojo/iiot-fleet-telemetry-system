@@ -3,8 +3,6 @@ namespace FleetTelemetry.Services;
 /// <summary>
 /// Canonical, stateless status evaluator for live-telemetry mode.
 /// Implements REQUIREMENTS.md section 4.1 (Vehicle Status Thresholds) exactly.
-/// This intentionally does not need to match TelemetrySimulationService's private
-/// EvaluateStatus bit-for-bit — that one is legacy/dummy-mode-only and stays untouched.
 /// </summary>
 public static class VehicleStatusEvaluator
 {

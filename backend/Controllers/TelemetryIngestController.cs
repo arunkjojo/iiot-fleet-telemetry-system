@@ -157,8 +157,7 @@ public class TelemetryIngestController : ControllerBase
 
     /// <summary>
     /// Decide which log lines this ingest should produce: first-ever reading, status change,
-    /// and/or threshold crossings. Thresholds and messages mirror TelemetrySimulationService's
-    /// dummy-mode logging so LogsController output stays meaningful regardless of data source.
+    /// and/or threshold crossings, so LogsController output stays meaningful.
     /// </summary>
     private static IEnumerable<(string Level, string Message)> BuildLogMessages(
         bool hasPrevious, Vehicle? previous, string computedStatus, TelemetryIngestRequest request)

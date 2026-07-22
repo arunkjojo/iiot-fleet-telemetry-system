@@ -38,13 +38,12 @@ backend/
 │   ├── TelemetryIngestRequest.cs   # POST /api/telemetry/ingest request DTO (camelCase JSON binding, BE-002)
 │   └── PatchVehicleRequest.cs      # PATCH /api/vehicles/{id} request DTO — DriverName?/DisplayNumber?, both optional (BE-006)
 ├── Services/
-│   ├── TelemetrySimulationService.cs  # BackgroundService — 10k vehicle simulation
 │   ├── VehicleStatusEvaluator.cs      # Static status evaluator (live-mode canonical rules, REQUIREMENTS.md 4.1)
 │   ├── LiveTelemetryStore.cs          # ILiveTelemetryStore — in-memory current-state cache + last-50-logs cache for live mode
 │   ├── TelemetryPersistenceService.cs # ITelemetryIngestQueue + BackgroundService — buffered batched writer draining into PostgreSQL (telemetry_snapshots, vehicle_logs), decouples emitter/request count from DB connections (BE-002). Batch/timing knobs configurable via "TelemetryPersistence" appsettings section; retries failed batches then falls back to a dead-letter JSON file on disk (ADR-001 follow-up)
 │   ├── LiveBroadcastService.cs        # BackgroundService — relays ILiveTelemetryStore.GetAndClearDirty() to SignalR every ~500ms; skips empty ticks (BE-003)
 │   ├── HubConnectionTracker.cs        # Singleton — thread-safe (Interlocked) count of active /fleethub connections + LastEventAtUtc; read by HealthController (BE-005)
-│   └── TelemetryRetentionService.cs   # BackgroundService — periodic bounded-batch deletion of telemetry_snapshots/vehicle_logs rows older than "TelemetryRetention" config; scoped FleetDbContext per sweep (mirrors TelemetryPersistenceService); only registered when USE_LIVE_TELEMETRY=true (DB-004). Closes ADR-001 action item #5
+│   └── TelemetryRetentionService.cs   # BackgroundService — periodic bounded-batch deletion of telemetry_snapshots/vehicle_logs rows older than "TelemetryRetention" config; scoped FleetDbContext per sweep (mirrors TelemetryPersistenceService); always registered (live-only mode, IIOT-S08-BE-001). Closes ADR-001 action item #5
 ├── Data/                           # (Sprint 01) EF Core DbContext + migrations
 │   ├── FleetDbContext.cs
 │   └── Migrations/
@@ -62,25 +61,22 @@ backend/
 
 | Method | Route | Response | Description |
 |--------|-------|----------|-------------|
-| GET | `/api/vehicles` | `ApiVehicle[]` | All 10,000 vehicles with current telemetry, including `lastSeenAtUtc` (BE-007) — live mode: last `ILiveTelemetryStore.Upsert` time for that vehicle (falls back to "now" if not tracked); dummy mode: always current server time |
+| GET | `/api/vehicles` | `ApiVehicle[]` | All 10,000 vehicles with current telemetry, including `lastSeenAtUtc` (BE-007) — last `ILiveTelemetryStore.Upsert` time for that vehicle (falls back to "now" if not tracked) |
 | GET | `/api/vehicles/{id}` | `{ vehicle, logs }` | Single vehicle detail + last 50 log entries; `vehicle` includes `lastSeenAtUtc` (BE-007), same rules as `GET /api/vehicles` |
 | GET | `/api/vehicles/{vehicleId}/logs` | `VehicleLog[]` | Last 50 log entries for a vehicle |
 | GET | `/api/vehicles/metadata` | `{ id, driver }[]` | Static metadata list for all 10k vehicles |
-| POST | `/api/telemetry/ingest` | `202 { status, vehicleId, computedStatus }` | Live telemetry ingestion (BE-002) — validates payload, computes status via `VehicleStatusEvaluator`, upserts `ILiveTelemetryStore`, enqueues a buffered/batched write via `ITelemetryIngestQueue`. Only registered when `USE_LIVE_TELEMETRY=true`. `400` on missing `vehicleId` or out-of-range numeric fields. |
-| GET | `/api/health/signalr` | `{ connectedClients, lastEventAtUtc }` | SignalR connection health (BE-005) — reads `HubConnectionTracker`; always registered, works regardless of `USE_LIVE_TELEMETRY`. |
-| PATCH | `/api/vehicles/{id}` | `ApiVehicle` | Edit a vehicle's `driverName`/`displayNumber` (BE-006). Body: `{ driverName?, displayNumber? }` — at least one required (non-empty after trim), else `400`. `400` if `driverName` > 100 chars or `displayNumber` > 30 chars. `404` if `{id}` isn't found in the currently-active in-memory store. Mutates the in-memory `Vehicle` (`ILiveTelemetryStore` in live mode, `TelemetrySimulationService.Vehicles` in dummy mode) in place, then persists synchronously to the Postgres `vehicles` row via `FleetDbContext`. The `{id}` route parameter (primary key) is never mutated — the request body has no id field. |
+| POST | `/api/telemetry/ingest` | `202 { status, vehicleId, computedStatus }` | Live telemetry ingestion (BE-002) — validates payload, computes status via `VehicleStatusEvaluator`, upserts `ILiveTelemetryStore`, enqueues a buffered/batched write via `ITelemetryIngestQueue`. `400` on missing `vehicleId` or out-of-range numeric fields. |
+| GET | `/api/health/signalr` | `{ connectedClients, lastEventAtUtc }` | SignalR connection health (BE-005) — reads `HubConnectionTracker`; always registered. |
+| PATCH | `/api/vehicles/{id}` | `ApiVehicle` | Edit a vehicle's `driverName`/`displayNumber` (BE-006). Body: `{ driverName?, displayNumber? }` — at least one required (non-empty after trim), else `400`. `400` if `driverName` > 100 chars or `displayNumber` > 30 chars. `404` if `{id}` isn't found in `ILiveTelemetryStore`. Mutates the in-memory `Vehicle` in `ILiveTelemetryStore` in place, then persists synchronously to the Postgres `vehicles` row via `FleetDbContext`. The `{id}` route parameter (primary key) is never mutated — the request body has no id field. |
 | WS | `/fleethub` | SignalR | Hub for `ReceiveFleetUpdate` broadcasts |
 
 ---
 
-## Read-Path Data Source Branching (BE-003)
+## Read-Path Data Source (IIOT-S08-BE-001)
 
-`VehiclesController` (`GET /api/vehicles`, `GET /api/vehicles/{id}`) and `LogsController` (`GET /api/vehicles/{vehicleId}/logs`) both inject `IConfiguration` and `ILiveTelemetryStore` and branch per-request on `IConfiguration.GetValue<bool>("USE_LIVE_TELEMETRY", false)`:
+`VehiclesController` (`GET /api/vehicles`, `GET /api/vehicles/{id}`) and `LogsController` (`GET /api/vehicles/{vehicleId}/logs`) inject `ILiveTelemetryStore` and always read from it — `ILiveTelemetryStore.GetAll()` / `.TryGet(id, out v)` / `.GetLogs(id)`, fed exclusively by `POST /api/telemetry/ingest` (BE-002). There is no dummy/simulation data source — the backend is live-only.
 
-- `false` (default, local `dotnet run`): read from `TelemetrySimulationService.Vehicles` / `.GetLogs(id)` — unchanged from Sprint 01.
-- `true` (Docker Compose): read from `ILiveTelemetryStore.GetAll()` / `.TryGet(id, out v)` / `.GetLogs(id)`, fed by `POST /api/telemetry/ingest` (BE-002).
-
-`ApiVehicle` field mapping (rounding, `driver`/`model` names) is byte-for-byte identical across both branches — the frontend type contract needs no changes. `MetadataController` is source-independent and untouched; it always returns the static `VEH-00000..VEH-09999` roster.
+`MetadataController` is source-independent and untouched; it always returns the static `VEH-00000..VEH-09999` roster.
 
 ---
 
@@ -125,18 +121,13 @@ public class VehicleLog {
 
 ---
 
-## TelemetrySimulationService Behavior
+## Live-Only Mode (IIOT-S08-BE-001)
 
-The `TelemetrySimulationService` (514 lines) is the core of the demo:
-
-- Seeds 10,000 vehicles across 200 synthetic SF corridors on startup
-- Runs a 500ms loop using `Parallel.ForEach` to update all vehicle metrics
-- Status classification priority: **offline > danger > warning > active**
-- Enforces distribution caps every ~20 ticks: offline ≤12, danger ≤14, warning ≤24
-- Broadcasts `VehicleUpdate[]` via SignalR to all connected clients
-- Keeps last 50 log entries per vehicle in `ConcurrentQueue<VehicleLog>`
-
-**Do not add HTTP clients or database calls inside this service** — it is designed to be fully in-memory for the simulation.
+The legacy dummy-mode in-memory simulation background service and its config toggle have been
+removed (IIOT-S08-BE-001). The backend now always runs the live ingestion pipeline — the Python
+emitter (`emitter/**`) is the sole source of vehicle state, via `POST /api/telemetry/ingest` →
+`ITelemetryIngestQueue` → `TelemetryPersistenceService` → `ILiveTelemetryStore` →
+`LiveBroadcastService` → `/fleethub`.
 
 ---
 
@@ -293,6 +284,5 @@ dotnet test                           # run tests (when test project exists)
 
 ## Do NOT Touch
 
-- `backend/Services/TelemetrySimulationService.cs` — do not add DB calls or HTTP clients; in-memory only
 - `backend/Hubs/FleetHub.cs` — hub stays minimal; hub path stays `/fleethub`
 - `backend/fleet-telemetry-system.sln` — solution file managed by dotnet tooling

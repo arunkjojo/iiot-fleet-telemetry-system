@@ -7,8 +7,7 @@ namespace FleetTelemetry.Services;
 /// In-memory "current live state" cache fed by the telemetry ingestion pipeline.
 /// Holds no DB dependency and performs no persistence itself — that responsibility
 /// belongs to TelemetryPersistenceService (BE-002). Read by VehiclesController /
-/// LogsController and drained by LiveBroadcastService (BE-003) when
-/// USE_LIVE_TELEMETRY=true.
+/// LogsController and drained by LiveBroadcastService (BE-003).
 /// </summary>
 public interface ILiveTelemetryStore
 {

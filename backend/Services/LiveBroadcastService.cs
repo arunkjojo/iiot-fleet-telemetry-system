@@ -6,8 +6,7 @@ namespace FleetTelemetry.Services;
 
 /// <summary>
 /// Relays vehicles that changed in <see cref="ILiveTelemetryStore"/> to all connected SignalR
-/// clients roughly every 500ms, mirroring TelemetrySimulationService's broadcast cadence and
-/// contract (BE-003). Only registered when USE_LIVE_TELEMETRY=true.
+/// clients roughly every 500ms (BE-003). Always registered (live-only mode).
 ///
 /// Purely a store-to-hub relay — it performs no simulation work itself. Each tick it drains
 /// only the vehicles that were upserted since the previous tick via
@@ -30,8 +29,7 @@ public class LiveBroadcastService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        // Drift-corrected tick loop, mirroring TelemetrySimulationService.ExecuteAsync
-        // (lines 246-249, 508-511) but at 500ms since there is no per-tick simulation work here.
+        // Drift-corrected tick loop, targeting a steady ~500ms cadence.
         var sw = System.Diagnostics.Stopwatch.StartNew();
 
         while (!stoppingToken.IsCancellationRequested)
@@ -61,7 +59,7 @@ public class LiveBroadcastService : BackgroundService
                 }
                 catch
                 {
-                    // ignore transient errors, mirrors TelemetrySimulationService's broadcast behavior
+                    // ignore transient errors — best-effort broadcast, next tick will retry with fresh data
                 }
             }
 

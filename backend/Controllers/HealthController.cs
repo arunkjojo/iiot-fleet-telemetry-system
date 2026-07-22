@@ -15,8 +15,7 @@ public class HealthController : ControllerBase
     }
 
     // GET /api/health/signalr — connected-client count for the /fleethub hub.
-    // Works regardless of USE_LIVE_TELEMETRY, since MapHub<FleetHub>("/fleethub") is
-    // always registered in Program.cs.
+    // MapHub<FleetHub>("/fleethub") is always registered in Program.cs.
     [HttpGet("signalr")]
     public IActionResult GetSignalRHealth()
     {

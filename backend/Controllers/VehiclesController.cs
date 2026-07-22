@@ -10,31 +10,23 @@ namespace FleetTelemetry.Controllers;
 [Route("api/vehicles")]
 public class VehiclesController : ControllerBase
 {
-    private readonly IConfiguration _config;
     private readonly ILiveTelemetryStore _liveStore;
     private readonly FleetDbContext _db;
 
     private const int DriverNameMaxLength = 100;
     private const int DisplayNumberMaxLength = 30;
 
-    public VehiclesController(IConfiguration config, ILiveTelemetryStore liveStore, FleetDbContext db)
+    public VehiclesController(ILiveTelemetryStore liveStore, FleetDbContext db)
     {
-        _config = config;
         _liveStore = liveStore;
         _db = db;
     }
 
-    // USE_LIVE_TELEMETRY=true reads from ILiveTelemetryStore (fed by POST /api/telemetry/ingest);
-    // false (default) keeps reading from TelemetrySimulationService.Vehicles, unchanged from Sprint 01.
-    private bool UseLiveTelemetry => _config.GetValue<bool>("USE_LIVE_TELEMETRY", false);
-
-    // BE-007: live mode reflects the last time this vehicle was upserted into ILiveTelemetryStore
-    // (falls back to "now" if the vehicle predates this field existing in the store); dummy mode
-    // has no meaningful staleness concept — the simulation ticks continuously — so it always
-    // reports "now".
+    // BE-007: reflects the last time this vehicle was upserted into ILiveTelemetryStore
+    // (falls back to "now" if the vehicle predates this field existing in the store).
     private DateTime GetLastSeenUtc(string id)
     {
-        if (UseLiveTelemetry && _liveStore.TryGetLastSeenUtc(id, out var lastSeen))
+        if (_liveStore.TryGetLastSeenUtc(id, out var lastSeen))
         {
             return lastSeen;
         }
@@ -44,15 +36,7 @@ public class VehiclesController : ControllerBase
     [HttpGet("{id}")]
     public IActionResult Get(string id)
     {
-        Vehicle? v = null;
-        if (UseLiveTelemetry)
-        {
-            _liveStore.TryGet(id, out v);
-        }
-        else
-        {
-            TelemetrySimulationService.Vehicles.TryGetValue(id, out v);
-        }
+        _liveStore.TryGet(id, out Vehicle? v);
 
         if (v != null)
         {
@@ -72,8 +56,8 @@ public class VehiclesController : ControllerBase
                 LastSeenAtUtc = GetLastSeenUtc(id)
             };
 
-            // return recent logs from the active data source (live store or simulation service)
-            var logs = (UseLiveTelemetry ? _liveStore.GetLogs(id) : TelemetrySimulationService.GetLogs(id))
+            // return recent logs from the live telemetry store
+            var logs = _liveStore.GetLogs(id)
                 .Select(l => new { ts = l.Ts.ToString("o"), level = l.Level, msg = l.Message })
                 .ToArray();
 
@@ -86,7 +70,7 @@ public class VehiclesController : ControllerBase
     [HttpGet]
     public IActionResult List()
     {
-        var vehicles = UseLiveTelemetry ? _liveStore.GetAll() : (IEnumerable<Vehicle>)TelemetrySimulationService.Vehicles.Values;
+        var vehicles = _liveStore.GetAll();
         var list = vehicles.Select(v => new {
             id = v.Id,
             model = string.IsNullOrEmpty(v.Model) ? "NV Cargo" : v.Model,
@@ -136,15 +120,7 @@ public class VehiclesController : ControllerBase
             return BadRequest(new { error = $"displayNumber must be {DisplayNumberMaxLength} characters or fewer." });
         }
 
-        Vehicle? v = null;
-        if (UseLiveTelemetry)
-        {
-            _liveStore.TryGet(id, out v);
-        }
-        else
-        {
-            TelemetrySimulationService.Vehicles.TryGetValue(id, out v);
-        }
+        _liveStore.TryGet(id, out Vehicle? v);
 
         if (v == null)
         {
@@ -162,9 +138,9 @@ public class VehiclesController : ControllerBase
             v.DisplayNumber = displayNumber!;
         }
 
-        // Postgres write: DbSeeder always seeds all 10,000 rows regardless of USE_LIVE_TELEMETRY,
-        // so the row should exist in both modes. Guard defensively in case it doesn't (e.g. a
-        // reduced local seed) rather than failing the whole request after the in-memory update.
+        // Postgres write: DbSeeder always seeds all 10,000 rows, so the row should exist.
+        // Guard defensively in case it doesn't (e.g. a reduced local seed) rather than
+        // failing the whole request after the in-memory update.
         var entity = await _db.Vehicles.FindAsync(id);
         if (entity != null)
         {

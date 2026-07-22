@@ -76,41 +76,27 @@ builder.Services.AddSignalR(options =>
 builder.Services.AddSingleton<ILiveTelemetryStore, LiveTelemetryStore>();
 
 // ── SignalR connection tracker (BE-005) — always registered; FleetHub increments/decrements
-// it on connect/disconnect, HealthController reads it via GET /api/health/signalr regardless
-// of USE_LIVE_TELEMETRY, since /fleethub is always mapped below. ──
+// it on connect/disconnect, HealthController reads it via GET /api/health/signalr, since
+// /fleethub is always mapped below. ──
 builder.Services.AddSingleton<HubConnectionTracker>();
 
-// ── Data source toggle: live ingestion pipeline vs. legacy in-memory dummy simulation ──
-// USE_LIVE_TELEMETRY=false (default) keeps local `dotnet run` on the dummy simulation.
-// USE_LIVE_TELEMETRY=true (set by Docker Compose) defers to the live ingestion pipeline
-// (registered in later sprint tasks) and must NOT start TelemetrySimulationService, since
-// its constructor seeds 10,000 vehicles and starts ticking immediately.
-var useLiveTelemetry = builder.Configuration.GetValue<bool>("USE_LIVE_TELEMETRY", false);
-if (!useLiveTelemetry)
-{
-    builder.Services.AddHostedService<TelemetrySimulationService>();
-}
-else
-{
-    // Buffered PostgreSQL writer for POST /api/telemetry/ingest (BE-002). Registered as a
-    // singleton so the same instance backs both the ITelemetryIngestQueue the controller
-    // enqueues into and the IHostedService drain loop that flushes it — the channels must be
-    // shared, not duplicated.
-    builder.Services.AddSingleton<TelemetryPersistenceService>();
-    builder.Services.AddSingleton<ITelemetryIngestQueue>(sp => sp.GetRequiredService<TelemetryPersistenceService>());
-    builder.Services.AddHostedService(sp => sp.GetRequiredService<TelemetryPersistenceService>());
+// ── Live ingestion pipeline (always registered — live-only mode, no dummy simulation) ──
+// Buffered PostgreSQL writer for POST /api/telemetry/ingest (BE-002). Registered as a
+// singleton so the same instance backs both the ITelemetryIngestQueue the controller
+// enqueues into and the IHostedService drain loop that flushes it — the channels must be
+// shared, not duplicated.
+builder.Services.AddSingleton<TelemetryPersistenceService>();
+builder.Services.AddSingleton<ITelemetryIngestQueue>(sp => sp.GetRequiredService<TelemetryPersistenceService>());
+builder.Services.AddHostedService(sp => sp.GetRequiredService<TelemetryPersistenceService>());
 
-    // Relays ILiveTelemetryStore changes to connected SignalR clients every ~500ms (BE-003).
-    // VehiclesController/LogsController read the same store synchronously on request; this
-    // service is what makes the frontend see updates without polling.
-    builder.Services.AddHostedService<LiveBroadcastService>();
+// Relays ILiveTelemetryStore changes to connected SignalR clients every ~500ms (BE-003).
+// VehiclesController/LogsController read the same store synchronously on request; this
+// service is what makes the frontend see updates without polling.
+builder.Services.AddHostedService<LiveBroadcastService>();
 
-    // Periodic bounded-batch cleanup of aged telemetry_snapshots/vehicle_logs rows (DB-004,
-    // ADR-001 action item #5). Dummy mode never writes to the DB, so retention has nothing to
-    // do there — registered only alongside the live ingestion pipeline, like the two services
-    // above.
-    builder.Services.AddHostedService<TelemetryRetentionService>();
-}
+// Periodic bounded-batch cleanup of aged telemetry_snapshots/vehicle_logs rows (DB-004,
+// ADR-001 action item #5).
+builder.Services.AddHostedService<TelemetryRetentionService>();
 
 var app = builder.Build();
 
