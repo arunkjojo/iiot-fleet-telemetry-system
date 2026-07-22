@@ -80,7 +80,7 @@ git status    # must be clean
 
 ## Task Index (Top-Level Todo)
 
-- [ ] DEBUG-001 — Confirm root cause of off-land markers and map lag
+- [x] DEBUG-001 — Confirm root cause of off-land markers and map lag
 - [ ] EMIT-001 — Land-constrain emitter vehicle positions with waypoint-to-waypoint motion
 - [ ] UI-003 — Add marker clustering to `MapView.tsx`
 - [ ] QA-002 — Verify land-constrained positions and map performance
@@ -114,7 +114,17 @@ EMIT-001                        UI-003
 
 **Agent:** DEBUG
 **Depends on:** NONE
-**Status:** [ ]
+**Status:** [x]
+
+---
+
+**Debug Report (2026-07-22):**
+
+**Section 1 — Off-land markers.** Root cause: `emitter/emitter.py` lines 95-96 (`make_initial_state`) and 131-132 (`evolve_state`) sample/drift positions via `random.uniform(LAT_MIN, LAT_MAX)`/`random.uniform(LNG_MIN, LNG_MAX)` across the raw SF bbox (`LAT_MIN, LAT_MAX = 37.70, 37.81` / `LNG_MIN, LNG_MAX = -122.52, -122.35`, lines 50-51) with no land constraint; `clamp()` only prevents leaving the rectangle, not entering water within it. Fix: EMIT-001 replaces this with curated on-land waypoints + waypoint-to-waypoint motion per `.claude/skills/iiot-emiter/SKILL.md`.
+
+**Section 2 — Map lag.** Root cause: `frontend/components/MapView.tsx` lines 78-86/101-117 render one Leaflet `<Marker>` DOM node per vehicle with no clustering (the `visible` filter at lines 71-74 is dead/commented-out code, so all vehicles render). At ~7,700+ simultaneous markers this cannot sustain NF-01's 60 FPS bar. Already flagged as a deferred follow-up in Sprint 08's UI-002 implementation note #4. Fix: UI-003 adds a clustering layer.
+
+**Independence confirmed:** no shared code path — symptom 1 is a data-generation problem (emitter), symptom 2 is a rendering-volume problem (frontend); they only meet via the `lat`/`lng` wire payload, a data contract not a code path. EMIT-001 and UI-003 proceed in parallel.
 
 ---
 
